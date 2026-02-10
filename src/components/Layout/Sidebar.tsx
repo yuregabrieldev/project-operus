@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  Home, Package, Settings, DollarSign, FileText, 
-  ClipboardList, Truck, ShoppingCart, Cog, 
-  Factory, Store, Users
+import {
+  LayoutDashboard, Package, Settings, DollarSign, FileText,
+  ClipboardList, Truck, ShoppingCart,
+  Factory, Store, Users, ChevronLeft, ChevronRight, ArrowLeftRight
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -19,16 +19,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
   const { user } = useAuth();
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Estoque', icon: Package },
-    { id: 'operations', label: 'Operações', icon: Cog },
-    { id: 'production', label: 'Produção', icon: Factory },
+    { id: 'operations', label: 'Operações', icon: ArrowLeftRight },
     { id: 'transit', label: 'Trânsito', icon: Truck },
     { id: 'purchases', label: 'Compras', icon: ShoppingCart },
     { id: 'cashbox', label: 'Caixa', icon: DollarSign },
     { id: 'invoices', label: 'Faturas', icon: FileText },
-    { id: 'checklists', label: 'Listas', icon: ClipboardList },
-    // Só mostra "Lojas" e "Usuários" para administradores
+    { id: 'checklists', label: 'Checklists', icon: ClipboardList },
     ...(user?.role === 'admin' ? [
       { id: 'stores', label: 'Lojas', icon: Store },
       { id: 'users', label: 'Usuários', icon: Users }
@@ -37,58 +35,77 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
   ];
 
   return (
-    <div className={cn(
-      "bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
-      isCollapsed ? "w-16" : "w-64"
+    <aside className={cn(
+      "bg-[#0f172a] flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out",
+      isCollapsed ? "w-[68px]" : "w-60"
     )}>
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">O</span>
-              </div>
-              <span className="font-semibold text-gray-900">Operus</span>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-            className="p-1 h-8 w-8"
-          >
-            <Cog className="h-4 w-4" />
-          </Button>
-        </div>
+      {/* Brand Header */}
+      <div className={cn(
+        "flex items-center h-16 border-b border-white/10 px-3",
+        isCollapsed ? "justify-center" : "justify-between"
+      )}>
+        {!isCollapsed && (
+          <span className="text-white font-bold text-xl tracking-wide">OPERUS</span>
+        )}
+        <button
+          onClick={onToggle}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2">
-        <div className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
+      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+
+          const buttonContent = (
+            <button
+              key={item.id}
+              onClick={() => onTabChange(item.id)}
+              className={cn(
+                "w-full flex items-center gap-3 rounded-lg transition-all duration-200",
+                isCollapsed ? "justify-center px-0 py-3" : "px-3 py-2.5",
+                isActive
+                  ? "bg-white text-[#0f172a] shadow-lg shadow-white/10"
+                  : "text-gray-400 hover:text-white hover:bg-white/10"
+              )}
+            >
+              <Icon className={cn(
+                "h-5 w-5 flex-shrink-0",
+                isActive ? "text-[#0f172a]" : ""
+              )} />
+              {!isCollapsed && (
+                <span className={cn(
+                  "text-sm font-medium truncate",
+                  isActive ? "text-[#0f172a]" : ""
+                )}>
+                  {item.label}
+                </span>
+              )}
+            </button>
+          );
+
+          if (isCollapsed) {
             return (
-              <Button
-                key={item.id}
-                variant={activeTab === item.id ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start h-10",
-                  isCollapsed ? "px-2" : "px-3",
-                  activeTab === item.id && "bg-blue-50 text-blue-700 border-blue-200"
-                )}
-                onClick={() => onTabChange(item.id)}
-              >
-                <Icon className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
-                {!isCollapsed && (
-                  <span className="text-sm font-medium">{item.label}</span>
-                )}
-              </Button>
+              <Tooltip key={item.id} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  {buttonContent}
+                </TooltipTrigger>
+                <TooltipContent side="right" className="ml-2">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
             );
-          })}
-        </div>
+          }
+
+          return <React.Fragment key={item.id}>{buttonContent}</React.Fragment>;
+        })}
       </nav>
-    </div>
+    </aside>
   );
 };
 

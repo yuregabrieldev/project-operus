@@ -8,7 +8,7 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
-const translations = {
+const translations: Record<string, any> = {
   pt: {
     sidebar: {
       dashboard: 'Dashboard',
@@ -21,6 +21,31 @@ const translations = {
       checklists: 'Checklists',
       settings: 'Configurações'
     },
+    common: {
+      product: 'Produto',
+      quantity: 'Quantidade',
+      status: 'Status',
+      actions: 'Ações',
+      error: 'Erro',
+      cancel: 'Cancelar',
+      update: 'Atualizar',
+      add: 'Adicionar',
+      save: 'Salvar',
+      create: 'Criar',
+      close: 'Fechar',
+      name: 'Nome',
+      units: 'unidades',
+      notes: 'Observações',
+      supplier: 'Fornecedor',
+      priority: 'Prioridade',
+      store: 'Loja',
+      type: 'Tipo',
+      active: 'Ativo',
+      inactive: 'Inativo',
+      select_product: 'Selecionar produto',
+      select_store: 'Selecionar loja',
+      select_supplier: 'Selecionar fornecedor'
+    },
     dashboard: {
       title: 'Dashboard',
       overview: 'Visão Geral',
@@ -32,7 +57,13 @@ const translations = {
       quickActions: 'Ações Rápidas',
       addProduct: 'Adicionar Produto',
       openCash: 'Abrir Caixa',
-      viewReports: 'Ver Relatórios'
+      viewReports: 'Ver Relatórios',
+      totalProducts: 'Total de Produtos',
+      lowStock: 'Estoque Baixo',
+      pendingInvoices: 'Faturas Pendentes',
+      openCashbox: 'Caixas Abertos',
+      recentMovements: 'Movimentações Recentes',
+      alerts: 'Alertas'
     },
     inventory: {
       title: 'Gestão de Estoque',
@@ -48,7 +79,8 @@ const translations = {
       actions: 'Ações',
       addProduct: 'Adicionar Produto',
       editProduct: 'Editar Produto',
-      addMovement: 'Adicionar Movimento'
+      addMovement: 'Adicionar Movimento',
+      costPrice: 'Preço de Custo'
     },
     operations: {
       title: 'Operações',
@@ -101,11 +133,49 @@ const translations = {
     },
     transit: {
       title: 'Gestão de Trânsito',
-      description: 'Gerencie transferências entre lojas'
+      description: 'Gerencie transferências entre lojas',
+      status_updated: 'Status Atualizado',
+      movement: 'Movimentação',
+      updated_to: 'atualizado para',
+      all_status: 'Todos os status',
+      pending: 'Pendente',
+      in_transit: 'Em Trânsito',
+      delivered: 'Entregue',
+      new_transfer: 'Nova Transferência',
+      total: 'Total',
+      movements: 'Movimentações',
+      from: 'Origem',
+      to: 'Destino',
+      created_at: 'Criado em',
+      external: 'Externo',
+      no_movements: 'Nenhuma movimentação encontrada',
+      view_transfer: 'Ver Transferência',
+      same_store_error: 'A loja de origem e destino não podem ser iguais',
+      updated: 'Atualizado',
+      movement_updated_successfully: 'Movimentação atualizada com sucesso',
+      created: 'Criado',
+      movement_created_successfully: 'Movimentação criada com sucesso',
+      movement_details: 'Detalhes da Movimentação',
+      movement_id: 'ID da Movimentação',
+      transfer_summary: 'Resumo da Transferência',
+      origin: 'Origem',
+      destination: 'Destino',
+      create_transfer: 'Criar Transferência'
     },
     purchases: {
       title: 'Sugestões de Compra',
-      description: 'Produtos com estoque baixo que precisam ser repostos'
+      description: 'Produtos com estoque baixo que precisam ser repostos',
+      orderCreated: 'Pedido Criado',
+      orderFor: 'Pedido para',
+      productDetails: 'Detalhes do Produto',
+      currentStock: 'Estoque Atual',
+      minStock: 'Estoque Mínimo',
+      orderDetails: 'Detalhes do Pedido',
+      quantity: 'Quantidade',
+      orderNotes: 'Observações do pedido...',
+      totalCost: 'Custo Total',
+      unitPrice: 'Preço unitário',
+      createOrder: 'Criar Pedido'
     },
     cashbox: {
       title: 'Gestão de Caixa',
@@ -113,7 +183,17 @@ const translations = {
     },
     invoices: {
       title: 'Gestão de Faturas',
-      description: 'Controle de faturas de fornecedores'
+      description: 'Controle de faturas de fornecedores',
+      updated: 'Atualizada',
+      invoice_updated_successfully: 'Fatura atualizada com sucesso',
+      added: 'Adicionada',
+      invoice_added_successfully: 'Fatura adicionada com sucesso',
+      number: 'Número',
+      amount: 'Valor',
+      pending: 'Pendente',
+      paid: 'Paga',
+      issue_date: 'Data de Emissão',
+      due_date: 'Data de Vencimento'
     },
     checklists: {
       title: 'Checklists',
@@ -129,7 +209,83 @@ const translations = {
     },
     settings: {
       title: 'Configurações',
-      description: 'Configurações do sistema'
+      description: 'Configurações do sistema',
+      stores: 'Lojas',
+      categories: 'Categorias',
+      suppliers: 'Fornecedores',
+      users: 'Usuários',
+      notifications: 'Notificações',
+      security: 'Segurança',
+      backup: 'Backup',
+      stores_management: 'Gestão de Lojas',
+      add_store: 'Adicionar Loja',
+      address: 'Endereço',
+      contact: 'Contato',
+      store_updated: 'Loja Atualizada',
+      store_updated_successfully: 'Loja atualizada com sucesso',
+      store_added: 'Loja Adicionada',
+      store_added_successfully: 'Loja adicionada com sucesso',
+      store_active: 'Loja ativa',
+      confirm_delete_store: 'Tem certeza que deseja excluir esta loja?',
+      store_deleted: 'Loja Excluída',
+      store_deleted_successfully: 'Loja excluída com sucesso',
+      general: 'Geral',
+      language: 'Idioma',
+      timezone: 'Fuso Horário',
+      currency: 'Moeda',
+      low_stock_alerts: 'Alertas de Estoque Baixo',
+      low_stock_description: 'Receber notificações quando produtos atingirem estoque mínimo',
+      overdue_invoices: 'Faturas Vencidas',
+      overdue_description: 'Receber notificações sobre faturas vencidas',
+      email_notifications: 'Notificações por Email',
+      email_description: 'Receber notificações por email',
+      backup_restore: 'Backup e Restauração',
+      backup_created: 'Backup Criado',
+      backup_downloaded: 'Backup baixado com sucesso',
+      export_data: 'Exportar Dados',
+      export_description: 'Exportar todos os dados do sistema em formato JSON',
+      export_now: 'Exportar Agora',
+      import_data: 'Importar Dados',
+      import_description: 'Importar dados de um arquivo de backup',
+      import_file: 'Importar Arquivo',
+      import_coming_soon: 'Funcionalidade em breve',
+      system_info: 'Informações do Sistema',
+      version: 'Versão',
+      last_backup: 'Último Backup',
+      never: 'Nunca',
+      database: 'Banco de Dados',
+      records: 'Registros'
+    },
+    stockPopup: {
+      currentStock: 'Estoque atual',
+      lastUpdate: 'Última atualização em',
+      add: 'Adicionar',
+      putInTransit: 'Colocar em trânsito',
+      observationPlaceholder: 'Observação (opcional)',
+      viewHistory: 'Ver Histórico',
+      noHistory: 'Nenhum histórico encontrado',
+      close: 'Fechar',
+      addMeasures: 'Adicionar {count} medidas',
+      stockUpdated: 'Estoque Atualizado',
+      edit: 'Editar',
+      alerts: 'Alertas',
+      transfer: 'Transferir',
+      delete: 'Apagar'
+    },
+    alertConfig: {
+      title: 'Definir níveis de alerta',
+      warning: 'Atenção',
+      critical: 'Crítico',
+      applyToAllStores: 'Alterar para todas as lojas',
+      saved: 'Alertas Salvos',
+      savedAllStores: 'Níveis de alerta atualizados em todas as lojas',
+      savedThisStore: 'Níveis de alerta atualizados nesta loja'
+    },
+    transferDialog: {
+      transfer: 'Transferir',
+      available: 'Disponível',
+      selectStore: 'Escolha a loja de destino',
+      transferCreated: 'Transferência Criada'
     }
   },
   en: {
@@ -144,6 +300,31 @@ const translations = {
       checklists: 'Checklists',
       settings: 'Settings'
     },
+    common: {
+      product: 'Product',
+      quantity: 'Quantity',
+      status: 'Status',
+      actions: 'Actions',
+      error: 'Error',
+      cancel: 'Cancel',
+      update: 'Update',
+      add: 'Add',
+      save: 'Save',
+      create: 'Create',
+      close: 'Close',
+      name: 'Name',
+      units: 'units',
+      notes: 'Notes',
+      supplier: 'Supplier',
+      priority: 'Priority',
+      store: 'Store',
+      type: 'Type',
+      active: 'Active',
+      inactive: 'Inactive',
+      select_product: 'Select product',
+      select_store: 'Select store',
+      select_supplier: 'Select supplier'
+    },
     dashboard: {
       title: 'Dashboard',
       overview: 'Overview',
@@ -155,7 +336,13 @@ const translations = {
       quickActions: 'Quick Actions',
       addProduct: 'Add Product',
       openCash: 'Open Cash',
-      viewReports: 'View Reports'
+      viewReports: 'View Reports',
+      totalProducts: 'Total Products',
+      lowStock: 'Low Stock',
+      pendingInvoices: 'Pending Invoices',
+      openCashbox: 'Open Cash Registers',
+      recentMovements: 'Recent Movements',
+      alerts: 'Alerts'
     },
     inventory: {
       title: 'Inventory Management',
@@ -171,7 +358,8 @@ const translations = {
       actions: 'Actions',
       addProduct: 'Add Product',
       editProduct: 'Edit Product',
-      addMovement: 'Add Movement'
+      addMovement: 'Add Movement',
+      costPrice: 'Cost Price'
     },
     operations: {
       title: 'Operations',
@@ -224,11 +412,49 @@ const translations = {
     },
     transit: {
       title: 'Transit Management',
-      description: 'Manage transfers between stores'
+      description: 'Manage transfers between stores',
+      status_updated: 'Status Updated',
+      movement: 'Movement',
+      updated_to: 'updated to',
+      all_status: 'All statuses',
+      pending: 'Pending',
+      in_transit: 'In Transit',
+      delivered: 'Delivered',
+      new_transfer: 'New Transfer',
+      total: 'Total',
+      movements: 'Movements',
+      from: 'From',
+      to: 'To',
+      created_at: 'Created at',
+      external: 'External',
+      no_movements: 'No movements found',
+      view_transfer: 'View Transfer',
+      same_store_error: 'Origin and destination stores cannot be the same',
+      updated: 'Updated',
+      movement_updated_successfully: 'Movement updated successfully',
+      created: 'Created',
+      movement_created_successfully: 'Movement created successfully',
+      movement_details: 'Movement Details',
+      movement_id: 'Movement ID',
+      transfer_summary: 'Transfer Summary',
+      origin: 'Origin',
+      destination: 'Destination',
+      create_transfer: 'Create Transfer'
     },
     purchases: {
       title: 'Purchase Suggestions',
-      description: 'Low stock products that need replenishment'
+      description: 'Low stock products that need replenishment',
+      orderCreated: 'Order Created',
+      orderFor: 'Order for',
+      productDetails: 'Product Details',
+      currentStock: 'Current Stock',
+      minStock: 'Minimum Stock',
+      orderDetails: 'Order Details',
+      quantity: 'Quantity',
+      orderNotes: 'Order notes...',
+      totalCost: 'Total Cost',
+      unitPrice: 'Unit price',
+      createOrder: 'Create Order'
     },
     cashbox: {
       title: 'Cash Management',
@@ -236,7 +462,17 @@ const translations = {
     },
     invoices: {
       title: 'Invoice Management',
-      description: 'Supplier invoice control'
+      description: 'Supplier invoice control',
+      updated: 'Updated',
+      invoice_updated_successfully: 'Invoice updated successfully',
+      added: 'Added',
+      invoice_added_successfully: 'Invoice added successfully',
+      number: 'Number',
+      amount: 'Amount',
+      pending: 'Pending',
+      paid: 'Paid',
+      issue_date: 'Issue Date',
+      due_date: 'Due Date'
     },
     checklists: {
       title: 'Checklists',
@@ -252,7 +488,83 @@ const translations = {
     },
     settings: {
       title: 'Settings',
-      description: 'System settings'
+      description: 'System settings',
+      stores: 'Stores',
+      categories: 'Categories',
+      suppliers: 'Suppliers',
+      users: 'Users',
+      notifications: 'Notifications',
+      security: 'Security',
+      backup: 'Backup',
+      stores_management: 'Store Management',
+      add_store: 'Add Store',
+      address: 'Address',
+      contact: 'Contact',
+      store_updated: 'Store Updated',
+      store_updated_successfully: 'Store updated successfully',
+      store_added: 'Store Added',
+      store_added_successfully: 'Store added successfully',
+      store_active: 'Store active',
+      confirm_delete_store: 'Are you sure you want to delete this store?',
+      store_deleted: 'Store Deleted',
+      store_deleted_successfully: 'Store deleted successfully',
+      general: 'General',
+      language: 'Language',
+      timezone: 'Timezone',
+      currency: 'Currency',
+      low_stock_alerts: 'Low Stock Alerts',
+      low_stock_description: 'Receive notifications when products reach minimum stock',
+      overdue_invoices: 'Overdue Invoices',
+      overdue_description: 'Receive notifications about overdue invoices',
+      email_notifications: 'Email Notifications',
+      email_description: 'Receive notifications by email',
+      backup_restore: 'Backup & Restore',
+      backup_created: 'Backup Created',
+      backup_downloaded: 'Backup downloaded successfully',
+      export_data: 'Export Data',
+      export_description: 'Export all system data in JSON format',
+      export_now: 'Export Now',
+      import_data: 'Import Data',
+      import_description: 'Import data from a backup file',
+      import_file: 'Import File',
+      import_coming_soon: 'Coming soon',
+      system_info: 'System Information',
+      version: 'Version',
+      last_backup: 'Last Backup',
+      never: 'Never',
+      database: 'Database',
+      records: 'Records'
+    },
+    stockPopup: {
+      currentStock: 'Current stock',
+      lastUpdate: 'Last update on',
+      add: 'Add',
+      putInTransit: 'Put in transit',
+      observationPlaceholder: 'Observation (optional)',
+      viewHistory: 'View History',
+      noHistory: 'No history found',
+      close: 'Close',
+      addMeasures: 'Add {count} measures',
+      stockUpdated: 'Stock Updated',
+      edit: 'Edit',
+      alerts: 'Alerts',
+      transfer: 'Transfer',
+      delete: 'Delete'
+    },
+    alertConfig: {
+      title: 'Set alert levels',
+      warning: 'Warning',
+      critical: 'Critical',
+      applyToAllStores: 'Apply to all stores',
+      saved: 'Alerts Saved',
+      savedAllStores: 'Alert levels updated in all stores',
+      savedThisStore: 'Alert levels updated for this store'
+    },
+    transferDialog: {
+      transfer: 'Transfer',
+      available: 'Available',
+      selectStore: 'Select destination store',
+      transferCreated: 'Transfer Created'
     }
   },
   es: {
@@ -267,6 +579,31 @@ const translations = {
       checklists: 'Listas',
       settings: 'Configuraciones'
     },
+    common: {
+      product: 'Producto',
+      quantity: 'Cantidad',
+      status: 'Estado',
+      actions: 'Acciones',
+      error: 'Error',
+      cancel: 'Cancelar',
+      update: 'Actualizar',
+      add: 'Agregar',
+      save: 'Guardar',
+      create: 'Crear',
+      close: 'Cerrar',
+      name: 'Nombre',
+      units: 'unidades',
+      notes: 'Notas',
+      supplier: 'Proveedor',
+      priority: 'Prioridad',
+      store: 'Tienda',
+      type: 'Tipo',
+      active: 'Activo',
+      inactive: 'Inactivo',
+      select_product: 'Seleccionar producto',
+      select_store: 'Seleccionar tienda',
+      select_supplier: 'Seleccionar proveedor'
+    },
     dashboard: {
       title: 'Dashboard',
       overview: 'Resumen',
@@ -278,7 +615,13 @@ const translations = {
       quickActions: 'Acciones Rápidas',
       addProduct: 'Agregar Producto',
       openCash: 'Abrir Caja',
-      viewReports: 'Ver Reportes'
+      viewReports: 'Ver Reportes',
+      totalProducts: 'Total de Productos',
+      lowStock: 'Stock Bajo',
+      pendingInvoices: 'Facturas Pendientes',
+      openCashbox: 'Cajas Abiertas',
+      recentMovements: 'Movimientos Recientes',
+      alerts: 'Alertas'
     },
     inventory: {
       title: 'Gestión de Inventario',
@@ -294,7 +637,8 @@ const translations = {
       actions: 'Acciones',
       addProduct: 'Agregar Producto',
       editProduct: 'Editar Producto',
-      addMovement: 'Agregar Movimiento'
+      addMovement: 'Agregar Movimiento',
+      costPrice: 'Precio de Costo'
     },
     operations: {
       title: 'Operaciones',
@@ -347,11 +691,49 @@ const translations = {
     },
     transit: {
       title: 'Gestión de Tránsito',
-      description: 'Gestionar transferencias entre tiendas'
+      description: 'Gestionar transferencias entre tiendas',
+      status_updated: 'Estado Actualizado',
+      movement: 'Movimiento',
+      updated_to: 'actualizado a',
+      all_status: 'Todos los estados',
+      pending: 'Pendiente',
+      in_transit: 'En Tránsito',
+      delivered: 'Entregado',
+      new_transfer: 'Nueva Transferencia',
+      total: 'Total',
+      movements: 'Movimientos',
+      from: 'Origen',
+      to: 'Destino',
+      created_at: 'Creado el',
+      external: 'Externo',
+      no_movements: 'Ningún movimiento encontrado',
+      view_transfer: 'Ver Transferencia',
+      same_store_error: 'Las tiendas de origen y destino no pueden ser iguales',
+      updated: 'Actualizado',
+      movement_updated_successfully: 'Movimiento actualizado exitosamente',
+      created: 'Creado',
+      movement_created_successfully: 'Movimiento creado exitosamente',
+      movement_details: 'Detalles del Movimiento',
+      movement_id: 'ID del Movimiento',
+      transfer_summary: 'Resumen de Transferencia',
+      origin: 'Origen',
+      destination: 'Destino',
+      create_transfer: 'Crear Transferencia'
     },
     purchases: {
       title: 'Sugerencias de Compra',
-      description: 'Productos con stock bajo que necesitan reposición'
+      description: 'Productos con stock bajo que necesitan reposición',
+      orderCreated: 'Pedido Creado',
+      orderFor: 'Pedido para',
+      productDetails: 'Detalles del Producto',
+      currentStock: 'Inventario Actual',
+      minStock: 'Inventario Mínimo',
+      orderDetails: 'Detalles del Pedido',
+      quantity: 'Cantidad',
+      orderNotes: 'Notas del pedido...',
+      totalCost: 'Costo Total',
+      unitPrice: 'Precio unitario',
+      createOrder: 'Crear Pedido'
     },
     cashbox: {
       title: 'Gestión de Caja',
@@ -359,7 +741,17 @@ const translations = {
     },
     invoices: {
       title: 'Gestión de Facturas',
-      description: 'Control de facturas de proveedores'
+      description: 'Control de facturas de proveedores',
+      updated: 'Actualizada',
+      invoice_updated_successfully: 'Factura actualizada exitosamente',
+      added: 'Agregada',
+      invoice_added_successfully: 'Factura agregada exitosamente',
+      number: 'Número',
+      amount: 'Monto',
+      pending: 'Pendiente',
+      paid: 'Pagada',
+      issue_date: 'Fecha de Emisión',
+      due_date: 'Fecha de Vencimiento'
     },
     checklists: {
       title: 'Listas de Verificación',
@@ -375,7 +767,83 @@ const translations = {
     },
     settings: {
       title: 'Configuraciones',
-      description: 'Configuraciones del sistema'
+      description: 'Configuraciones del sistema',
+      stores: 'Tiendas',
+      categories: 'Categorías',
+      suppliers: 'Proveedores',
+      users: 'Usuarios',
+      notifications: 'Notificaciones',
+      security: 'Seguridad',
+      backup: 'Respaldo',
+      stores_management: 'Gestión de Tiendas',
+      add_store: 'Agregar Tienda',
+      address: 'Dirección',
+      contact: 'Contacto',
+      store_updated: 'Tienda Actualizada',
+      store_updated_successfully: 'Tienda actualizada exitosamente',
+      store_added: 'Tienda Agregada',
+      store_added_successfully: 'Tienda agregada exitosamente',
+      store_active: 'Tienda activa',
+      confirm_delete_store: '¿Está seguro de que desea eliminar esta tienda?',
+      store_deleted: 'Tienda Eliminada',
+      store_deleted_successfully: 'Tienda eliminada exitosamente',
+      general: 'General',
+      language: 'Idioma',
+      timezone: 'Zona Horaria',
+      currency: 'Moneda',
+      low_stock_alerts: 'Alertas de Inventario Bajo',
+      low_stock_description: 'Recibir notificaciones cuando los productos alcancen el inventario mínimo',
+      overdue_invoices: 'Facturas Vencidas',
+      overdue_description: 'Recibir notificaciones sobre facturas vencidas',
+      email_notifications: 'Notificaciones por Email',
+      email_description: 'Recibir notificaciones por email',
+      backup_restore: 'Respaldo y Restauración',
+      backup_created: 'Respaldo Creado',
+      backup_downloaded: 'Respaldo descargado exitosamente',
+      export_data: 'Exportar Datos',
+      export_description: 'Exportar todos los datos del sistema en formato JSON',
+      export_now: 'Exportar Ahora',
+      import_data: 'Importar Datos',
+      import_description: 'Importar datos de un archivo de respaldo',
+      import_file: 'Importar Archivo',
+      import_coming_soon: 'Próximamente',
+      system_info: 'Información del Sistema',
+      version: 'Versión',
+      last_backup: 'Último Respaldo',
+      never: 'Nunca',
+      database: 'Base de Datos',
+      records: 'Registros'
+    },
+    stockPopup: {
+      currentStock: 'Stock actual',
+      lastUpdate: 'Última actualización el',
+      add: 'Agregar',
+      putInTransit: 'Colocar en tránsito',
+      observationPlaceholder: 'Observación (opcional)',
+      viewHistory: 'Ver Historial',
+      noHistory: 'Sin historial',
+      close: 'Cerrar',
+      addMeasures: 'Agregar {count} medidas',
+      stockUpdated: 'Stock Actualizado',
+      edit: 'Editar',
+      alerts: 'Alertas',
+      transfer: 'Transferir',
+      delete: 'Eliminar'
+    },
+    alertConfig: {
+      title: 'Definir niveles de alerta',
+      warning: 'Atención',
+      critical: 'Crítico',
+      applyToAllStores: 'Aplicar a todas las tiendas',
+      saved: 'Alertas Guardadas',
+      savedAllStores: 'Niveles de alerta actualizados en todas las tiendas',
+      savedThisStore: 'Niveles de alerta actualizados en esta tienda'
+    },
+    transferDialog: {
+      transfer: 'Transferir',
+      available: 'Disponible',
+      selectStore: 'Seleccione la tienda de destino',
+      transferCreated: 'Transferencia Creada'
     }
   }
 };
@@ -388,11 +856,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const t = (key: string): string => {
     const keys = key.split('.');
     let value: any = translations[language];
-    
+
     for (const k of keys) {
       value = value?.[k];
     }
-    
+
     return value || key;
   };
 

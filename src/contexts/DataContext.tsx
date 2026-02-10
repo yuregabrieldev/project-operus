@@ -41,6 +41,8 @@ export interface InventoryItem {
   currentQuantity: number;
   minQuantity: number;
   lastUpdated: Date;
+  alertWarning?: number;
+  alertCritical?: number;
 }
 
 export interface CashRegister {
@@ -149,41 +151,41 @@ interface DataContextType {
   operationLogs: OperationLog[];
   recipes: Recipe[];
   productionRecords: ProductionRecord[];
-  
+
   // Actions
   addStore: (store: Omit<Store, 'id'>) => void;
   updateStore: (id: string, store: Partial<Store>) => void;
   deleteStore: (id: string) => void;
-  
+
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
-  
+
   addInventoryItem: (item: Omit<InventoryItem, 'id'>) => void;
   updateInventoryItem: (id: string, item: Partial<InventoryItem>) => void;
-  
+
   addCashRegister: (cashRegister: Omit<CashRegister, 'id'>) => void;
   updateCashRegister: (id: string, cashRegister: Partial<CashRegister>) => void;
-  
+
   addInvoice: (invoice: Omit<Invoice, 'id'>) => void;
   updateInvoice: (id: string, invoice: Partial<Invoice>) => void;
-  
+
   addChecklist: (checklist: Omit<Checklist, 'id'>) => void;
   updateChecklist: (id: string, checklist: Partial<Checklist>) => void;
-  
+
   addMovement: (movement: Omit<InventoryMovement, 'id'>) => void;
   updateMovement: (id: string, movement: Partial<InventoryMovement>) => void;
-  
+
   addOperationLog: (log: Omit<OperationLog, 'id'>) => void;
   getOperationLogsByProduct: (productId: string) => OperationLog[];
-  
+
   addRecipe: (recipe: Omit<Recipe, 'id'>) => void;
   updateRecipe: (id: string, recipe: Partial<Recipe>) => void;
   deleteRecipe: (id: string) => void;
-  
+
   addProductionRecord: (record: Omit<ProductionRecord, 'id'>) => void;
   getProductionRecordsByRecipe: (recipeId: string) => ProductionRecord[];
-  
+
   // Getters
   getProductById: (id: string) => Product | undefined;
   getStoreById: (id: string) => Store | undefined;
@@ -398,7 +400,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setOperationLogs(prev => [...prev, newLog]);
   };
 
-  const getOperationLogsByProduct = (productId: string) => 
+  const getOperationLogsByProduct = (productId: string) =>
     operationLogs.filter(log => log.productId === productId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   // Recipe actions
@@ -421,7 +423,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProductionRecords(prev => [...prev, newRecord]);
   };
 
-  const getProductionRecordsByRecipe = (recipeId: string) => 
+  const getProductionRecordsByRecipe = (recipeId: string) =>
     productionRecords.filter(record => record.recipeId === recipeId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   // Getters

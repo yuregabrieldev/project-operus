@@ -21,6 +21,7 @@ import {
 import ProductForm from './ProductForm';
 import InventoryMovementForm from './InventoryMovementForm';
 import InventoryCardView from './InventoryCardView';
+import StockPopup from './StockPopup';
 import { TransitForm } from '@/components/Transit/TransitForm';
 
 type StockFilter = 'all' | 'normal' | 'low' | 'critical';
@@ -52,6 +53,9 @@ const InventoryManager: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTransitMovement, setSelectedTransitMovement] = useState<any>(null);
   const [showTransitDetail, setShowTransitDetail] = useState(false);
+  const [stockPopupData, setStockPopupData] = useState<{
+    product: any; store: any; item: any; category?: any;
+  } | null>(null);
 
   // Group inventory by product
   const productGroups = useMemo(() => {
@@ -312,12 +316,17 @@ const InventoryManager: React.FC = () => {
                       {/* Store Quantity Circles */}
                       <div className="flex flex-wrap gap-3 flex-1 justify-center lg:justify-start">
                         {group.storeItems.map(({ store, item }: { store: any; item: any }) => {
-                          const isLow = item.currentQuantity <= item.minQuantity;
-                          const isCritical = item.currentQuantity <= item.minQuantity * 0.5;
+                          const warningThreshold = item.alertWarning ?? item.minQuantity;
+                          const criticalThreshold = item.alertCritical ?? Math.floor(item.minQuantity * 0.5);
+                          const isCritical = item.currentQuantity <= criticalThreshold;
+                          const isLow = item.currentQuantity <= warningThreshold;
                           const circleColor = isCritical ? 'bg-red-500' : isLow ? 'bg-amber-500' : 'bg-emerald-500';
                           return (
                             <div key={store.id} className="flex flex-col items-center">
-                              <div className={`w-10 h-10 ${circleColor} rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                              <div
+                                className={`w-10 h-10 ${circleColor} rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm cursor-pointer hover:scale-110 hover:shadow-md transition-all active:scale-95`}
+                                onClick={() => setStockPopupData({ product: group.product, store, item, category: group.category })}
+                              >
                                 {item.currentQuantity}
                               </div>
                               <span className="text-[10px] text-gray-500 mt-1 max-w-[60px] text-center truncate">{store.name}</span>
@@ -427,6 +436,25 @@ const InventoryManager: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Stock Popup */}
+      {stockPopupData && (
+        <StockPopup
+          product={stockPopupData.product}
+          store={stockPopupData.store}
+          item={stockPopupData.item}
+          category={stockPopupData.category}
+          onClose={() => setStockPopupData(null)}
+          onEditProduct={(id) => {
+            setStockPopupData(null);
+            handleEditProduct(id);
+          }}
+          onTransferProduct={(id) => {
+            setStockPopupData(null);
+            // Could navigate to transit or open transit form
+          }}
+        />
+      )}
     </div>
   );
 };
