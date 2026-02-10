@@ -1,0 +1,415 @@
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  BarChart3, 
+  Package, 
+  Truck, 
+  FileText, 
+  Shield, 
+  Users, 
+  CheckCircle,
+  Star,
+  ArrowRight,
+  Menu,
+  X
+} from 'lucide-react';
+
+const LandingPage: React.FC = () => {
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '' });
+  const { login, register, loading } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await login(loginForm.email, loginForm.password);
+    
+    if (success) {
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo ao Operus",
+      });
+      setIsLoginOpen(false);
+    } else {
+      toast({
+        title: "Erro no login",
+        description: "Email ou senha incorretos",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await register(registerForm.name, registerForm.email, registerForm.password);
+    
+    if (success) {
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Bem-vindo ao Operus",
+      });
+      setIsRegisterOpen(false);
+    } else {
+      toast({
+        title: "Erro no cadastro",
+        description: "Tente novamente",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const features = [
+    {
+      icon: Package,
+      title: "Gestão de Estoque",
+      description: "Controle completo do seu inventário com alertas automáticos de estoque baixo"
+    },
+    {
+      icon: BarChart3,
+      title: "Dashboard Inteligente",
+      description: "Visualize métricas importantes e tome decisões baseadas em dados"
+    },
+    {
+      icon: Truck,
+      title: "Trânsito de Produtos",
+      description: "Gerencie transferências entre lojas e acompanhe entregas"
+    },
+    {
+      icon: FileText,
+      title: "Gestão de Faturas",
+      description: "Controle de notas fiscais e documentos fiscais centralizados"
+    },
+    {
+      icon: Users,
+      title: "Gestão de Equipe",
+      description: "Controle de acesso e permissões para diferentes níveis de usuário"
+    },
+    {
+      icon: Shield,
+      title: "Segurança Total",
+      description: "Dados protegidos com criptografia e backups automáticos"
+    }
+  ];
+
+  const testimonials = [
+    {
+      name: "Maria Silva",
+      role: "Gerente de Loja",
+      content: "O Operus revolucionou nossa gestão. Economizamos 3 horas por dia só no controle de estoque.",
+      rating: 5
+    },
+    {
+      name: "João Santos",
+      role: "Proprietário",
+      content: "Interface intuitiva e funcionalidades completas. Recomendo para qualquer negócio.",
+      rating: 5
+    },
+    {
+      name: "Ana Costa",
+      role: "Supervisora",
+      content: "O melhor sistema que já usei. Suporte excelente e atualizações constantes.",
+      rating: 5
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">O</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">Operus</span>
+            </div>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex space-x-8">
+              <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors">
+                Funcionalidades
+              </a>
+              <a href="#testimonials" className="text-gray-600 hover:text-blue-600 transition-colors">
+                Depoimentos
+              </a>
+              <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors">
+                Preços
+              </a>
+            </nav>
+
+            {/* Desktop Auth Buttons */}
+            <div className="hidden md:flex space-x-4">
+              <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost">Entrar</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Entrar no Operus</DialogTitle>
+                    <DialogDescription>
+                      Digite suas credenciais para acessar o sistema
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div>
+                      <Label htmlFor="login-email">Email</Label>
+                      <Input
+                        id="login-email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={loginForm.email}
+                        onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="login-password">Senha</Label>
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={loginForm.password}
+                        onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                      <p className="font-semibold mb-2">Credenciais de teste:</p>
+                      <p>Admin: admin@operus.com / 123456</p>
+                      <p>Gerente: manager@operus.com / 123456</p>
+                      <p>Funcionário: funcionario@operus.com / 123456</p>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Entrando..." : "Entrar"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
+                <DialogTrigger asChild>
+                  <Button>Cadastrar</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Criar Conta</DialogTitle>
+                    <DialogDescription>
+                      Preencha os dados para criar sua conta
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <div>
+                      <Label htmlFor="register-name">Nome</Label>
+                      <Input
+                        id="register-name"
+                        placeholder="Seu nome completo"
+                        value={registerForm.name}
+                        onChange={(e) => setRegisterForm(prev => ({ ...prev, name: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="register-email">Email</Label>
+                      <Input
+                        id="register-email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={registerForm.email}
+                        onChange={(e) => setRegisterForm(prev => ({ ...prev, email: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="register-password">Senha</Label>
+                      <Input
+                        id="register-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={registerForm.password}
+                        onChange={(e) => setRegisterForm(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Criando conta..." : "Criar Conta"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden py-4 border-t">
+              <nav className="flex flex-col space-y-4">
+                <a href="#features" className="text-gray-600 hover:text-blue-600">
+                  Funcionalidades
+                </a>
+                <a href="#testimonials" className="text-gray-600 hover:text-blue-600">
+                  Depoimentos
+                </a>
+                <a href="#pricing" className="text-gray-600 hover:text-blue-600">
+                  Preços
+                </a>
+                <div className="flex flex-col space-y-2 pt-4 border-t">
+                  <Button variant="ghost" onClick={() => setIsLoginOpen(true)}>
+                    Entrar
+                  </Button>
+                  <Button onClick={() => setIsRegisterOpen(true)}>
+                    Cadastrar
+                  </Button>
+                </div>
+              </nav>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              Gerencie seu negócio com
+              <span className="text-blue-600"> inteligência</span>
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              O Operus é a solução completa para gestão de estoque, vendas e operações. 
+              Simplifique processos, economize tempo e aumente seus lucros.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="text-lg px-8" onClick={() => setIsRegisterOpen(true)}>
+                Começar Gratuitamente
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button size="lg" variant="outline" className="text-lg px-8" onClick={() => setIsLoginOpen(true)}>
+                Ver Demo
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Funcionalidades Poderosas
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Tudo que você precisa para gerenciar seu negócio em uma única plataforma
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <feature.icon className="h-12 w-12 text-blue-600 mb-4" />
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              O que nossos clientes dizem
+            </h2>
+            <p className="text-xl text-gray-600">
+              Empresas de todos os tamanhos confiam no Operus
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="bg-white">
+                <CardContent className="pt-6">
+                  <div className="flex mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 mb-4 italic">"{testimonial.content}"</p>
+                  <div>
+                    <p className="font-semibold text-gray-900">{testimonial.name}</p>
+                    <p className="text-sm text-gray-500">{testimonial.role}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-blue-600">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Pronto para transformar seu negócio?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Junte-se a milhares de empresas que já usam o Operus para crescer
+          </p>
+          <Button size="lg" variant="secondary" className="text-lg px-8" onClick={() => setIsRegisterOpen(true)}>
+            Começar Agora
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">O</span>
+              </div>
+              <span className="text-xl font-bold text-white">Operus</span>
+            </div>
+            <p className="text-gray-400">
+              © 2024 Operus. Todos os direitos reservados.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default LandingPage;
