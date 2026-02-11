@@ -1,11 +1,24 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Truck, Package, MapPin, Clock, Plus, Eye, CheckCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Truck, Package, MapPin, Clock, Plus, Eye, CheckCircle, Search, Download, FileDown, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -13,29 +26,67 @@ import { TransitForm } from './TransitForm';
 
 const TransitManager: React.FC = () => {
   const { t } = useLanguage();
-  const { 
-    movements, 
+  const {
+    movements,
     products,
     stores,
-    getProductById, 
+    categories,
+    suppliers,
+    inventory,
+    getProductById,
     getStoreById,
-    updateMovement,
-    addMovement
+    updateMovement
   } = useData();
-  
+
   const [selectedMovement, setSelectedMovement] = useState<any>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // Filters
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [originStore, setOriginStore] = useState<string>('all');
+  const [destStore, setDestStore] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const getFilteredMovements = () => {
-    const transferMovements = movements.filter(m => m.type === 'transfer');
-    if (statusFilter === 'all') return transferMovements;
-    return transferMovements.filter(movement => movement.status === statusFilter);
-  };
+  // Export CSV state
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 1);
+    return d;
+  });
+  const [exportEndDate, setExportEndDate] = useState<Date>(() => new Date());
+  const [exportStore, setExportStore] = useState<string>('all');
 
-  const filteredMovements = getFilteredMovements();
+  // Filter Logic
+  const filteredMovements = useMemo(() => {
+    return movements
+      .filter(m => m.type === 'transfer')
+      .filter(movement => {
+        const product = getProductById(movement.productId);
+        if (!product) return false;
 
-  const getStatusStats = () => {
+        if (statusFilter !== 'all' && movement.status !== statusFilter) return false;
+        if (selectedCategory !== 'all' && product.categoryId !== selectedCategory) return false;
+        if (selectedSupplier !== 'all' && product.supplierId !== selectedSupplier) return false;
+        if (originStore !== 'all' && movement.fromStoreId !== originStore) return false;
+        if (destStore !== 'all' && movement.toStoreId !== destStore) return false;
+
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          return (
+            product.name.toLowerCase().includes(term) ||
+            product.sku.toLowerCase().includes(term)
+          );
+        }
+
+        return true;
+      });
+  }, [movements, statusFilter, selectedCategory, selectedSupplier, originStore, destStore, searchTerm, getProductById]);
+
+  // Stats
+  const stats = useMemo(() => {
     const transferMovements = movements.filter(m => m.type === 'transfer');
     return {
       total: transferMovements.length,
@@ -43,25 +94,126 @@ const TransitManager: React.FC = () => {
       in_transit: transferMovements.filter(m => m.status === 'in_transit').length,
       delivered: transferMovements.filter(m => m.status === 'delivered').length
     };
-  };
+  }, [movements]);
 
-  const stats = getStatusStats();
+  // Export data computation
+  const exportData = useMemo(() => {
+    const start = new Date(exportStartDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(exportEndDate);
+    end.setHours(23, 59, 59, 999);
+
+    const transfersInRange = movements
+      .filter(m => m.type === 'transfer')
+      .filter(m => {
+        const date = new Date(m.createdAt);
+        return date >= start && date <= end;
+      })
+      .filter(m => {
+        if (exportStore === 'all') return true;
+        return m.fromStoreId === exportStore || m.toStoreId === exportStore;
+      });
+
+    // Aggregate by product
+    const productMap = new Map<string, { name: string; moved: number; balance: number }>();
+
+    transfersInRange.forEach(m => {
+      const product = getProductById(m.productId);
+      if (!product) return;
+
+      const existing = productMap.get(m.productId);
+      // moved = net outgoing quantity (negative means product left the selected store)
+      let moveDelta = 0;
+      if (exportStore === 'all') {
+        // If all stores, show total movement volume as negative (outgoing)
+        moveDelta = -(m.quantity || 0);
+      } else if (m.fromStoreId === exportStore) {
+        moveDelta = -(m.quantity || 0); // outgoing
+      } else if (m.toStoreId === exportStore) {
+        moveDelta = (m.quantity || 0); // incoming
+      }
+
+      if (existing) {
+        existing.moved += moveDelta;
+      } else {
+        productMap.set(m.productId, {
+          name: product.name,
+          moved: moveDelta,
+          balance: 0
+        });
+      }
+    });
+
+    // Calculate current balance for each product in the selected store
+    productMap.forEach((data, productId) => {
+      if (exportStore === 'all') {
+        // Sum across all stores
+        const totalQty = inventory
+          .filter((inv: any) => inv.productId === productId)
+          .reduce((sum: number, inv: any) => sum + (inv.currentQuantity || 0), 0);
+        data.balance = totalQty;
+      } else {
+        const inv = inventory.find((i: any) => i.productId === productId && i.storeId === exportStore);
+        data.balance = inv ? inv.currentQuantity : 0;
+      }
+    });
+
+    // Sort by moved (most negative first)
+    return Array.from(productMap.values()).sort((a, b) => a.moved - b.moved);
+  }, [movements, exportStartDate, exportEndDate, exportStore, getProductById, inventory]);
+
+  const handleDownloadCSV = () => {
+    if (exportData.length === 0) return;
+
+    const storeName = exportStore === 'all'
+      ? t('transit.export_all_stores')
+      : stores.find((s: any) => s.id === exportStore)?.name || '';
+
+    const startStr = format(exportStartDate, 'dd/MM/yyyy');
+    const endStr = format(exportEndDate, 'dd/MM/yyyy');
+    const periodStr = `${startStr}-${endStr}`;
+
+    const headers = [t('transit.export_product'), t('transit.export_period'), t('transit.export_quantity_csv')];
+    const rows = exportData.map(row => [
+      `"${row.name}"`,
+      `"${periodStr}"`,
+      row.moved
+    ]);
+
+    const csvContent = [
+      headers.join(';'), // Using semicolon for broader Excel compatibility in some regions, or comma. User image shows Excel, usually semicolon in PT/BR/EU but comma in US. Standard CSV is comma. Sticking to comma for now unless issues arise, but adding BOM handles most. 
+      ...rows.map(r => r.join(';'))
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `movimentacoes_${storeName}_${format(exportStartDate, 'yyyy-MM-dd')}_${format(exportEndDate, 'yyyy-MM-dd')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: t('transit.export_csv'),
+      description: `${exportData.length} ${t('common.product').toLowerCase()}(s)`,
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_transit': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'delivered': return 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100';
+      case 'in_transit': return 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100';
+      case 'pending': return 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'delivered': return <CheckCircle className="h-4 w-4" />;
-      case 'in_transit': return <Truck className="h-4 w-4" />;
-      case 'pending': return <Clock className="h-4 w-4" />;
-      default: return <Package className="h-4 w-4" />;
+      case 'delivered': return <CheckCircle className="h-3.5 w-3.5" />;
+      case 'in_transit': return <Truck className="h-3.5 w-3.5" />;
+      case 'pending': return <Clock className="h-3.5 w-3.5" />;
+      default: return <Package className="h-3.5 w-3.5" />;
     }
   };
 
@@ -77,7 +229,7 @@ const TransitManager: React.FC = () => {
 
   const updateMovementStatus = (movementId: string, newStatus: 'pending' | 'in_transit' | 'delivered') => {
     updateMovement(movementId, { status: newStatus });
-    
+
     toast({
       title: t('transit.status_updated'),
       description: `${t('transit.movement')} ${t('transit.updated_to')} ${t(`transit.${newStatus}`)}`,
@@ -109,6 +261,7 @@ const TransitManager: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -118,72 +271,156 @@ const TransitManager: React.FC = () => {
             {t('transit.description')}
           </p>
         </div>
-        
-        <div className="flex flex-wrap gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsExportOpen(true)}
+            className="border-gray-300 hover:bg-gray-50"
           >
-            <option value="all">{t('transit.all_status')}</option>
-            <option value="pending">{t('transit.pending')}</option>
-            <option value="in_transit">{t('transit.in_transit')}</option>
-            <option value="delivered">{t('transit.delivered')}</option>
-          </select>
-          
-          <Button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700">
+            <Download className="h-4 w-4 mr-2" />
+            {t('transit.export_csv')}
+          </Button>
+          <Button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700 shadow-md">
             <Plus className="h-4 w-4 mr-2" />
-            {t('transit.new_transfer')}
+            {t('transit.create_transfer')}
           </Button>
         </div>
       </div>
 
+      {/* Filters — ABOVE Stats Cards */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold text-gray-700 flex items-center gap-2">
+            <Search className="h-4 w-4" />
+            {t('transit.filters_title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Row 1 */}
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('transit.filter_category')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('inventory.allCategories')}</SelectItem>
+                {categories.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('transit.filter_supplier')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('inventory.allSuppliers')}</SelectItem>
+                {suppliers.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Row 2 - Product Search */}
+            <div className="relative md:col-span-2">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder={t('transit.filter_product')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Row 3 - Stores */}
+            <Select value={originStore} onValueChange={setOriginStore}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('transit.filter_origin')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('inventory.allStores')}</SelectItem>
+                {stores.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={destStore} onValueChange={setDestStore}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('transit.filter_destination')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('inventory.allStores')}</SelectItem>
+                {stores.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Row 4 - Status */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="md:col-span-2">
+                <SelectValue placeholder={t('transit.filter_status')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('transit.all_status')}</SelectItem>
+                <SelectItem value="pending">{t('transit.pending')}</SelectItem>
+                <SelectItem value="in_transit">{t('transit.in_transit')}</SelectItem>
+                <SelectItem value="delivered">{t('transit.delivered')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">{t('transit.total')}</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-              <Package className="h-8 w-8 text-blue-600" />
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 font-medium">{t('transit.total')}</p>
+              <p className="text-2xl font-bold">{stats.total}</p>
+            </div>
+            <div className="p-2 bg-gray-100 rounded-lg">
+              <Package className="h-6 w-6 text-gray-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">{t('transit.pending')}</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 font-medium">{t('transit.pending')}</p>
+              <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
+            </div>
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Clock className="h-6 w-6 text-amber-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">{t('transit.in_transit')}</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.in_transit}</p>
-              </div>
-              <Truck className="h-8 w-8 text-blue-600" />
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 font-medium">{t('transit.in_transit')}</p>
+              <p className="text-2xl font-bold text-blue-600">{stats.in_transit}</p>
+            </div>
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Truck className="h-6 w-6 text-blue-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">{t('transit.delivered')}</p>
-                <p className="text-2xl font-bold text-green-600">{stats.delivered}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 font-medium">{t('transit.delivered')}</p>
+              <p className="text-2xl font-bold text-emerald-600">{stats.delivered}</p>
+            </div>
+            <div className="p-2 bg-emerald-100 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-emerald-600" />
             </div>
           </CardContent>
         </Card>
@@ -202,13 +439,14 @@ const TransitManager: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[80px] text-center">{t('transit.product_photo')}</TableHead>
                   <TableHead>{t('common.product')}</TableHead>
                   <TableHead>{t('transit.from')}</TableHead>
                   <TableHead>{t('transit.to')}</TableHead>
                   <TableHead>{t('common.quantity')}</TableHead>
                   <TableHead>{t('common.status')}</TableHead>
                   <TableHead>{t('transit.created_at')}</TableHead>
-                  <TableHead>{t('common.actions')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -216,53 +454,80 @@ const TransitManager: React.FC = () => {
                   const product = getProductById(movement.productId);
                   const fromStore = movement.fromStoreId ? getStoreById(movement.fromStoreId) : null;
                   const toStore = movement.toStoreId ? getStoreById(movement.toStoreId) : null;
-                  
+                  const isPending = movement.status === 'pending';
+
                   return (
-                    <TableRow key={movement.id}>
-                      <TableCell className="font-medium">
-                        {product?.name}
-                        <div className="text-sm text-gray-500">
-                          SKU: {product?.sku}
+                    <TableRow key={movement.id} className="hover:bg-slate-50/50">
+                      {/* Photo Column */}
+                      <TableCell className="text-center p-2">
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden mx-auto">
+                          {product?.imageUrl ? (
+                            <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <Package className="h-5 w-5 text-slate-400" />
+                          )}
                         </div>
                       </TableCell>
+
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-900">{product?.name}</span>
+                          <span className="text-xs text-gray-500">SKU: {product?.sku}</span>
+                        </div>
+                      </TableCell>
+
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-gray-400" />
+                        <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                          <MapPin className="h-3.5 w-3.5 text-gray-400" />
                           {fromStore?.name || t('transit.external')}
                         </div>
                       </TableCell>
+
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-gray-400" />
+                        <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                          <MapPin className="h-3.5 w-3.5 text-gray-400" />
                           {toStore?.name || t('transit.external')}
                         </div>
                       </TableCell>
-                      <TableCell className="font-semibold">
-                        {movement.quantity}
-                      </TableCell>
+
                       <TableCell>
-                        <Badge className={getStatusColor(movement.status)}>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(movement.status)}
+                        <Badge variant="outline" className="font-semibold bg-gray-50">
+                          {movement.quantity}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge className={`${getStatusColor(movement.status)} transition-all duration-300`}>
+                          <div className="flex items-center gap-1.5">
+                            {/* Heartbeat Effect for Pending */}
+                            {isPending && (
+                              <span className="relative flex h-2 w-2 mr-0.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                              </span>
+                            )}
+                            {!isPending && getStatusIcon(movement.status)}
                             {t(`transit.${movement.status}`)}
                           </div>
                         </Badge>
                       </TableCell>
-                      <TableCell>
+
+                      <TableCell className="text-xs text-gray-500 whitespace-nowrap">
                         {formatDate(movement.createdAt)}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(movement)}>
-                            <Eye className="h-3 w-3" />
+
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleEdit(movement)}>
+                            <Eye className="h-4 w-4" />
                           </Button>
-                          
+
                           {getNextStatus(movement.status) && (
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => updateMovementStatus(movement.id, getNextStatus(movement.status)!)}
-                              className="text-blue-600 hover:bg-blue-50"
+                              className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 border-blue-200 hover:border-blue-300"
                               title={getNextStatusLabel(movement.status) || ''}
                             >
                               {getStatusIcon(getNextStatus(movement.status)!)}
@@ -276,11 +541,16 @@ const TransitManager: React.FC = () => {
               </TableBody>
             </Table>
           </div>
-          
+
           {filteredMovements.length === 0 && (
-            <div className="text-center py-8">
-              <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">{t('transit.no_movements')}</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Truck className="h-8 w-8 text-gray-300" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">{t('transit.no_movements')}</h3>
+              <p className="text-gray-500 text-sm max-w-sm mx-auto">
+                {t('inventory.noProductsFilters')}
+              </p>
             </div>
           )}
         </CardContent>
@@ -288,16 +558,152 @@ const TransitManager: React.FC = () => {
 
       {/* Transit Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedMovement ? t('transit.view_transfer') : t('transit.new_transfer')}
             </DialogTitle>
           </DialogHeader>
-          <TransitForm 
+          <TransitForm
             movement={selectedMovement}
             onClose={() => setIsFormOpen(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Export CSV Dialog */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <FileDown className="h-5 w-5 text-blue-600" />
+              {t('transit.export_title')}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Date & Store Selectors */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transit.export_start_date')}:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal h-10"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
+                    {format(exportStartDate, 'dd/MM/yyyy')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={exportStartDate}
+                    onSelect={(day) => day && setExportStartDate(day)}
+                    locale={ptBR}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transit.export_end_date')}:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal h-10"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
+                    {format(exportEndDate, 'dd/MM/yyyy')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={exportEndDate}
+                    onSelect={(day) => day && setExportEndDate(day)}
+                    locale={ptBR}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('transit.export_store')}:</Label>
+              <Select value={exportStore} onValueChange={setExportStore}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder={t('transit.export_store')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('transit.export_all_stores')}</SelectItem>
+                  {stores.map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Section Title */}
+          <h3 className="text-center font-semibold text-gray-700 text-sm mt-4 mb-2">
+            {t('transit.export_moved_qty')}
+          </h3>
+
+          {/* Movement Summary Table */}
+          <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-600 hover:to-blue-700">
+                  <TableHead className="text-white font-semibold text-xs uppercase tracking-wider">
+                    {t('transit.export_product')}
+                  </TableHead>
+                  <TableHead className="text-white font-semibold text-xs uppercase tracking-wider text-center">
+                    {t('transit.export_moved')}
+                  </TableHead>
+                  <TableHead className="text-white font-semibold text-xs uppercase tracking-wider text-right">
+                    {t('transit.export_balance')}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {exportData.length > 0 ? (
+                  exportData.map((row, idx) => (
+                    <TableRow key={idx} className={idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100'}>
+                      <TableCell className="text-sm font-medium text-gray-800">
+                        {row.name}
+                      </TableCell>
+                      <TableCell className={`text-sm font-semibold text-center ${row.moved < 0 ? 'text-red-500' : row.moved > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                        {row.moved}
+                      </TableCell>
+                      <TableCell className="text-sm font-bold text-right text-gray-900">
+                        {row.balance}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-10 text-gray-400 text-sm">
+                      <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                      {t('transit.export_no_data')}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Download Button */}
+          <div className="flex justify-end pt-3">
+            <Button
+              onClick={handleDownloadCSV}
+              disabled={exportData.length === 0}
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-40"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {t('transit.export_download')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

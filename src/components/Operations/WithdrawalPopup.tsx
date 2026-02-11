@@ -82,7 +82,7 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
 
         toast({
             title: t('operationsPage.withdrawn'),
-            description: `−${quantity} ${product.unit || 'UN.'} ${product.name}`,
+            description: `âˆ’${quantity} ${product.unit || 'UN.'} ${product.name}`,
         });
 
         onClose();
@@ -183,7 +183,7 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
                             className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
                         >
                             {showHistory ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            {showHistory ? '−' : '+'} {t('stockPopup.viewHistory')}
+                            {showHistory ? 'âˆ’' : '+'} {t('stockPopup.viewHistory')}
                         </button>
 
                         {/* History List */}
@@ -229,3 +229,4 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
 };
 
 export default WithdrawalPopup;
+

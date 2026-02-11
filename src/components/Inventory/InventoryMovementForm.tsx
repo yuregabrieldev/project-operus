@@ -22,12 +22,12 @@ interface InventoryMovementFormProps {
 
 const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({ productId, onClose }) => {
   const { t } = useLanguage();
-  const { 
-    stores, 
-    addMovement, 
-    updateInventoryItem, 
-    inventory, 
-    getProductById 
+  const {
+    stores,
+    addMovement,
+    updateInventoryItem,
+    inventory,
+    getProductById
   } = useData();
 
   const [formData, setFormData] = useState({
@@ -42,7 +42,7 @@ const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({ productId
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.quantity || formData.quantity <= 0) {
       toast.error('Quantidade deve ser maior que zero');
       return;
@@ -126,17 +126,17 @@ const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({ productId
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Registrar Movimentação</DialogTitle>
           <p className="text-sm text-gray-600">Produto: {product?.name}</p>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="type">Tipo de Movimentação</Label>
-            <Select 
-              value={formData.type} 
+            <Select
+              value={formData.type}
               onValueChange={(value: 'in' | 'out' | 'transfer') => handleInputChange('type', value)}
             >
               <SelectTrigger>
@@ -165,8 +165,8 @@ const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({ productId
           {formData.type === 'transfer' && (
             <div className="space-y-2">
               <Label htmlFor="fromStore">Loja de Origem</Label>
-              <Select 
-                value={formData.fromStoreId} 
+              <Select
+                value={formData.fromStoreId}
                 onValueChange={(value) => handleInputChange('fromStoreId', value)}
               >
                 <SelectTrigger>
@@ -187,8 +187,8 @@ const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({ productId
             <Label htmlFor="toStore">
               {formData.type === 'transfer' ? 'Loja de Destino' : 'Loja'}
             </Label>
-            <Select 
-              value={formData.toStoreId} 
+            <Select
+              value={formData.toStoreId}
               onValueChange={(value) => handleInputChange('toStoreId', value)}
             >
               <SelectTrigger>

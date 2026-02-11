@@ -4,7 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Package, Store } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import WithdrawalPopup from './WithdrawalPopup';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import WithdrawalPopup from './WithdrawalPopup.tsx';
 
 const OperationsManager: React.FC = () => {
   const { t } = useLanguage();
@@ -18,6 +25,7 @@ const OperationsManager: React.FC = () => {
 
   const [selectedStoreId, setSelectedStoreId] = useState<string>(stores[0]?.id || '');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [withdrawalProduct, setWithdrawalProduct] = useState<any>(null);
 
   // Get products with stock in the selected store
@@ -32,6 +40,12 @@ const OperationsManager: React.FC = () => {
       })
       .filter(Boolean)
       .filter((entry: any) => {
+        // Filter by Category
+        if (selectedCategoryId !== 'all' && entry.product.categoryId !== selectedCategoryId) {
+          return false;
+        }
+
+        // Search
         if (!searchTerm) return true;
         const term = searchTerm.toLowerCase();
         return (
@@ -40,7 +54,7 @@ const OperationsManager: React.FC = () => {
           (entry.category?.name || '').toLowerCase().includes(term)
         );
       });
-  }, [inventory, products, selectedStoreId, searchTerm, getCategoryById]);
+  }, [inventory, products, selectedStoreId, searchTerm, selectedCategoryId, getCategoryById]);
 
   const selectedStore = stores.find((s: any) => s.id === selectedStoreId);
 
@@ -59,8 +73,8 @@ const OperationsManager: React.FC = () => {
             key={store.id}
             onClick={() => setSelectedStoreId(store.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${selectedStoreId === store.id
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
           >
             <Store className="h-4 w-4" />
@@ -69,15 +83,29 @@ const OperationsManager: React.FC = () => {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          placeholder={t('operationsPage.searchPlaceholder')}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 h-11 rounded-xl border-gray-200 text-sm"
-        />
+      {/* Search and Filters */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder={t('operationsPage.searchPlaceholder')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-11 rounded-xl border-gray-200 text-sm"
+          />
+        </div>
+
+        <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+          <SelectTrigger className="w-40 h-11 rounded-xl bg-white border-gray-200">
+            <SelectValue placeholder={t('inventory.filterByCategory')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('inventory.allCategories')}</SelectItem>
+            {categories.map((category: any) => (
+              <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Product Grid — one tap to withdraw */}
