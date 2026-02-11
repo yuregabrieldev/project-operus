@@ -203,7 +203,7 @@ const InventoryManager: React.FC = () => {
                   <SelectValue placeholder={t('inventory.filterByCategory')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as Categorias</SelectItem>
+                  <SelectItem value="all">{t('inventory.allCategories')}</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
                   ))}
@@ -215,17 +215,17 @@ const InventoryManager: React.FC = () => {
                 <button
                   onClick={() => setStockFilter(stockFilter === 'normal' ? 'all' : 'normal')}
                   className={getStockDotClass('normal', stockFilter === 'normal')}
-                  title="Estoque Normal"
+                  title={t('inventory.stockStatus.normal')}
                 />
                 <button
                   onClick={() => setStockFilter(stockFilter === 'low' ? 'all' : 'low')}
                   className={getStockDotClass('low', stockFilter === 'low')}
-                  title="Estoque Baixo"
+                  title={t('inventory.stockStatus.low')}
                 />
                 <button
                   onClick={() => setStockFilter(stockFilter === 'critical' ? 'all' : 'critical')}
                   className={getStockDotClass('critical', stockFilter === 'critical')}
-                  title="Estoque Crítico"
+                  title={t('inventory.stockStatus.critical')}
                 />
               </div>
             </div>
@@ -234,10 +234,10 @@ const InventoryManager: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por fornecedor" />
+                  <SelectValue placeholder={t('inventory.filterBySupplier')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os Fornecedores</SelectItem>
+                  <SelectItem value="all">{t('inventory.allSuppliers')}</SelectItem>
                   {suppliers.map(supplier => (
                     <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
                   ))}
@@ -249,7 +249,7 @@ const InventoryManager: React.FC = () => {
                   <SelectValue placeholder={t('inventory.filterByStore')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as Lojas</SelectItem>
+                  <SelectItem value="all">{t('inventory.allStores')}</SelectItem>
                   {stores.map(store => (
                     <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
                   ))}
@@ -287,7 +287,7 @@ const InventoryManager: React.FC = () => {
         Object.entries(groupedByCategory).map(([categoryName, groups]) => (
           <div key={categoryName} className="space-y-3">
             <h2 className="text-lg font-bold text-gray-700 uppercase tracking-wide text-center">
-              {categoryName}
+              {categoryName === 'Sem Categoria' ? t('inventory.noCategory') : categoryName}
             </h2>
             <div className="space-y-2">
               {groups.map((group) => (
@@ -304,7 +304,7 @@ const InventoryManager: React.FC = () => {
                             <Package className="h-7 w-7 text-slate-400" />
                           )}
                           <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center py-0.5 font-semibold">
-                            Total: {group.totalQuantity}
+                            {t('inventory.total')}: {group.totalQuantity}
                           </div>
                         </div>
                         <div className="min-w-0">
@@ -393,7 +393,7 @@ const InventoryManager: React.FC = () => {
         <Card>
           <CardContent className="p-12 text-center">
             <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">Nenhum produto encontrado com os filtros selecionados.</p>
+            <p className="text-gray-500">{t('inventory.noProductsFilters')}</p>
           </CardContent>
         </Card>
       )}

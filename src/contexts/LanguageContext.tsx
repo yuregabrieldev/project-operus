@@ -19,6 +19,8 @@ const translations: Record<string, any> = {
       cashbox: 'Caixa',
       invoices: 'Faturas',
       checklists: 'Checklists',
+      stores: 'Lojas',
+      users: 'Usuários',
       settings: 'Configurações'
     },
     common: {
@@ -63,7 +65,16 @@ const translations: Record<string, any> = {
       pendingInvoices: 'Faturas Pendentes',
       openCashbox: 'Caixas Abertos',
       recentMovements: 'Movimentações Recentes',
-      alerts: 'Alertas'
+      alerts: 'Alertas',
+      operationalSummary: 'Resumo Operacional',
+      financialSummary: 'Resumo Financeiro',
+      entry: 'Entrada',
+      exit: 'Saída',
+      transfer: 'Transferência',
+      critical: 'Crítico',
+      overdue: 'Vencida',
+      invoice: 'Fatura',
+      qty: 'Qtd'
     },
     inventory: {
       title: 'Gestão de Estoque',
@@ -80,7 +91,19 @@ const translations: Record<string, any> = {
       addProduct: 'Adicionar Produto',
       editProduct: 'Editar Produto',
       addMovement: 'Adicionar Movimento',
-      costPrice: 'Preço de Custo'
+      costPrice: 'Preço de Custo',
+      allCategories: 'Todas as Categorias',
+      allStores: 'Todas as Lojas',
+      allSuppliers: 'Todos os Fornecedores',
+      noCategory: 'Sem Categoria',
+      filterBySupplier: 'Filtrar por fornecedor',
+      stockStatus: {
+        normal: 'Estoque Normal',
+        low: 'Estoque Baixo',
+        critical: 'Estoque Crítico'
+      },
+      noProductsFilters: 'Nenhum produto encontrado com os filtros selecionados.',
+      total: 'Total'
     },
     operations: {
       title: 'Operações',
@@ -297,6 +320,23 @@ const translations: Record<string, any> = {
       remaining: 'restante(s)',
       historyWithdrawn: 'Retirado',
       historyAdded: 'Adicionado'
+    },
+    finance: {
+      title: 'Resumo Financeiro',
+      selectPeriod: 'Selecionar período',
+      periods: {
+        today: 'Hoje',
+        last7days: 'Últimos 7 dias',
+        last30days: 'Últimos 30 dias',
+        last3months: 'Últimos 3 meses',
+        lastYear: 'Último ano'
+      },
+      revenue: 'Receitas',
+      expenses: 'Despesas',
+      balance: 'Saldo Mensal',
+      margin: 'Margem',
+      financialFlow: 'Fluxo Financeiro (Últimos 6 Meses)',
+      comparePeriod: 'em relação ao período anterior'
     }
   },
   en: {
@@ -307,8 +347,9 @@ const translations: Record<string, any> = {
       transit: 'Transit',
       purchases: 'Purchases',
       cashbox: 'Cash',
-      invoices: 'Invoices',
       checklists: 'Checklists',
+      stores: 'Stores',
+      users: 'Users',
       settings: 'Settings'
     },
     common: {
@@ -353,7 +394,16 @@ const translations: Record<string, any> = {
       pendingInvoices: 'Pending Invoices',
       openCashbox: 'Open Cash Registers',
       recentMovements: 'Recent Movements',
-      alerts: 'Alerts'
+      alerts: 'Alerts',
+      operationalSummary: 'Operational Summary',
+      financialSummary: 'Financial Summary',
+      entry: 'Entry',
+      exit: 'Exit',
+      transfer: 'Transfer',
+      critical: 'Critical',
+      overdue: 'Overdue',
+      invoice: 'Invoice',
+      qty: 'Qty'
     },
     inventory: {
       title: 'Inventory Management',
@@ -370,7 +420,19 @@ const translations: Record<string, any> = {
       addProduct: 'Add Product',
       editProduct: 'Edit Product',
       addMovement: 'Add Movement',
-      costPrice: 'Cost Price'
+      costPrice: 'Cost Price',
+      allCategories: 'All Categories',
+      allStores: 'All Stores',
+      allSuppliers: 'All Suppliers',
+      noCategory: 'No Category',
+      filterBySupplier: 'Filter by supplier',
+      stockStatus: {
+        normal: 'Normal Stock',
+        low: 'Low Stock',
+        critical: 'Critical Stock'
+      },
+      noProductsFilters: 'No products found with selected filters.',
+      total: 'Total'
     },
     operations: {
       title: 'Operations',
@@ -587,6 +649,23 @@ const translations: Record<string, any> = {
       remaining: 'remaining',
       historyWithdrawn: 'Withdrawn',
       historyAdded: 'Added'
+    },
+    finance: {
+      title: 'Financial Summary',
+      selectPeriod: 'Select period',
+      periods: {
+        today: 'Today',
+        last7days: 'Last 7 days',
+        last30days: 'Last 30 days',
+        last3months: 'Last 3 months',
+        lastYear: 'Last year'
+      },
+      revenue: 'Revenue',
+      expenses: 'Expenses',
+      balance: 'Monthly Balance',
+      margin: 'Margin',
+      financialFlow: 'Financial Flow (Last 6 Months)',
+      comparePeriod: 'vs previous period'
     }
   },
   es: {
@@ -599,6 +678,8 @@ const translations: Record<string, any> = {
       cashbox: 'Caja',
       invoices: 'Facturas',
       checklists: 'Listas',
+      stores: 'Tiendas',
+      users: 'Usuarios',
       settings: 'Configuraciones'
     },
     common: {
@@ -643,7 +724,16 @@ const translations: Record<string, any> = {
       pendingInvoices: 'Facturas Pendientes',
       openCashbox: 'Cajas Abiertas',
       recentMovements: 'Movimientos Recientes',
-      alerts: 'Alertas'
+      alerts: 'Alertas',
+      operationalSummary: 'Resumen Operativo',
+      financialSummary: 'Resumen Financiero',
+      entry: 'Entrada',
+      exit: 'Salida',
+      transfer: 'Transferencia',
+      critical: 'Crítico',
+      overdue: 'Vencida',
+      invoice: 'Factura',
+      qty: 'Cant'
     },
     inventory: {
       title: 'Gestión de Inventario',
@@ -660,7 +750,19 @@ const translations: Record<string, any> = {
       addProduct: 'Agregar Producto',
       editProduct: 'Editar Producto',
       addMovement: 'Agregar Movimiento',
-      costPrice: 'Precio de Costo'
+      costPrice: 'Precio de Costo',
+      allCategories: 'Todas las Categorías',
+      allStores: 'Todas las Tiendas',
+      allSuppliers: 'Todos los Proveedores',
+      noCategory: 'Sin Categoría',
+      filterBySupplier: 'Filtrar por proveedor',
+      stockStatus: {
+        normal: 'Stock Normal',
+        low: 'Stock Bajo',
+        critical: 'Stock Crítico'
+      },
+      noProductsFilters: 'No se encontraron productos con los filtros seleccionados.',
+      total: 'Total'
     },
     operations: {
       title: 'Operaciones',
@@ -877,6 +979,23 @@ const translations: Record<string, any> = {
       remaining: 'restante(s)',
       historyWithdrawn: 'Retirado',
       historyAdded: 'Agregado'
+    },
+    finance: {
+      title: 'Resumen Financiero',
+      selectPeriod: 'Seleccionar período',
+      periods: {
+        today: 'Hoy',
+        last7days: 'Últimos 7 días',
+        last30days: 'Últimos 30 días',
+        last3months: 'Últimos 3 meses',
+        lastYear: 'Último año'
+      },
+      revenue: 'Ingresos',
+      expenses: 'Gastos',
+      balance: 'Saldo Mensual',
+      margin: 'Margen',
+      financialFlow: 'Flujo Financiero (Últimos 6 Meses)',
+      comparePeriod: 'vs periodo anterior'
     }
   }
 };

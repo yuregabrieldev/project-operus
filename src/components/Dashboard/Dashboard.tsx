@@ -48,6 +48,15 @@ const Dashboard: React.FC = () => {
     }
   ];
 
+  const getMovementLabel = (type: string) => {
+    switch (type) {
+      case 'in': return t('dashboard.entry');
+      case 'out': return t('dashboard.exit');
+      case 'transfer': return t('dashboard.transfer');
+      default: return type;
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -65,14 +74,14 @@ const Dashboard: React.FC = () => {
             className="relative rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium text-gray-500 shadow-none transition-all data-[state=active]:border-b-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none hover:text-gray-700 gap-2"
           >
             <BarChart3 className="h-4 w-4" />
-            Resumo Operacional
+            {t('dashboard.operationalSummary')}
           </TabsTrigger>
           <TabsTrigger
             value="financeiro"
             className="relative rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium text-gray-500 shadow-none transition-all data-[state=active]:border-b-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none hover:text-gray-700 gap-2"
           >
             <DollarSign className="h-4 w-4" />
-            Resumo Financeiro
+            {t('dashboard.financialSummary')}
           </TabsTrigger>
         </TabsList>
 
@@ -124,11 +133,10 @@ const Dashboard: React.FC = () => {
                           }`} />
                         <div>
                           <p className="text-sm font-medium">
-                            {movement.type === 'in' ? 'Entrada' :
-                              movement.type === 'out' ? 'Saída' : 'Transferência'}
+                            {getMovementLabel(movement.type)}
                           </p>
                           <p className="text-xs text-gray-600">
-                            Qtd: {movement.quantity}
+                            {t('dashboard.qty')}: {movement.quantity}
                           </p>
                         </div>
                       </div>
@@ -154,24 +162,24 @@ const Dashboard: React.FC = () => {
                   {lowStockItems.slice(0, 3).map((item) => (
                     <div key={item.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                       <div>
-                        <p className="text-sm font-medium text-red-800">Estoque Baixo</p>
+                        <p className="text-sm font-medium text-red-800">{t('dashboard.lowStock')}</p>
                         <p className="text-xs text-red-600">
-                          Produto ID: {item.productId} - Qtd: {item.currentQuantity}
+                          {t('common.product')}: {item.productId} - {t('dashboard.qty')}: {item.currentQuantity}
                         </p>
                       </div>
-                      <Badge variant="destructive">Crítico</Badge>
+                      <Badge variant="destructive">{t('dashboard.critical')}</Badge>
                     </div>
                   ))}
 
                   {overdueInvoices.slice(0, 2).map((invoice) => (
                     <div key={invoice.id} className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                       <div>
-                        <p className="text-sm font-medium text-yellow-800">Fatura Vencida</p>
+                        <p className="text-sm font-medium text-yellow-800">{t('dashboard.invoice')}</p>
                         <p className="text-xs text-yellow-600">
                           {invoice.invoiceNumber} - R$ {invoice.amount.toFixed(2)}
                         </p>
                       </div>
-                      <Badge variant="secondary">Vencida</Badge>
+                      <Badge variant="secondary">{t('dashboard.overdue')}</Badge>
                     </div>
                   ))}
                 </div>

@@ -25,9 +25,9 @@ const FinanceSummary: React.FC = () => {
 
     // Calcular receitas dos registros de caixa fechados
     const receitas = cashRegisters
-      .filter(register => 
-        new Date(register.openedAt) >= startDate && 
-        register.status === 'closed' && 
+      .filter(register =>
+        new Date(register.openedAt) >= startDate &&
+        register.status === 'closed' &&
         register.closingBalance !== undefined
       )
       .reduce((total, register) => {
@@ -37,9 +37,9 @@ const FinanceSummary: React.FC = () => {
 
     // Calcular despesas das faturas pagas
     const despesas = invoices
-      .filter(invoice => 
-        invoice.status === 'paid' && 
-        invoice.dueDate && 
+      .filter(invoice =>
+        invoice.status === 'paid' &&
+        invoice.dueDate &&
         new Date(invoice.dueDate) >= startDate
       )
       .reduce((total, invoice) => total + invoice.amount, 0);
@@ -66,18 +66,18 @@ const FinanceSummary: React.FC = () => {
   const getMonthlyData = () => {
     const months = [];
     const now = new Date();
-    
+
     for (let i = 5; i >= 0; i--) {
       const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      
+
       const monthReceitas = cashRegisters
         .filter(register => {
           const registerDate = new Date(register.openedAt);
-          return registerDate >= monthDate && 
-                 registerDate < nextMonth && 
-                 register.status === 'closed' && 
-                 register.closingBalance !== undefined;
+          return registerDate >= monthDate &&
+            registerDate < nextMonth &&
+            register.status === 'closed' &&
+            register.closingBalance !== undefined;
         })
         .reduce((total, register) => {
           const sales = (register.closingBalance || 0) - register.openingBalance;
@@ -97,7 +97,7 @@ const FinanceSummary: React.FC = () => {
         despesas: monthDespesas
       });
     }
-    
+
     return months;
   };
 
@@ -105,17 +105,17 @@ const FinanceSummary: React.FC = () => {
     <div className="space-y-6">
       {/* Header com filtro de período */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Resumo Financeiro</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('finance.title')}</h2>
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Selecionar período" />
+            <SelectValue placeholder={t('finance.selectPeriod')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">Hoje</SelectItem>
-            <SelectItem value="7">Últimos 7 dias</SelectItem>
-            <SelectItem value="30">Últimos 30 dias</SelectItem>
-            <SelectItem value="90">Últimos 3 meses</SelectItem>
-            <SelectItem value="365">Último ano</SelectItem>
+            <SelectItem value="1">{t('finance.periods.today')}</SelectItem>
+            <SelectItem value="7">{t('finance.periods.last7days')}</SelectItem>
+            <SelectItem value="30">{t('finance.periods.last30days')}</SelectItem>
+            <SelectItem value="90">{t('finance.periods.last3months')}</SelectItem>
+            <SelectItem value="365">{t('finance.periods.lastYear')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -125,7 +125,7 @@ const FinanceSummary: React.FC = () => {
         {/* Receitas */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receitas</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('finance.revenue')}</CardTitle>
             <div className="h-4 w-4 text-green-600">
               <DollarSign className="h-4 w-4" />
             </div>
@@ -136,7 +136,7 @@ const FinanceSummary: React.FC = () => {
             </div>
             <p className="text-xs text-muted-foreground flex items-center">
               <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-              +12% em relação ao período anterior
+              +12% {t('finance.comparePeriod')}
             </p>
           </CardContent>
         </Card>
@@ -144,7 +144,7 @@ const FinanceSummary: React.FC = () => {
         {/* Despesas */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Despesas</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('finance.expenses')}</CardTitle>
             <div className="h-4 w-4 text-red-600">
               <TrendingDown className="h-4 w-4" />
             </div>
@@ -155,7 +155,7 @@ const FinanceSummary: React.FC = () => {
             </div>
             <p className="text-xs text-muted-foreground flex items-center">
               <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-              -5% em relação ao período anterior
+              -5% {t('finance.comparePeriod')}
             </p>
           </CardContent>
         </Card>
@@ -163,7 +163,7 @@ const FinanceSummary: React.FC = () => {
         {/* Saldo */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo Mensal</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('finance.balance')}</CardTitle>
             <div className="h-4 w-4 text-blue-600">
               <TrendingUp className="h-4 w-4" />
             </div>
@@ -173,7 +173,7 @@ const FinanceSummary: React.FC = () => {
               {formatCurrency(financeData.saldo)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Receitas - Despesas
+              {t('finance.revenue')} - {t('finance.expenses')}
             </p>
           </CardContent>
         </Card>
@@ -181,7 +181,7 @@ const FinanceSummary: React.FC = () => {
         {/* Margem */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Margem</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('finance.margin')}</CardTitle>
             <div className="h-4 w-4 text-purple-600">
               <Target className="h-4 w-4" />
             </div>
@@ -191,7 +191,7 @@ const FinanceSummary: React.FC = () => {
               {formatPercentage(financeData.margem)}
             </div>
             <p className="text-xs text-muted-foreground">
-              (Saldo / Receitas) × 100
+              ({t('finance.balance')} / {t('finance.revenue')}) × 100
             </p>
           </CardContent>
         </Card>
@@ -201,7 +201,7 @@ const FinanceSummary: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Fluxo Financeiro (Últimos 6 Meses)</CardTitle>
+            <CardTitle>{t('finance.financialFlow')}</CardTitle>
           </CardHeader>
           <CardContent>
             <FinanceChart data={getMonthlyData()} />

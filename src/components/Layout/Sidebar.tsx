@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SidebarProps {
@@ -17,21 +18,22 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onTabChange }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'inventory', label: 'Estoque', icon: Package },
-    { id: 'operations', label: 'Operações', icon: ArrowLeftRight },
-    { id: 'transit', label: 'Trânsito', icon: Truck },
-    { id: 'purchases', label: 'Compras', icon: ShoppingCart },
-    { id: 'cashbox', label: 'Caixa', icon: DollarSign },
-    { id: 'invoices', label: 'Faturas', icon: FileText },
-    { id: 'checklists', label: 'Checklists', icon: ClipboardList },
+    { id: 'dashboard', label: t('sidebar.dashboard'), icon: LayoutDashboard },
+    { id: 'inventory', label: t('sidebar.inventory'), icon: Package },
+    { id: 'operations', label: t('sidebar.operations'), icon: ArrowLeftRight },
+    { id: 'transit', label: t('sidebar.transit'), icon: Truck },
+    { id: 'purchases', label: t('sidebar.purchases'), icon: ShoppingCart },
+    { id: 'cashbox', label: t('sidebar.cashbox'), icon: DollarSign },
+    { id: 'invoices', label: t('sidebar.invoices'), icon: FileText },
+    { id: 'checklists', label: t('sidebar.checklists'), icon: ClipboardList },
     ...(user?.role === 'admin' ? [
-      { id: 'stores', label: 'Lojas', icon: Store },
-      { id: 'users', label: 'Usuários', icon: Users }
+      { id: 'stores', label: t('sidebar.stores'), icon: Store },
+      { id: 'users', label: t('sidebar.users'), icon: Users }
     ] : []),
-    { id: 'settings', label: 'Configurações', icon: Settings },
+    { id: 'settings', label: t('sidebar.settings'), icon: Settings },
   ];
 
   return (
