@@ -286,6 +286,17 @@ const translations: Record<string, any> = {
       available: 'Disponível',
       selectStore: 'Escolha a loja de destino',
       transferCreated: 'Transferência Criada'
+    },
+    operationsPage: {
+      subtitle: 'Retirada rápida de estoque',
+      searchPlaceholder: 'Buscar produto...',
+      noProducts: 'Nenhum produto encontrado nesta loja',
+      withdrawButton: 'Retirar {count} medida(s) do estoque',
+      withdrawn: 'Retirado',
+      lowStockAlert: 'Estoque Baixo!',
+      remaining: 'restante(s)',
+      historyWithdrawn: 'Retirado',
+      historyAdded: 'Adicionado'
     }
   },
   en: {
@@ -565,6 +576,17 @@ const translations: Record<string, any> = {
       available: 'Available',
       selectStore: 'Select destination store',
       transferCreated: 'Transfer Created'
+    },
+    operationsPage: {
+      subtitle: 'Quick stock withdrawal',
+      searchPlaceholder: 'Search product...',
+      noProducts: 'No products found in this store',
+      withdrawButton: 'Withdraw {count} measure(s) from stock',
+      withdrawn: 'Withdrawn',
+      lowStockAlert: 'Low Stock!',
+      remaining: 'remaining',
+      historyWithdrawn: 'Withdrawn',
+      historyAdded: 'Added'
     }
   },
   es: {
@@ -844,6 +866,17 @@ const translations: Record<string, any> = {
       available: 'Disponible',
       selectStore: 'Seleccione la tienda de destino',
       transferCreated: 'Transferencia Creada'
+    },
+    operationsPage: {
+      subtitle: 'Retiro rápido de stock',
+      searchPlaceholder: 'Buscar producto...',
+      noProducts: 'No se encontraron productos en esta tienda',
+      withdrawButton: 'Retirar {count} medida(s) del stock',
+      withdrawn: 'Retirado',
+      lowStockAlert: '¡Stock Bajo!',
+      remaining: 'restante(s)',
+      historyWithdrawn: 'Retirado',
+      historyAdded: 'Agregado'
     }
   }
 };
