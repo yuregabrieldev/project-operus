@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ShoppingCart, Package, Filter, Store, Check, X } from 'lucide-react';
+import { ShoppingCart, Package, Filter, Store, Check, X, FileText } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PurchaseDistributionModal } from './PurchaseDistributionModal';
@@ -107,7 +107,8 @@ const PurchaseList: React.FC = () => {
       }
 
       const purchaseItem = itemsMap.get(key)!;
-      const idealStock = item.minQuantity * 2;
+      // Use alertWarning as ideal if available, otherwise minQuantity * 2
+      const idealStock = item.alertWarning || item.minQuantity * 2;
       const suggestedQuantity = Math.max(idealStock - item.currentQuantity, 0);
 
       purchaseItem.stores.push({
@@ -366,14 +367,10 @@ const PurchaseList: React.FC = () => {
                         {item.suggested}
                       </TableCell>
                       <TableCell>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={item.order || ''}
-                          onChange={(e) => handleOrderChange(item.productId, e.target.value)}
-                          className="w-20"
-                          placeholder="0"
-                        />
+                        <span className={`inline-flex items-center justify-center w-12 h-8 rounded-md text-sm font-semibold ${item.order > 0 ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-gray-50 text-gray-400 border border-gray-200'
+                          }`}>
+                          {item.order}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Button
@@ -399,6 +396,20 @@ const PurchaseList: React.FC = () => {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-1">{t('purchases.noItems')}</h3>
               <p className="text-gray-500 text-sm">{t('purchases.noItemsDescription')}</p>
+            </div>
+          )}
+
+          {/* Generate Order button below the list */}
+          {purchaseItems.length > 0 && (
+            <div className="flex justify-end pt-4 mt-4 border-t">
+              <Button
+                onClick={generateOrder}
+                disabled={totalOrderItems === 0}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {t('purchases.generateOrder')} {totalOrderItems > 0 ? `(${totalOrderItems} itens)` : ''}
+              </Button>
             </div>
           )}
         </CardContent>
