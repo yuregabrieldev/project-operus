@@ -57,15 +57,31 @@ export interface CashRegister {
   status: 'open' | 'closed';
 }
 
+export type InvoiceStatus = 'pedido_realizado' | 'mercadoria_recebida' | 'contas_a_pagar' | 'finalizado_pago' | 'cancelado' | 'finalizado_outros';
+
 export interface Invoice {
   id: string;
   supplierId: string;
   invoiceNumber: string;
   amount: number;
-  status: 'paid' | 'pending' | 'overdue';
+  status: InvoiceStatus;
   issueDate: Date;
   dueDate: Date;
   paidDate?: Date;
+  storeId?: string;
+  description?: string;
+  orderNumber?: string;
+  costCenter?: string;
+  currency?: string;
+  directDebit?: boolean;
+  paymentMethod?: string;
+  financialInstitution?: string;
+  observations?: Array<{ user: string; text: string; date: string }>;
+}
+
+export interface CostCenter {
+  id: string;
+  name: string;
 }
 
 export interface ChecklistTask {
@@ -172,6 +188,7 @@ interface DataContextType {
   recipes: Recipe[];
   productionRecords: ProductionRecord[];
   purchaseOrders: PurchaseOrder[];
+  costCenters: CostCenter[];
 
   // Actions
   addStore: (store: Omit<Store, 'id'>) => void;
@@ -190,6 +207,12 @@ interface DataContextType {
 
   addInvoice: (invoice: Omit<Invoice, 'id'>) => void;
   updateInvoice: (id: string, invoice: Partial<Invoice>) => void;
+
+  addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
+  deleteSupplier: (id: string) => void;
+
+  addCostCenter: (costCenter: Omit<CostCenter, 'id'>) => void;
+  deleteCostCenter: (id: string) => void;
 
   addChecklist: (checklist: Omit<Checklist, 'id'>) => void;
   updateChecklist: (id: string, checklist: Partial<Checklist>) => void;
@@ -288,9 +311,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ]);
 
   const [invoices, setInvoices] = useState<Invoice[]>([
-    { id: '1', supplierId: '1', invoiceNumber: 'INV001', amount: 5000, status: 'pending', issueDate: new Date(), dueDate: new Date(Date.now() + 30 * 86400000) },
-    { id: '2', supplierId: '2', invoiceNumber: 'INV002', amount: 2500, status: 'overdue', issueDate: new Date(Date.now() - 45 * 86400000), dueDate: new Date(Date.now() - 15 * 86400000) },
-    { id: '3', supplierId: '3', invoiceNumber: 'INV003', amount: 1800, status: 'paid', issueDate: new Date(Date.now() - 60 * 86400000), dueDate: new Date(Date.now() - 30 * 86400000), paidDate: new Date(Date.now() - 25 * 86400000) }
+    { id: '1', supplierId: '1', invoiceNumber: 'INV001', amount: 5000, status: 'pedido_realizado', issueDate: new Date(), dueDate: new Date(Date.now() + 30 * 86400000) },
+    { id: '2', supplierId: '2', invoiceNumber: 'INV002', amount: 2500, status: 'contas_a_pagar', issueDate: new Date(Date.now() - 45 * 86400000), dueDate: new Date(Date.now() - 15 * 86400000) },
+    { id: '3', supplierId: '3', invoiceNumber: 'INV003', amount: 1800, status: 'finalizado_pago', issueDate: new Date(Date.now() - 60 * 86400000), dueDate: new Date(Date.now() - 30 * 86400000), paidDate: new Date(Date.now() - 25 * 86400000) }
+  ]);
+
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([
+    { id: '1', name: '5544 - TESTE 2' },
+    { id: '2', name: '4545 - Teste 9' },
+    { id: '3', name: '5454 - Teste 49' },
+    { id: '4', name: '4565 - Agora Vai' },
   ]);
 
   const [checklists, setChecklists] = useState<Checklist[]>([
@@ -513,20 +543,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Getters
   const getProductById = (id: string) => products.find(p => p.id === id);
   const getStoreById = (id: string) => stores.find(s => s.id === id);
+  const addSupplier = (supplier: Omit<Supplier, 'id'>) => {
+    const newSupplier = { ...supplier, id: generateId() };
+    setSuppliers(prev => [...prev, newSupplier]);
+  };
+
+  const deleteSupplier = (id: string) => {
+    setSuppliers(prev => prev.filter(s => s.id !== id));
+  };
+
+  const addCostCenter = (costCenter: Omit<CostCenter, 'id'>) => {
+    const newCC = { ...costCenter, id: generateId() };
+    setCostCenters(prev => [...prev, newCC]);
+  };
+
+  const deleteCostCenter = (id: string) => {
+    setCostCenters(prev => prev.filter(cc => cc.id !== id));
+  };
+
   const getSupplierById = (id: string) => suppliers.find(s => s.id === id);
   const getCategoryById = (id: string) => categories.find(c => c.id === id);
   const getInventoryByStore = (storeId: string) => inventory.filter(i => i.storeId === storeId);
   const getLowStockItems = () => inventory.filter(i => i.currentQuantity <= i.minQuantity);
   const getOpenCashRegisters = () => cashRegisters.filter(cr => cr.status === 'open');
-  const getOverdueInvoices = () => invoices.filter(i => i.status === 'overdue' || (i.status === 'pending' && new Date() > i.dueDate));
+  const getOverdueInvoices = () => invoices.filter(i => i.status === 'contas_a_pagar');
 
   const value = {
-    stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists, movements, operationLogs, recipes, productionRecords, purchaseOrders,
+    stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists, movements, operationLogs, recipes, productionRecords, purchaseOrders, costCenters,
     addStore, updateStore, deleteStore,
     addProduct, updateProduct, deleteProduct,
     addInventoryItem, updateInventoryItem,
     addCashRegister, updateCashRegister,
     addInvoice, updateInvoice,
+    addSupplier, deleteSupplier,
+    addCostCenter, deleteCostCenter,
     addChecklist, updateChecklist,
     addMovement, updateMovement,
     addOperationLog, getOperationLogsByProduct,

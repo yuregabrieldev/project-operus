@@ -7,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { FileText, AlertCircle, CheckCircle, Clock, Plus, Edit, Search, Filter, Download, X, Check, ChevronDown, Calendar, ArrowLeft } from 'lucide-react';
+import { FileText, AlertCircle, CheckCircle, Clock, Plus, Edit, Search, Filter, Download, X, Calendar, ArrowLeft } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -25,11 +24,12 @@ const InvoiceManager: React.FC = () => {
 
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [scrollToPayment, setScrollToPayment] = useState(false);
 
   // Filtros avançados
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [supplierFilter, setSupplierFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
   const [issueDatePreset, setIssueDatePreset] = useState('all');
   const [issueDateStart, setIssueDateStart] = useState('');
   const [issueDateEnd, setIssueDateEnd] = useState('');
@@ -40,29 +40,29 @@ const InvoiceManager: React.FC = () => {
   const [maxAmount, setMaxAmount] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Popover states
-  const [statusPopoverOpen, setStatusPopoverOpen] = useState(false);
-  const [supplierPopoverOpen, setSupplierPopoverOpen] = useState(false);
-
   // Helper functions
   const isOverdue = (invoice: any) => {
-    return invoice.status === 'pending' && new Date() > new Date(invoice.dueDate);
+    return invoice.status === 'contas_a_pagar' && new Date() > new Date(invoice.dueDate);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid': return 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100';
-      case 'pending': return 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100';
-      case 'overdue': return 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100';
+      case 'finalizado_pago': return 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100';
+      case 'pedido_realizado': return 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100';
+      case 'contas_a_pagar': return 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100';
+      case 'mercadoria_recebida': return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100';
+      case 'cancelado':
+      case 'finalizado_outros':
       default: return 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'paid': return <CheckCircle className="h-4 w-4" />;
-      case 'pending': return <Clock className="h-4 w-4" />;
-      case 'overdue': return <AlertCircle className="h-4 w-4" />;
+      case 'finalizado_pago': return <CheckCircle className="h-4 w-4" />;
+      case 'pedido_realizado': return <Clock className="h-4 w-4" />;
+      case 'contas_a_pagar': return <AlertCircle className="h-4 w-4" />;
+      case 'mercadoria_recebida': return <FileText className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;
     }
   };
@@ -116,18 +116,7 @@ const InvoiceManager: React.FC = () => {
     }
   };
 
-  // Toggles
-  const toggleStatusFilter = (status: string) => {
-    setStatusFilter(prev =>
-      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
-    );
-  };
-
-  const toggleSupplierFilter = (supplierId: string) => {
-    setSupplierFilter(prev =>
-      prev.includes(supplierId) ? prev.filter(s => s !== supplierId) : [...prev, supplierId]
-    );
-  };
+  // No toggles needed — single-value filters now
 
   // Filtered invoices
   const filteredInvoices = useMemo(() => {
@@ -140,10 +129,9 @@ const InvoiceManager: React.FC = () => {
         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         supplier?.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const currentStatus = isOverdue(invoice) ? 'overdue' : invoice.status;
-      const matchesStatus = statusFilter.length === 0 || statusFilter.includes(currentStatus);
+      const matchesStatus = !statusFilter || invoice.status === statusFilter;
 
-      const matchesSupplier = supplierFilter.length === 0 || supplierFilter.includes(invoice.supplierId);
+      const matchesSupplier = !supplierFilter || invoice.supplierId === supplierFilter;
 
       const matchesIssueDate = (!issueDateStart || invoiceDate >= new Date(issueDateStart)) &&
         (!issueDateEnd || invoiceDate <= new Date(issueDateEnd + 'T23:59:59'));
@@ -163,9 +151,9 @@ const InvoiceManager: React.FC = () => {
   // Stats
   const dashboardStats = useMemo(() => {
     const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-    const paidInvoices = filteredInvoices.filter(i => i.status === 'paid');
-    const pendingInvoices = filteredInvoices.filter(i => i.status === 'pending');
-    const overdueFiltered = filteredInvoices.filter(i => isOverdue(i));
+    const paidInvoices = filteredInvoices.filter(i => i.status === 'finalizado_pago');
+    const pendingInvoices = filteredInvoices.filter(i => i.status === 'pedido_realizado' || i.status === 'mercadoria_recebida');
+    const overdueFiltered = filteredInvoices.filter(i => i.status === 'contas_a_pagar');
 
     return {
       totalInvoices: filteredInvoices.length,
@@ -181,8 +169,8 @@ const InvoiceManager: React.FC = () => {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setStatusFilter([]);
-    setSupplierFilter([]);
+    setStatusFilter('');
+    setSupplierFilter('');
     setIssueDatePreset('all');
     setIssueDateStart('');
     setIssueDateEnd('');
@@ -194,20 +182,22 @@ const InvoiceManager: React.FC = () => {
   };
 
   const markAsPaid = (invoice: any) => {
-    updateInvoice(invoice.id, { status: 'paid', paidDate: new Date() });
-    toast({
-      title: t('invoices.markedAsPaid'),
-      description: `${t('invoices.title')} ${invoice.invoiceNumber}`,
-    });
+    // Open edit page with status = finalizado_pago and scroll to payment
+    const paidInvoice = { ...invoice, status: 'finalizado_pago' };
+    setSelectedInvoice(paidInvoice);
+    setScrollToPayment(true);
+    setIsFormOpen(true);
   };
 
   const handleEdit = (invoice: any) => {
     setSelectedInvoice(invoice);
+    setScrollToPayment(false);
     setIsFormOpen(true);
   };
 
   const handleAddNew = () => {
     setSelectedInvoice(null);
+    setScrollToPayment(false);
     setIsFormOpen(true);
   };
 
@@ -220,9 +210,15 @@ const InvoiceManager: React.FC = () => {
 
     const rows = filteredInvoices.map(invoice => {
       const supplier = getSupplierById(invoice.supplierId);
-      const currentStatus = isOverdue(invoice) ? 'Vencida' :
-        invoice.status === 'paid' ? 'Paga' :
-          invoice.status === 'pending' ? 'Pendente' : invoice.status;
+      const statusLabelsCSV: Record<string, string> = {
+        'pedido_realizado': 'Pedido Realizado',
+        'mercadoria_recebida': 'Mercadoria Recebida',
+        'contas_a_pagar': 'Contas a Pagar',
+        'finalizado_pago': 'Pago',
+        'cancelado': 'Cancelado',
+        'finalizado_outros': 'Finalizado Outros',
+      };
+      const currentStatus = statusLabelsCSV[invoice.status] || invoice.status;
 
       return [
         invoice.invoiceNumber,
@@ -259,18 +255,7 @@ const InvoiceManager: React.FC = () => {
     });
   };
 
-  // statusLabel for multi-dropdown
-  const statusLabel = statusFilter.length === 0
-    ? t('invoices.allStatuses')
-    : statusFilter.length === 1
-      ? statusFilter[0] === 'paid' ? t('invoices.paid') : statusFilter[0] === 'pending' ? t('invoices.pending') : t('invoices.overdue')
-      : `${statusFilter.length} ${t('invoices.statusesSelected')}`;
-
-  const supplierLabel = supplierFilter.length === 0
-    ? t('invoices.allSuppliers')
-    : supplierFilter.length === 1
-      ? suppliers.find(s => s.id === supplierFilter[0])?.name || ''
-      : `${supplierFilter.length} ${t('invoices.suppliersSelected')}`;
+  // Labels not needed for single-select — we use Select with SelectValue
 
   const datePresetOptions = [
     { value: 'all', label: t('invoices.allDates') },
@@ -314,7 +299,8 @@ const InvoiceManager: React.FC = () => {
             <CardContent className="p-8">
               <InvoiceForm
                 invoice={selectedInvoice}
-                onClose={() => setIsFormOpen(false)}
+                onClose={() => { setIsFormOpen(false); setScrollToPayment(false); }}
+                scrollToPayment={scrollToPayment}
               />
             </CardContent>
           </Card>
@@ -383,70 +369,51 @@ const InvoiceManager: React.FC = () => {
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Status Multi-Dropdown */}
+                {/* Status Dropdown */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-gray-700">{t('common.status')}</Label>
-                  <Popover open={statusPopoverOpen} onOpenChange={setStatusPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between text-left font-normal h-10">
-                        <span className="truncate">{statusLabel}</span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-2" align="start">
-                      <div className="space-y-1">
-                        <Button variant="ghost" className="w-full justify-start text-sm h-8" onClick={() => setStatusFilter([])}>
-                          <div className={`w-4 h-4 mr-2 rounded border flex items-center justify-center ${statusFilter.length === 0 ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
-                            {statusFilter.length === 0 && <Check className="h-3 w-3 text-white" />}
-                          </div>
-                          {t('invoices.allStatuses')}
-                        </Button>
-                        {[
-                          { value: 'paid', label: t('invoices.paid'), color: 'text-green-600' },
-                          { value: 'pending', label: t('invoices.pending'), color: 'text-yellow-600' },
-                          { value: 'overdue', label: t('invoices.overdue'), color: 'text-red-600' },
-                        ].map(status => (
-                          <Button key={status.value} variant="ghost" className="w-full justify-start text-sm h-8" onClick={() => toggleStatusFilter(status.value)}>
-                            <div className={`w-4 h-4 mr-2 rounded border flex items-center justify-center ${statusFilter.includes(status.value) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
-                              {statusFilter.includes(status.value) && <Check className="h-3 w-3 text-white" />}
-                            </div>
-                            <span className={status.color}>{status.label}</span>
-                          </Button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <Select value={statusFilter || '__all__'} onValueChange={(v) => setStatusFilter(v === '__all__' ? '' : v)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">{t('invoices.allStatuses')}</SelectItem>
+                      <SelectItem value="pedido_realizado">
+                        <span className="text-yellow-600">{t('invoices.status_pedido_realizado')}</span>
+                      </SelectItem>
+                      <SelectItem value="mercadoria_recebida">
+                        <span className="text-blue-600">{t('invoices.status_mercadoria_recebida')}</span>
+                      </SelectItem>
+                      <SelectItem value="contas_a_pagar">
+                        <span className="text-red-600">{t('invoices.status_contas_a_pagar')}</span>
+                      </SelectItem>
+                      <SelectItem value="finalizado_pago">
+                        <span className="text-green-600">{t('invoices.status_finalizado_pago')}</span>
+                      </SelectItem>
+                      <SelectItem value="cancelado">
+                        <span className="text-gray-500">{t('invoices.status_cancelado')}</span>
+                      </SelectItem>
+                      <SelectItem value="finalizado_outros">
+                        <span className="text-gray-500">{t('invoices.status_finalizado_outros')}</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Supplier Multi-Dropdown */}
+                {/* Supplier Dropdown */}
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-gray-700">{t('invoices.supplierFilter')}</Label>
-                  <Popover open={supplierPopoverOpen} onOpenChange={setSupplierPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between text-left font-normal h-10">
-                        <span className="truncate">{supplierLabel}</span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-2" align="start">
-                      <div className="space-y-1 max-h-48 overflow-y-auto">
-                        <Button variant="ghost" className="w-full justify-start text-sm h-8" onClick={() => setSupplierFilter([])}>
-                          <div className={`w-4 h-4 mr-2 rounded border flex items-center justify-center ${supplierFilter.length === 0 ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
-                            {supplierFilter.length === 0 && <Check className="h-3 w-3 text-white" />}
-                          </div>
-                          {t('invoices.allSuppliers')}
-                        </Button>
-                        {suppliers.map(supplier => (
-                          <Button key={supplier.id} variant="ghost" className="w-full justify-start text-sm h-8" onClick={() => toggleSupplierFilter(supplier.id)}>
-                            <div className={`w-4 h-4 mr-2 rounded border flex items-center justify-center ${supplierFilter.includes(supplier.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
-                              {supplierFilter.includes(supplier.id) && <Check className="h-3 w-3 text-white" />}
-                            </div>
-                            {supplier.name}
-                          </Button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <Select value={supplierFilter || '__all__'} onValueChange={(v) => setSupplierFilter(v === '__all__' ? '' : v)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">{t('invoices.allSuppliers')}</SelectItem>
+                      {suppliers.map(supplier => (
+                        <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Issue Date Dynamic Dropdown */}
@@ -601,7 +568,6 @@ const InvoiceManager: React.FC = () => {
                 <TableBody>
                   {filteredInvoices.map((invoice) => {
                     const overdueStatus = isOverdue(invoice);
-                    const displayStatus = overdueStatus ? 'overdue' : invoice.status;
                     return (
                       <TableRow key={invoice.id} className={`hover:bg-gray-50/50 transition-colors ${overdueStatus ? 'bg-red-50/30' : ''}`}>
                         <TableCell className="font-medium text-gray-900">{invoice.invoiceNumber}</TableCell>
@@ -617,13 +583,11 @@ const InvoiceManager: React.FC = () => {
                           {invoice.paidDate ? formatDate(invoice.paidDate) : '-'}
                         </TableCell>
                         <TableCell>
-                          <Badge className={`${getStatusColor(displayStatus)} transition-colors border ${overdueStatus ? 'animate-heartbeat' : ''}`}>
+                          <Badge className={`${getStatusColor(invoice.status)} transition-colors border ${overdueStatus ? 'animate-heartbeat' : ''}`}>
                             <div className="flex items-center gap-2">
-                              {getStatusIcon(displayStatus)}
+                              {getStatusIcon(invoice.status)}
                               <span className="font-medium">
-                                {overdueStatus ? t('invoices.overdue') :
-                                  invoice.status === 'paid' ? t('invoices.paid') :
-                                    invoice.status === 'pending' ? t('invoices.pending') : invoice.status}
+                                {t(`invoices.status_${invoice.status}`)}
                               </span>
                             </div>
                           </Badge>
@@ -634,7 +598,7 @@ const InvoiceManager: React.FC = () => {
                               <Edit className="h-3 w-3" />
                             </Button>
 
-                            {invoice.status === 'pending' && (
+                            {invoice.status !== 'finalizado_pago' && invoice.status !== 'cancelado' && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -657,7 +621,7 @@ const InvoiceManager: React.FC = () => {
               <div className="text-center py-12">
                 <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">
-                  {searchTerm || statusFilter.length > 0 || supplierFilter.length > 0 ||
+                  {searchTerm || statusFilter || supplierFilter ||
                     issueDateStart || dueDateStart || minAmount || maxAmount
                     ? t('invoices.noFilterResults')
                     : t('invoices.noInvoices')}

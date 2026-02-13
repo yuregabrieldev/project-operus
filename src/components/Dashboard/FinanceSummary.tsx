@@ -38,7 +38,7 @@ const FinanceSummary: React.FC = () => {
     // Calcular despesas das faturas pagas
     const despesas = invoices
       .filter(invoice =>
-        invoice.status === 'paid' &&
+        invoice.status === 'finalizado_pago' &&
         invoice.dueDate &&
         new Date(invoice.dueDate) >= startDate
       )
@@ -87,7 +87,7 @@ const FinanceSummary: React.FC = () => {
       const monthDespesas = invoices
         .filter(invoice => {
           const invoiceDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
-          return invoiceDate && invoiceDate >= monthDate && invoiceDate < nextMonth && invoice.status === 'paid';
+          return invoiceDate && invoiceDate >= monthDate && invoiceDate < nextMonth && invoice.status === 'finalizado_pago';
         })
         .reduce((total, invoice) => total + invoice.amount, 0);
 
