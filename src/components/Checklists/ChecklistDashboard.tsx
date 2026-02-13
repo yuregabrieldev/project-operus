@@ -29,10 +29,10 @@ interface ChecklistDashboardProps {
   onManageTemplates: () => void;
 }
 
-const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({ 
-  onChecklistAction, 
-  onCreateNew, 
-  onManageTemplates 
+const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
+  onChecklistAction,
+  onCreateNew,
+  onManageTemplates
 }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -43,9 +43,9 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
     id: execution.id,
     name: execution.templateName,
     storeNames: 'Loja', // Would come from store context
-    progress: { 
+    progress: {
       completed: execution.responses.filter(r => r.response !== null || r.skipped).length,
-      total: execution.responses.length 
+      total: execution.responses.length
     },
     status: execution.status === 'draft' ? 'paused' : execution.status,
     startedAt: execution.startTime,
@@ -94,13 +94,9 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
             Olá, {user?.name}! Gerencie seus checklists aqui.
           </p>
         </div>
-        
+
         {isAdmin && (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleManageTemplates}>
-              <Settings className="h-4 w-4 mr-2" />
-              Gerenciar Templates
-            </Button>
             <Button onClick={handleCreateNew}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Checklist
@@ -141,8 +137,8 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
               <div>
                 <p className="text-sm text-muted-foreground">Completos Hoje</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {historyChecklists.filter(c => 
-                    c.completedAt && 
+                  {historyChecklists.filter(c =>
+                    c.completedAt &&
                     c.completedAt.toDateString() === new Date().toDateString()
                   ).length}
                 </p>

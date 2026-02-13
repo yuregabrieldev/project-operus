@@ -60,7 +60,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
     const Icon = status === 'not_started' ? Play : RotateCcw;
 
     return (
-      <Button 
+      <Button
         onClick={() => onAction(id)}
         className="w-full mt-3"
         variant={status === 'not_started' ? 'default' : 'outline'}
@@ -102,7 +102,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
           {startedAt && variant === 'pending' && (
             <div className="flex items-center text-sm text-muted-foreground">
               <Clock className="h-4 w-4 mr-1" />
-              <span>Iniciado: {startedAt.toLocaleDateString('pt-BR')} {startedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>Iniciado: {new Date(startedAt).toLocaleDateString('pt-BR')} {new Date(startedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           )}
 
@@ -110,7 +110,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
-                <span>Completo em {completedAt.toLocaleDateString('pt-BR')} {completedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>Completo em {new Date(completedAt).toLocaleDateString('pt-BR')} {new Date(completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               {duration && (
                 <span>{duration} minutos</span>

@@ -84,6 +84,69 @@ export interface CostCenter {
   name: string;
 }
 
+export type LicenseStatus = 'ativa' | 'expirada' | 'cancelada' | 'pendente';
+
+export interface LicenseRenewal {
+  id: string;
+  issueDate: Date;
+  renewalDate: Date;
+  value: number;
+  currency: string;
+}
+
+export interface LicenseContact {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface LicenseAttachment {
+  id: string;
+  description: string;
+  createdAt: Date;
+  file?: File;
+  fileName?: string;
+}
+
+export interface License {
+  id: string;
+  name: string;
+  storeIds: string[];
+  description?: string;
+  periodicity: 'mensal' | 'trimestral' | 'semestral' | 'anual';
+  alertDays: number;
+  status: LicenseStatus;
+  renewals: LicenseRenewal[];
+  contacts: LicenseContact[];
+  attachments: LicenseAttachment[];
+  observations: Array<{ user: string; text: string; date: string }>;
+}
+
+export interface WasteVariant {
+  id: string;
+  name: string;
+  productIds: string[];
+}
+
+export interface WasteReason {
+  id: string;
+  name: string;
+}
+
+export interface WasteRecord {
+  id: string;
+  productId: string;
+  variantId: string;
+  storeId: string;
+  userId: string;
+  userName: string;
+  quantity: number;
+  reasonId: string;
+  comment?: string;
+  createdAt: Date;
+}
+
 export interface ChecklistTask {
   id: string;
   taskName: string;
@@ -189,6 +252,10 @@ interface DataContextType {
   productionRecords: ProductionRecord[];
   purchaseOrders: PurchaseOrder[];
   costCenters: CostCenter[];
+  licenses: License[];
+  wasteVariants: WasteVariant[];
+  wasteReasons: WasteReason[];
+  wasteRecords: WasteRecord[];
 
   // Actions
   addStore: (store: Omit<Store, 'id'>) => void;
@@ -213,6 +280,19 @@ interface DataContextType {
 
   addCostCenter: (costCenter: Omit<CostCenter, 'id'>) => void;
   deleteCostCenter: (id: string) => void;
+
+  addLicense: (license: Omit<License, 'id'>) => void;
+  updateLicense: (id: string, license: Partial<License>) => void;
+  deleteLicense: (id: string) => void;
+
+  addWasteVariant: (variant: Omit<WasteVariant, 'id'>) => void;
+  updateWasteVariant: (id: string, variant: Partial<WasteVariant>) => void;
+  deleteWasteVariant: (id: string) => void;
+  addWasteReason: (reason: Omit<WasteReason, 'id'>) => void;
+  updateWasteReason: (id: string, reason: Partial<WasteReason>) => void;
+  deleteWasteReason: (id: string) => void;
+  addWasteRecord: (record: Omit<WasteRecord, 'id'>) => void;
+  deleteWasteRecord: (id: string) => void;
 
   addChecklist: (checklist: Omit<Checklist, 'id'>) => void;
   updateChecklist: (id: string, checklist: Partial<Checklist>) => void;
@@ -413,6 +493,83 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   ]);
 
+  const [licenses, setLicenses] = useState<License[]>([
+    {
+      id: '1',
+      name: 'Licença ASAE',
+      storeIds: ['1', '2', '3'],
+      description: 'Licença de funcionamento ASAE',
+      periodicity: 'anual',
+      alertDays: 10,
+      status: 'ativa',
+      renewals: [
+        { id: '1', issueDate: new Date(2025, 5, 23), renewalDate: new Date(2026, 5, 24), value: 150, currency: '€' },
+        { id: '2', issueDate: new Date(2025, 1, 1), renewalDate: new Date(2026, 1, 1), value: 100, currency: '€' },
+      ],
+      contacts: [{ id: '1', name: 'Joao', phone: '', email: '' }],
+      attachments: [],
+      observations: [
+        { user: 'William Cardoso', text: 'Novo controle de licença criado.', date: '21/02/25 17:55' },
+      ],
+    },
+    {
+      id: '2',
+      name: 'Licença de Esplanada',
+      storeIds: ['2'],
+      description: 'Licença de Esplanada',
+      periodicity: 'mensal',
+      alertDays: 10,
+      status: 'expirada',
+      renewals: [
+        { id: '1', issueDate: new Date(2025, 4, 24), renewalDate: new Date(2025, 5, 23), value: 320, currency: '€' },
+      ],
+      contacts: [],
+      attachments: [],
+      observations: [
+        { user: 'William Cardoso', text: 'Novo controle de licença criado.', date: '24/06/25 02:07' },
+      ],
+    },
+  ]);
+
+  const [wasteVariants, setWasteVariants] = useState<WasteVariant[]>([
+    { id: '1', name: 'Grande', productIds: ['1', '2', '3', '6', '7'] },
+    { id: '2', name: 'Médio', productIds: ['1', '2', '3', '6', '7'] },
+    { id: '3', name: 'Pequeno', productIds: ['1', '2', '3', '6', '7'] },
+  ]);
+
+  const [wasteReasons, setWasteReasons] = useState<WasteReason[]>([
+    { id: '1', name: 'Validade expirada' },
+    { id: '2', name: 'Queda / Acidente' },
+    { id: '3', name: 'Qualidade comprometida' },
+    { id: '4', name: 'Outros' },
+  ]);
+
+  const [wasteRecords, setWasteRecords] = useState<WasteRecord[]>([
+    {
+      id: '1',
+      productId: '6',
+      variantId: '1',
+      storeId: '1',
+      userId: 'user1',
+      userName: 'William Cardoso',
+      quantity: 1,
+      reasonId: '4',
+      comment: 'Produto caiu no chão',
+      createdAt: new Date(),
+    },
+    {
+      id: '2',
+      productId: '7',
+      variantId: '2',
+      storeId: '1',
+      userId: 'user1',
+      userName: 'William Cardoso',
+      quantity: 2,
+      reasonId: '1',
+      createdAt: new Date(Date.now() - 86400000),
+    },
+  ]);
+
   // Helper functions
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -561,6 +718,56 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCostCenters(prev => prev.filter(cc => cc.id !== id));
   };
 
+  // License actions
+  const addLicense = (license: Omit<License, 'id'>) => {
+    const newLicense = { ...license, id: generateId() };
+    setLicenses(prev => [...prev, newLicense]);
+  };
+
+  const updateLicense = (id: string, license: Partial<License>) => {
+    setLicenses(prev => prev.map(l => l.id === id ? { ...l, ...license } : l));
+  };
+
+  const deleteLicense = (id: string) => {
+    setLicenses(prev => prev.filter(l => l.id !== id));
+  };
+
+  // Waste actions
+  const addWasteVariant = (variant: Omit<WasteVariant, 'id'>) => {
+    const newVariant = { ...variant, id: generateId() };
+    setWasteVariants(prev => [...prev, newVariant]);
+  };
+
+  const updateWasteVariant = (id: string, variant: Partial<WasteVariant>) => {
+    setWasteVariants(prev => prev.map(v => v.id === id ? { ...v, ...variant } : v));
+  };
+
+  const deleteWasteVariant = (id: string) => {
+    setWasteVariants(prev => prev.filter(v => v.id !== id));
+  };
+
+  const addWasteReason = (reason: Omit<WasteReason, 'id'>) => {
+    const newReason = { ...reason, id: generateId() };
+    setWasteReasons(prev => [...prev, newReason]);
+  };
+
+  const updateWasteReason = (id: string, reason: Partial<WasteReason>) => {
+    setWasteReasons(prev => prev.map(r => r.id === id ? { ...r, ...reason } : r));
+  };
+
+  const deleteWasteReason = (id: string) => {
+    setWasteReasons(prev => prev.filter(r => r.id !== id));
+  };
+
+  const addWasteRecord = (record: Omit<WasteRecord, 'id'>) => {
+    const newRecord = { ...record, id: generateId() };
+    setWasteRecords(prev => [...prev, newRecord]);
+  };
+
+  const deleteWasteRecord = (id: string) => {
+    setWasteRecords(prev => prev.filter(r => r.id !== id));
+  };
+
   const getSupplierById = (id: string) => suppliers.find(s => s.id === id);
   const getCategoryById = (id: string) => categories.find(c => c.id === id);
   const getInventoryByStore = (storeId: string) => inventory.filter(i => i.storeId === storeId);
@@ -569,7 +776,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getOverdueInvoices = () => invoices.filter(i => i.status === 'contas_a_pagar');
 
   const value = {
-    stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists, movements, operationLogs, recipes, productionRecords, purchaseOrders, costCenters,
+    stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists, movements, operationLogs, recipes, productionRecords, purchaseOrders, costCenters, licenses, wasteVariants, wasteReasons, wasteRecords,
     addStore, updateStore, deleteStore,
     addProduct, updateProduct, deleteProduct,
     addInventoryItem, updateInventoryItem,
@@ -577,6 +784,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addInvoice, updateInvoice,
     addSupplier, deleteSupplier,
     addCostCenter, deleteCostCenter,
+    addLicense, updateLicense, deleteLicense,
+    addWasteVariant, updateWasteVariant, deleteWasteVariant,
+    addWasteReason, updateWasteReason, deleteWasteReason,
+    addWasteRecord, deleteWasteRecord,
     addChecklist, updateChecklist,
     addMovement, updateMovement,
     addOperationLog, getOperationLogsByProduct,

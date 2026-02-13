@@ -19,6 +19,8 @@ import CashManager from './components/CashManagement/CashManager';
 import PurchaseSuggestions from './components/Purchases/PurchaseSuggestions';
 import InvoiceManager from './components/Invoices/InvoiceManager';
 import TransitManager from './components/Transit/TransitManager';
+import LicenseManager from './components/Licenses/LicenseManager';
+import WasteManager from './components/Waste/WasteManager';
 import ChecklistManager from './components/Checklists/ChecklistManager';
 import ChecklistConfigManager from './components/Checklists/ChecklistConfigManager';
 import ChecklistExecution from './components/Checklists/ChecklistExecution';
@@ -82,6 +84,10 @@ const MainApp = () => {
         return <CashManager />;
       case 'invoices':
         return <InvoiceManager />;
+      case 'licenses':
+        return <LicenseManager />;
+      case 'waste':
+        return <WasteManager />;
       case 'checklists':
         return <ChecklistManager />;
       case 'checklist-config':
@@ -109,10 +115,10 @@ const MainApp = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
-      
+
       <div className="flex-1 flex flex-col">
         <Header />
-        
+
         <main className="flex-1 overflow-auto">
           {renderContent()}
         </main>

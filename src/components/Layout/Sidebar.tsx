@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard, Package, Settings, DollarSign, FileText,
   ClipboardList, Truck, ShoppingCart,
-  Factory, Store, Users, ChevronLeft, ChevronRight, ArrowLeftRight
+  Factory, Store, Users, ChevronLeft, ChevronRight, ArrowLeftRight, Shield, Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +28,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
     { id: 'purchases', label: t('sidebar.purchases'), icon: ShoppingCart },
     { id: 'cashbox', label: t('sidebar.cashbox'), icon: DollarSign },
     { id: 'invoices', label: t('sidebar.invoices'), icon: FileText },
+    { id: 'licenses', label: 'Licenças', icon: Shield },
+    { id: 'waste', label: 'Desperdício', icon: Trash2 },
     { id: 'checklists', label: t('sidebar.checklists'), icon: ClipboardList },
     ...(user?.role === 'admin' ? [
       { id: 'stores', label: t('sidebar.stores'), icon: Store },
