@@ -137,6 +137,26 @@ export interface ProductionRecord {
   createdAt: Date;
 }
 
+export interface PurchaseOrderItem {
+  productId: string;
+  storeId: string;
+  unit: string;
+  quantity: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  supplierId: string;
+  userId: string;
+  storeIds: string[];
+  items: PurchaseOrderItem[];
+  hasInvoiceManagement: boolean;
+  hasTransitGenerated: boolean;
+  invoiceId?: string;
+  observation?: string;
+  createdAt: Date;
+}
+
 interface DataContextType {
   // State
   stores: Store[];
@@ -151,6 +171,7 @@ interface DataContextType {
   operationLogs: OperationLog[];
   recipes: Recipe[];
   productionRecords: ProductionRecord[];
+  purchaseOrders: PurchaseOrder[];
 
   // Actions
   addStore: (store: Omit<Store, 'id'>) => void;
@@ -185,6 +206,10 @@ interface DataContextType {
 
   addProductionRecord: (record: Omit<ProductionRecord, 'id'>) => void;
   getProductionRecordsByRecipe: (recipeId: string) => ProductionRecord[];
+
+  addPurchaseOrder: (order: Omit<PurchaseOrder, 'id'>) => void;
+  updatePurchaseOrder: (id: string, order: Partial<PurchaseOrder>) => void;
+  deletePurchaseOrder: (id: string) => void;
 
   // Getters
   getProductById: (id: string) => Product | undefined;
@@ -313,6 +338,51 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [productionRecords, setProductionRecords] = useState<ProductionRecord[]>([]);
 
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([
+    {
+      id: '1',
+      supplierId: '1',
+      userId: 'user1',
+      storeIds: ['1'],
+      items: [
+        { productId: '1', storeId: '1', unit: 'UN.', quantity: 5 },
+        { productId: '4', storeId: '1', unit: 'UN.', quantity: 3 }
+      ],
+      hasInvoiceManagement: true,
+      hasTransitGenerated: true,
+      invoiceId: '1',
+      observation: 'Pedido urgente de eletrônicos',
+      createdAt: new Date()
+    },
+    {
+      id: '2',
+      supplierId: '2',
+      userId: 'user1',
+      storeIds: ['2'],
+      items: [
+        { productId: '2', storeId: '2', unit: 'UN.', quantity: 10 }
+      ],
+      hasInvoiceManagement: false,
+      hasTransitGenerated: false,
+      createdAt: new Date(Date.now() - 5 * 86400000)
+    },
+    {
+      id: '3',
+      supplierId: '3',
+      userId: 'user1',
+      storeIds: ['1', '3'],
+      items: [
+        { productId: '3', storeId: '1', unit: 'UN.', quantity: 8 },
+        { productId: '6', storeId: '3', unit: 'UN.', quantity: 20 }
+      ],
+      hasInvoiceManagement: true,
+      hasTransitGenerated: true,
+      invoiceId: '3',
+      observation: 'Reposição mensal',
+      createdAt: new Date(Date.now() - 10 * 86400000)
+    }
+  ]);
+
   // Helper functions
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -426,6 +496,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getProductionRecordsByRecipe = (recipeId: string) =>
     productionRecords.filter(record => record.recipeId === recipeId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
+  // Purchase Order actions
+  const addPurchaseOrder = (order: Omit<PurchaseOrder, 'id'>) => {
+    const newOrder = { ...order, id: generateId() };
+    setPurchaseOrders(prev => [...prev, newOrder]);
+  };
+
+  const updatePurchaseOrder = (id: string, order: Partial<PurchaseOrder>) => {
+    setPurchaseOrders(prev => prev.map(o => o.id === id ? { ...o, ...order } : o));
+  };
+
+  const deletePurchaseOrder = (id: string) => {
+    setPurchaseOrders(prev => prev.filter(o => o.id !== id));
+  };
+
   // Getters
   const getProductById = (id: string) => products.find(p => p.id === id);
   const getStoreById = (id: string) => stores.find(s => s.id === id);
@@ -437,7 +521,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getOverdueInvoices = () => invoices.filter(i => i.status === 'overdue' || (i.status === 'pending' && new Date() > i.dueDate));
 
   const value = {
-    stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists, movements, operationLogs, recipes, productionRecords,
+    stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists, movements, operationLogs, recipes, productionRecords, purchaseOrders,
     addStore, updateStore, deleteStore,
     addProduct, updateProduct, deleteProduct,
     addInventoryItem, updateInventoryItem,
@@ -448,6 +532,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addOperationLog, getOperationLogsByProduct,
     addRecipe, updateRecipe, deleteRecipe,
     addProductionRecord, getProductionRecordsByRecipe,
+    addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder,
     getProductById, getStoreById, getSupplierById, getCategoryById,
     getInventoryByStore, getLowStockItems, getOpenCashRegisters, getOverdueInvoices
   };
