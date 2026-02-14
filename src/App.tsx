@@ -28,6 +28,7 @@ import ChecklistHistory from './components/Checklists/ChecklistHistory';
 import SettingsManager from './components/Settings/SettingsManager';
 import OperationsManager from './components/Operations/OperationsManager';
 import ProductionManager from './components/Production/ProductionManager';
+import ProfilePage from './components/Profile/ProfilePage';
 import { StoreManager } from './components/Store/StoreManager';
 import { UserManager } from './components/Users/UserManager';
 
@@ -102,6 +103,8 @@ const MainApp = () => {
         return <UserManager />;
       case 'settings':
         return <SettingsManager />;
+      case 'profile':
+        return <ProfilePage />;
       default:
         return <Dashboard />;
     }
@@ -117,7 +120,7 @@ const MainApp = () => {
       />
 
       <div className="flex-1 flex flex-col">
-        <Header />
+        <Header onTabChange={setActiveTab} />
 
         <main className="flex-1 overflow-auto">
           {renderContent()}

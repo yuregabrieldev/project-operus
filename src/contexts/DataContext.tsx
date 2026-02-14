@@ -262,6 +262,9 @@ interface DataContextType {
   updateStore: (id: string, store: Partial<Store>) => void;
   deleteStore: (id: string) => void;
 
+  addCategory: (category: Omit<Category, 'id'>) => void;
+  deleteCategory: (id: string) => void;
+
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
@@ -587,6 +590,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setStores(prev => prev.filter(s => s.id !== id));
   };
 
+  // Category actions
+  const addCategory = (category: Omit<Category, 'id'>) => {
+    const newCategory = { ...category, id: generateId() };
+    setCategories(prev => [...prev, newCategory]);
+  };
+
+  const deleteCategory = (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+  };
+
   // Product actions
   const addProduct = (product: Omit<Product, 'id'>) => {
     const newProduct = { ...product, id: generateId() };
@@ -781,6 +794,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addProduct, updateProduct, deleteProduct,
     addInventoryItem, updateInventoryItem,
     addCashRegister, updateCashRegister,
+    addCategory, deleteCategory,
     addInvoice, updateInvoice,
     addSupplier, deleteSupplier,
     addCostCenter, deleteCostCenter,

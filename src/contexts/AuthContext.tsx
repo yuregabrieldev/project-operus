@@ -7,6 +7,7 @@ interface User {
   email: string;
   role: 'admin' | 'manager' | 'employee';
   hasMultipleBrands?: boolean;
+  imageUrl?: string;
 }
 
 interface AuthContextType {
@@ -14,6 +15,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateUser: (data: Partial<User>) => void;
   isAuthenticated: boolean;
   loading: boolean;
   needsBrandSelection: boolean;
@@ -41,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedUser) {
       const userData = JSON.parse(savedUser);
       setUser(userData);
-      
+
       // Verificar se precisa selecionar marca
       const selectedBrand = localStorage.getItem('selected_brand');
       if (userData.hasMultipleBrands && !selectedBrand) {
@@ -53,39 +55,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
-    
+
     // Simular uma chamada de API
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     // Credenciais de exemplo com informação de múltiplas marcas
     const validCredentials = [
-      { 
-        email: 'admin@operus.com', 
-        password: '123456', 
-        name: 'Administrador', 
+      {
+        email: 'admin@operus.com',
+        password: '123456',
+        name: 'Administrador',
         role: 'admin' as const,
         hasMultipleBrands: true
       },
-      { 
-        email: 'manager@operus.com', 
-        password: '123456', 
-        name: 'Gerente', 
+      {
+        email: 'manager@operus.com',
+        password: '123456',
+        name: 'Gerente',
         role: 'manager' as const,
         hasMultipleBrands: true
       },
-      { 
-        email: 'funcionario@operus.com', 
-        password: '123456', 
-        name: 'Funcionário', 
+      {
+        email: 'funcionario@operus.com',
+        password: '123456',
+        name: 'Funcionário',
         role: 'employee' as const,
         hasMultipleBrands: false
       },
     ];
-    
+
     const userCredentials = validCredentials.find(
       cred => cred.email === email && cred.password === password
     );
-    
+
     if (userCredentials) {
       const userData: User = {
         id: Math.random().toString(36),
@@ -94,10 +96,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: userCredentials.role,
         hasMultipleBrands: userCredentials.hasMultipleBrands,
       };
-      
+
       setUser(userData);
       localStorage.setItem('operus_user', JSON.stringify(userData));
-      
+
       // Verificar se precisa selecionar marca
       if (userData.hasMultipleBrands) {
         const selectedBrand = localStorage.getItem('selected_brand');
@@ -105,21 +107,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setNeedsBrandSelection(true);
         }
       }
-      
+
       setLoading(false);
       return true;
     }
-    
+
     setLoading(false);
     return false;
   };
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
     setLoading(true);
-    
+
     // Simular uma chamada de API
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const userData: User = {
       id: Math.random().toString(36),
       name,
@@ -127,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: 'employee',
       hasMultipleBrands: false,
     };
-    
+
     setUser(userData);
     localStorage.setItem('operus_user', JSON.stringify(userData));
     setLoading(false);
@@ -141,11 +143,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('selected_brand');
   };
 
+  const updateUser = (data: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem('operus_user', JSON.stringify(updatedUser));
+    }
+  };
+
   const value = {
     user,
     login,
     register,
     logout,
+    updateUser,
     isAuthenticated: !!user,
     loading,
     needsBrandSelection,

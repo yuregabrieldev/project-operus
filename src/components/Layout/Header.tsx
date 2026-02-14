@@ -13,13 +13,19 @@ import { toast } from '@/hooks/use-toast';
 import { StoreForm } from '../Store/StoreForm';
 import { cn } from '@/lib/utils';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onTabChange?: (tab: string) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
   const { selectedBrand } = useBrand();
   const { user, logout } = useAuth();
   const { language, setLanguage } = useLanguage();
 
   const [showStoreForm, setShowStoreForm] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return document.documentElement.classList.contains('dark');
+  });
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -58,10 +64,16 @@ const Header: React.FC = () => {
   };
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     toast({
-      title: darkMode ? "Modo Claro" : "Modo Noturno",
-      description: darkMode ? "Tema claro ativado." : "Tema noturno ativado.",
+      title: newMode ? "Modo Noturno" : "Modo Claro",
+      description: newMode ? "Tema noturno ativado." : "Tema claro ativado.",
     });
   };
 
@@ -85,6 +97,15 @@ const Header: React.FC = () => {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  // Sample notifications
+  const notifications = [
+    { id: '1', text: 'Estoque baixo: Açaí 10L', time: 'há 5 min', read: false },
+    { id: '2', text: 'Checklist pendente: Abertura Loja', time: 'há 15 min', read: false },
+    { id: '3', text: 'Licença expirando: Alvará Sanitário', time: 'há 1h', read: true },
+  ];
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 h-16 flex items-center">
@@ -182,16 +203,48 @@ const Header: React.FC = () => {
               title="Notificações"
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 rounded-full text-white text-[10px] font-bold px-1">
+                  {unreadCount}
+                </span>
+              )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="px-4 py-2 border-b border-gray-100">
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
+                  {unreadCount > 0 && (
+                    <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
+                      {unreadCount} novas
+                    </Badge>
+                  )}
                 </div>
-                <div className="py-2 px-4 text-sm text-gray-500 text-center">
-                  Nenhuma notificação nova
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.map(notif => (
+                    <div
+                      key={notif.id}
+                      className={cn(
+                        "px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-b-0",
+                        !notif.read && "bg-blue-50/50"
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        {!notif.read && (
+                          <span className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0" />
+                        )}
+                        <div className={cn(!notif.read ? "" : "ml-4")}>
+                          <p className="text-sm text-gray-800">{notif.text}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{notif.time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-4 py-2 border-t border-gray-100">
+                  <button className="text-xs text-blue-600 hover:text-blue-800 font-medium w-full text-center">
+                    Ver todas as notificações
+                  </button>
                 </div>
               </div>
             )}
@@ -210,9 +263,17 @@ const Header: React.FC = () => {
               }}
               className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                {user?.name ? getInitials(user.name) : 'U'}
-              </div>
+              {user?.imageUrl ? (
+                <img
+                  src={user.imageUrl}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                  {user?.name ? getInitials(user.name) : 'U'}
+                </div>
+              )}
               <span className="text-sm font-medium text-gray-700 hidden md:block">
                 {user?.name}
               </span>
@@ -234,14 +295,20 @@ const Header: React.FC = () => {
                 <div className="py-1">
                   <button
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    onClick={() => setShowUserMenu(false)}
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      onTabChange?.('profile');
+                    }}
                   >
                     <User className="h-4 w-4 text-gray-400" />
                     Perfil
                   </button>
                   <button
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    onClick={() => setShowUserMenu(false)}
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      onTabChange?.('settings');
+                    }}
                   >
                     <Settings className="h-4 w-4 text-gray-400" />
                     Configurações
