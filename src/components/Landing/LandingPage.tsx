@@ -18,8 +18,12 @@ import {
   Star,
   ArrowRight,
   Menu,
-  X
+  X,
+  Phone,
+  Sparkles
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 const LandingPage: React.FC = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -27,6 +31,11 @@ const LandingPage: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '' });
+  const [isAnnual, setIsAnnual] = useState(false);
+  const [showSubscribe, setShowSubscribe] = useState(false);
+  const [subscribePlan, setSubscribePlan] = useState('');
+  const [subscribeForm, setSubscribeForm] = useState({ name: '', email: '', phone: '', countryCode: '+351' });
+  const [subscribeSuccess, setSubscribeSuccess] = useState(false);
   const { login, register, loading } = useAuth();
   const { toast } = useToast();
 
@@ -377,6 +386,81 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Planos & Preços</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">Escolha o plano ideal para o seu negócio</p>
+
+            {/* Annual toggle */}
+            <div className="flex items-center justify-center gap-3">
+              <span className={`text-sm font-medium ${!isAnnual ? 'text-gray-900' : 'text-gray-400'}`}>Mensal</span>
+              <button onClick={() => setIsAnnual(!isAnnual)} className={`relative w-14 h-7 rounded-full transition-colors ${isAnnual ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-transform ${isAnnual ? 'translate-x-7' : ''}`} />
+              </button>
+              <span className={`text-sm font-medium ${isAnnual ? 'text-gray-900' : 'text-gray-400'}`}>Anual</span>
+              {isAnnual && <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Poupe ~9%</Badge>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Starter */}
+            <Card className="relative hover:shadow-xl transition-all border-2 border-gray-200">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-2xl">Starter</CardTitle>
+                <CardDescription className="text-gray-500">Para pequenos negócios</CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="mb-6">
+                  <span className="text-5xl font-bold text-gray-900">€{isAnnual ? '26,50' : '29'}</span>
+                  <span className="text-gray-500">/{isAnnual ? 'mês (faturado anualmente)' : 'mês'}</span>
+                </div>
+                <ul className="text-left space-y-3 mb-8">
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Gestão de Estoque</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Dashboard Inteligente</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Gestão de Faturas</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Trânsito de Produtos</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Gestão de Equipa</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Gestão de Caixa</span></li>
+                </ul>
+                <Button className="w-full" variant="outline" size="lg" onClick={() => { setSubscribePlan('Starter'); setShowSubscribe(true); setSubscribeSuccess(false); }}>
+                  Subscrever Starter
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Business */}
+            <Card className="relative hover:shadow-xl transition-all border-2 border-blue-500 shadow-lg">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <Badge className="bg-blue-600 text-white px-4 py-1 gap-1"><Sparkles className="h-3 w-3" /> Popular</Badge>
+              </div>
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-2xl">Business</CardTitle>
+                <CardDescription className="text-gray-500">Para crescimento acelerado</CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="mb-6">
+                  <span className="text-5xl font-bold text-gray-900">€{isAnnual ? '32' : '35'}</span>
+                  <span className="text-gray-500">/{isAnnual ? 'mês (faturado anualmente)' : 'mês'}</span>
+                </div>
+                <ul className="text-left space-y-3 mb-8">
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Tudo do Starter</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" /><span className="font-semibold text-blue-700">Gestão de Desperdício</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" /><span className="font-semibold text-blue-700">Gestão de Produção</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Relatórios avançados</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Suporte prioritário</span></li>
+                  <li className="flex items-start gap-2"><CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Integrações avançadas</span></li>
+                </ul>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700" size="lg" onClick={() => { setSubscribePlan('Business'); setShowSubscribe(true); setSubscribeSuccess(false); }}>
+                  Subscrever Business
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-blue-600">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
@@ -409,6 +493,70 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
+      {/* Subscribe Dialog */}
+      <Dialog open={showSubscribe} onOpenChange={(open) => { if (!open) { setShowSubscribe(false); setSubscribeSuccess(false); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-blue-600" /> Subscrever Plano {subscribePlan}
+            </DialogTitle>
+            <DialogDescription>
+              Preencha os seus dados de contacto para solicitar a subscrição.
+            </DialogDescription>
+          </DialogHeader>
+          {subscribeSuccess ? (
+            <div className="text-center py-6">
+              <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="h-8 w-8 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Pedido Recebido!</h3>
+              <p className="text-gray-600 text-sm">Obrigado pelo interesse no plano <strong>{subscribePlan}</strong>. A nossa equipa irá entrar em contacto consigo em breve.</p>
+              <Button className="mt-6" onClick={() => { setShowSubscribe(false); setSubscribeSuccess(false); }}>Fechar</Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label>Nome *</Label>
+                <Input placeholder="Seu nome completo" value={subscribeForm.name} onChange={e => setSubscribeForm(p => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Email *</Label>
+                <Input type="email" placeholder="seu@email.com" value={subscribeForm.email} onChange={e => setSubscribeForm(p => ({ ...p, email: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Telefone *</Label>
+                <div className="flex gap-2">
+                  <Select value={subscribeForm.countryCode} onValueChange={v => setSubscribeForm(p => ({ ...p, countryCode: v }))}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="+351">🇵🇹 +351</SelectItem>
+                      <SelectItem value="+55">🇧🇷 +55</SelectItem>
+                      <SelectItem value="+34">🇪🇸 +34</SelectItem>
+                      <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                      <SelectItem value="+33">🇫🇷 +33</SelectItem>
+                      <SelectItem value="+49">🇩🇪 +49</SelectItem>
+                      <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input className="flex-1" placeholder="912 345 678" value={subscribeForm.phone} onChange={e => setSubscribeForm(p => ({ ...p, phone: e.target.value }))} />
+                </div>
+              </div>
+              <Button
+                className="w-full"
+                disabled={!subscribeForm.name || !subscribeForm.email || !subscribeForm.phone}
+                onClick={() => {
+                  setSubscribeSuccess(true);
+                  setSubscribeForm({ name: '', email: '', phone: '', countryCode: '+351' });
+                }}
+              >
+                Enviar Pedido de Subscrição
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

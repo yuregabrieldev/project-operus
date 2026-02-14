@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import {
     Users, Building2, TrendingUp, TrendingDown, Clock, DollarSign,
@@ -11,7 +10,6 @@ import {
 
 const DevDashboard: React.FC = () => {
     const { user } = useAuth();
-    const [period, setPeriod] = useState('30');
 
     const today = new Date().toLocaleDateString('pt-PT', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -47,23 +45,6 @@ const DevDashboard: React.FC = () => {
                     <CalendarDays className="h-4 w-4" />
                     {today}
                 </p>
-            </div>
-
-            {/* Period Filter */}
-            <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-500">Período:</span>
-                <Select value={period} onValueChange={setPeriod}>
-                    <SelectTrigger className="w-[200px] h-9">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="7">Últimos 7 dias</SelectItem>
-                        <SelectItem value="30">Últimos 30 dias</SelectItem>
-                        <SelectItem value="60">Últimos 60 dias</SelectItem>
-                        <SelectItem value="90">Últimos 90 dias</SelectItem>
-                        <SelectItem value="365">Último ano</SelectItem>
-                    </SelectContent>
-                </Select>
             </div>
 
             {/* Stats Cards */}
@@ -125,7 +106,7 @@ const DevDashboard: React.FC = () => {
                                     <span className={`text-xs font-semibold ${stats.revenueChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                                         {stats.revenueChange >= 0 ? '+' : ''}{stats.revenueChange}%
                                     </span>
-                                    <span className="text-xs text-gray-400">vs período anterior</span>
+                                    <span className="text-xs text-gray-400">vs mês anterior</span>
                                 </div>
                             </div>
                             <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">

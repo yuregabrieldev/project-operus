@@ -9,10 +9,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     Building2, Store, DollarSign, Search, Edit, CheckCircle, Trash2,
-    ArrowLeft, Upload, X, Eye, Power, AlertTriangle
+    ArrowLeft, Upload, X, Power, AlertTriangle, Plus, UserPlus, Image as ImageIcon
 } from 'lucide-react';
 
 type BrandStatus = 'active' | 'pending' | 'inactive';
+
+interface DemoStore {
+    id: string;
+    name: string;
+    address: string;
+    responsible: string;
+    contact: string;
+    plan: 'Starter' | 'Business';
+    planValue: number;
+    status: BrandStatus;
+    imageUrl?: string;
+}
 
 interface DemoBrand {
     id: string;
@@ -23,17 +35,14 @@ interface DemoBrand {
     status: BrandStatus;
     totalRevenue: number;
     stores: DemoStore[];
+    imageUrl?: string;
 }
 
-interface DemoStore {
+interface SystemUser {
     id: string;
     name: string;
-    responsible: string;
-    contact: string;
-    plan: 'Starter' | 'Business';
-    planValue: number;
-    status: BrandStatus;
-    attachment?: string;
+    email: string;
+    role: string;
 }
 
 const DevBrands: React.FC = () => {
@@ -42,32 +51,60 @@ const DevBrands: React.FC = () => {
     const [selectedBrand, setSelectedBrand] = useState<DemoBrand | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<{ type: 'brand' | 'store'; id: string } | null>(null);
+    const [showCreateBrand, setShowCreateBrand] = useState(false);
+    const [showAddStore, setShowAddStore] = useState(false);
+
+    // Create Brand form state
+    const [newBrandName, setNewBrandName] = useState('');
+    const [newBrandImage, setNewBrandImage] = useState('');
+    const [adminSearch, setAdminSearch] = useState('');
+    const [selectedAdmin, setSelectedAdmin] = useState<SystemUser | null>(null);
+
+    // Add Store form state
+    const [newStoreName, setNewStoreName] = useState('');
+    const [newStoreAddress, setNewStoreAddress] = useState('');
+    const [newStoreImage, setNewStoreImage] = useState('');
+    const [newStorePlan, setNewStorePlan] = useState<'Starter' | 'Business'>('Starter');
+    const [storeAdminSearch, setStoreAdminSearch] = useState('');
+    const [selectedStoreAdmin, setSelectedStoreAdmin] = useState<SystemUser | null>(null);
 
     const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+
+    // System users for admin assignment
+    const systemUsers: SystemUser[] = [
+        { id: 'u1', name: 'João Silva', email: 'joao@operus.com', role: 'admin' },
+        { id: 'u2', name: 'Maria Santos', email: 'maria@operus.com', role: 'manager' },
+        { id: 'u3', name: 'Pedro Costa', email: 'pedro@operus.com', role: 'admin' },
+        { id: 'u4', name: 'Ana Lima', email: 'ana@operus.com', role: 'manager' },
+        { id: 'u5', name: 'Carlos Mendes', email: 'carlos@operus.com', role: 'admin' },
+        { id: 'u6', name: 'Sofia Oliveira', email: 'sofia@operus.com', role: 'admin' },
+        { id: 'u7', name: 'Rita Ferreira', email: 'rita@operus.com', role: 'manager' },
+        { id: 'u8', name: 'Miguel Sousa', email: 'miguel@operus.com', role: 'assistant' },
+    ];
 
     const demoBrands: DemoBrand[] = [
         {
             id: '1', name: 'Oakberry', storesCount: 3, responsible: 'João Silva',
             monthlyRevenue: 8500, status: 'active', totalRevenue: 102000,
             stores: [
-                { id: 's1', name: 'Alvalade', responsible: 'Maria Santos', contact: '+351 912 345 678', plan: 'Business', planValue: 149.90, status: 'active' },
-                { id: 's2', name: 'Rossio', responsible: 'Pedro Costa', contact: '+351 913 456 789', plan: 'Business', planValue: 149.90, status: 'active' },
-                { id: 's3', name: 'Colombo', responsible: 'Ana Lima', contact: '+351 914 567 890', plan: 'Starter', planValue: 49.90, status: 'pending' },
+                { id: 's1', name: 'Alvalade', address: 'Av. da Igreja 42, Lisboa', responsible: 'Maria Santos', contact: '+351 912 345 678', plan: 'Business', planValue: 149.90, status: 'active' },
+                { id: 's2', name: 'Rossio', address: 'Praça Dom Pedro IV, Lisboa', responsible: 'Pedro Costa', contact: '+351 913 456 789', plan: 'Business', planValue: 149.90, status: 'active' },
+                { id: 's3', name: 'Colombo', address: 'Centro Colombo, Lisboa', responsible: 'Ana Lima', contact: '+351 914 567 890', plan: 'Starter', planValue: 49.90, status: 'pending' },
             ]
         },
         {
             id: '2', name: 'Spike', storesCount: 2, responsible: 'Carlos Mendes',
             monthlyRevenue: 3200, status: 'active', totalRevenue: 38400,
             stores: [
-                { id: 's4', name: 'Saldanha', responsible: 'Rita Ferreira', contact: '+351 915 678 901', plan: 'Business', planValue: 149.90, status: 'active' },
-                { id: 's5', name: 'Benfica', responsible: 'Miguel Sousa', contact: '+351 916 789 012', plan: 'Starter', planValue: 49.90, status: 'inactive' },
+                { id: 's4', name: 'Saldanha', address: 'Av. da República, Lisboa', responsible: 'Rita Ferreira', contact: '+351 915 678 901', plan: 'Business', planValue: 149.90, status: 'active' },
+                { id: 's5', name: 'Benfica', address: 'Estrada de Benfica, Lisboa', responsible: 'Miguel Sousa', contact: '+351 916 789 012', plan: 'Starter', planValue: 49.90, status: 'inactive' },
             ]
         },
         {
             id: '3', name: 'Green Bowl', storesCount: 1, responsible: 'Sofia Oliveira',
             monthlyRevenue: 1500, status: 'pending', totalRevenue: 0,
             stores: [
-                { id: 's6', name: 'Amoreiras', responsible: 'Sofia Oliveira', contact: '+351 917 890 123', plan: 'Starter', planValue: 49.90, status: 'pending' },
+                { id: 's6', name: 'Amoreiras', address: 'Centro Amoreiras, Lisboa', responsible: 'Sofia Oliveira', contact: '+351 917 890 123', plan: 'Starter', planValue: 49.90, status: 'pending' },
             ]
         },
         {
@@ -103,19 +140,52 @@ const DevBrands: React.FC = () => {
         setDeleteTarget(null);
     };
 
+    const filteredAdminUsers = systemUsers.filter(u =>
+        u.name.toLowerCase().includes(adminSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(adminSearch.toLowerCase())
+    );
+
+    const filteredStoreAdminUsers = systemUsers.filter(u =>
+        u.name.toLowerCase().includes(storeAdminSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(storeAdminSearch.toLowerCase())
+    );
+
+    const resetCreateBrand = () => {
+        setNewBrandName('');
+        setNewBrandImage('');
+        setAdminSearch('');
+        setSelectedAdmin(null);
+        setShowCreateBrand(false);
+    };
+
+    const resetAddStore = () => {
+        setNewStoreName('');
+        setNewStoreAddress('');
+        setNewStoreImage('');
+        setNewStorePlan('Starter');
+        setStoreAdminSearch('');
+        setSelectedStoreAdmin(null);
+        setShowAddStore(false);
+    };
+
     // Brand Detail View
     if (selectedBrand) {
         return (
             <div className="p-6 space-y-6">
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedBrand(null)} className="gap-2">
-                        <ArrowLeft className="h-4 w-4" /> Voltar
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                            {selectedBrand.name} {statusBadge(selectedBrand.status)}
-                        </h1>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" size="sm" onClick={() => setSelectedBrand(null)} className="gap-2">
+                            <ArrowLeft className="h-4 w-4" /> Voltar
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                                {selectedBrand.name} {statusBadge(selectedBrand.status)}
+                            </h1>
+                        </div>
                     </div>
+                    <Button className="gap-2" onClick={() => setShowAddStore(true)}>
+                        <Plus className="h-4 w-4" /> Nova Loja
+                    </Button>
                 </div>
 
                 {/* Brand Revenue */}
@@ -138,8 +208,8 @@ const DevBrands: React.FC = () => {
                             <thead>
                                 <tr className="border-b bg-gray-50/80">
                                     <th className="text-left p-3 font-semibold text-gray-600">Loja</th>
+                                    <th className="text-left p-3 font-semibold text-gray-600">Endereço</th>
                                     <th className="text-left p-3 font-semibold text-gray-600">Responsável</th>
-                                    <th className="text-left p-3 font-semibold text-gray-600">Contato</th>
                                     <th className="text-center p-3 font-semibold text-gray-600">Plano</th>
                                     <th className="text-right p-3 font-semibold text-gray-600">Valor</th>
                                     <th className="text-center p-3 font-semibold text-gray-600">Status</th>
@@ -153,8 +223,8 @@ const DevBrands: React.FC = () => {
                                     selectedBrand.stores.map(store => (
                                         <tr key={store.id} className="border-b hover:bg-gray-50/50">
                                             <td className="p-3 font-medium">{store.name}</td>
+                                            <td className="p-3 text-gray-500 text-xs">{store.address}</td>
                                             <td className="p-3 text-gray-600">{store.responsible}</td>
-                                            <td className="p-3 text-gray-500 text-xs">{store.contact}</td>
                                             <td className="p-3 text-center">
                                                 <Badge variant="outline" className={store.plan === 'Business' ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200'}>
                                                     {store.plan}
@@ -166,9 +236,6 @@ const DevBrands: React.FC = () => {
                                                 <div className="flex items-center justify-center gap-1">
                                                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title={store.status === 'active' ? 'Desativar' : 'Ativar'}>
                                                         <Power className={`h-3.5 w-3.5 ${store.status === 'active' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                                                    </Button>
-                                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Anexar comprovativo">
-                                                        <Upload className="h-3.5 w-3.5 text-blue-500" />
                                                     </Button>
                                                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Excluir" onClick={() => { setDeleteTarget({ type: 'store', id: store.id }); setShowDeleteConfirm(true); }}>
                                                         <Trash2 className="h-3.5 w-3.5 text-red-500" />
@@ -210,6 +277,94 @@ const DevBrands: React.FC = () => {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+
+                {/* Add Store Dialog */}
+                <Dialog open={showAddStore} onOpenChange={(open) => { if (!open) resetAddStore(); }}>
+                    <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <Plus className="h-5 w-5" /> Adicionar Loja a {selectedBrand.name}
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Nome da Loja *</Label>
+                                <Input value={newStoreName} onChange={e => setNewStoreName(e.target.value)} placeholder="Ex: Centro Colombo" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Endereço *</Label>
+                                <Input value={newStoreAddress} onChange={e => setNewStoreAddress(e.target.value)} placeholder="Ex: Av. Lusíada, Lisboa" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Imagem da Loja</Label>
+                                <div className="flex items-center gap-3">
+                                    <div className="h-16 w-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                                        <ImageIcon className="h-6 w-6 text-gray-400" />
+                                    </div>
+                                    <Button variant="outline" size="sm" className="gap-2">
+                                        <Upload className="h-3.5 w-3.5" /> Carregar
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Plano *</Label>
+                                <Select value={newStorePlan} onValueChange={(v: 'Starter' | 'Business') => setNewStorePlan(v)}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Starter">Starter — €29,00/mês</SelectItem>
+                                        <SelectItem value="Business">Business — €35,00/mês</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Administrador da Loja *</Label>
+                                {selectedStoreAdmin ? (
+                                    <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                        <div className="h-8 w-8 rounded-full bg-emerald-200 flex items-center justify-center text-sm font-bold text-emerald-700">
+                                            {selectedStoreAdmin.name.charAt(0)}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium">{selectedStoreAdmin.name}</p>
+                                            <p className="text-xs text-gray-500">{selectedStoreAdmin.email}</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setSelectedStoreAdmin(null)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Input placeholder="Buscar utilizador por nome ou email..." value={storeAdminSearch} onChange={e => setStoreAdminSearch(e.target.value)} />
+                                        {storeAdminSearch.length >= 2 && (
+                                            <div className="border rounded-lg max-h-32 overflow-y-auto">
+                                                {filteredStoreAdminUsers.length === 0 ? (
+                                                    <p className="p-3 text-sm text-gray-500 text-center">Nenhum utilizador encontrado</p>
+                                                ) : (
+                                                    filteredStoreAdminUsers.map(u => (
+                                                        <button key={u.id} onClick={() => { setSelectedStoreAdmin(u); setStoreAdminSearch(''); }} className="w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 text-left border-b last:border-0">
+                                                            <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">
+                                                                {u.name.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-medium">{u.name}</p>
+                                                                <p className="text-[11px] text-gray-400">{u.email} · {u.role}</p>
+                                                            </div>
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={resetAddStore}>Cancelar</Button>
+                            <Button disabled={!newStoreName || !newStoreAddress || !selectedStoreAdmin} onClick={resetAddStore} className="gap-2">
+                                <Plus className="h-4 w-4" /> Adicionar Loja
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     }
@@ -217,7 +372,12 @@ const DevBrands: React.FC = () => {
     // Brand List View
     return (
         <div className="p-6 space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Gestão de Marcas</h1>
+            <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-gray-900">Gestão de Marcas</h1>
+                <Button className="gap-2" onClick={() => setShowCreateBrand(true)}>
+                    <Plus className="h-4 w-4" /> Nova Marca
+                </Button>
+            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -320,6 +480,84 @@ const DevBrands: React.FC = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancelar</Button>
                         <Button variant="destructive" onClick={handleDelete}>Sim, Excluir</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Brand Dialog */}
+            <Dialog open={showCreateBrand} onOpenChange={(open) => { if (!open) resetCreateBrand(); }}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="h-5 w-5" /> Criar Nova Marca
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Nome da Marca *</Label>
+                            <Input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="Ex: Oakberry" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Imagem / Logo da Marca</Label>
+                            <div className="flex items-center gap-3">
+                                <div className="h-16 w-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                                    <ImageIcon className="h-6 w-6 text-gray-400" />
+                                </div>
+                                <Button variant="outline" size="sm" className="gap-2">
+                                    <Upload className="h-3.5 w-3.5" /> Carregar
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Administrador da Marca *</Label>
+                            <p className="text-xs text-gray-500">Busque e selecione um utilizador existente no sistema</p>
+                            {selectedAdmin ? (
+                                <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                    <div className="h-8 w-8 rounded-full bg-emerald-200 flex items-center justify-center text-sm font-bold text-emerald-700">
+                                        {selectedAdmin.name.charAt(0)}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium">{selectedAdmin.name}</p>
+                                        <p className="text-xs text-gray-500">{selectedAdmin.email}</p>
+                                    </div>
+                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setSelectedAdmin(null)}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <Input placeholder="Buscar utilizador por nome ou email..." value={adminSearch} onChange={e => setAdminSearch(e.target.value)} className="pl-10" />
+                                    </div>
+                                    {adminSearch.length >= 2 && (
+                                        <div className="border rounded-lg max-h-40 overflow-y-auto">
+                                            {filteredAdminUsers.length === 0 ? (
+                                                <p className="p-3 text-sm text-gray-500 text-center">Nenhum utilizador encontrado</p>
+                                            ) : (
+                                                filteredAdminUsers.map(u => (
+                                                    <button key={u.id} onClick={() => { setSelectedAdmin(u); setAdminSearch(''); }} className="w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 text-left border-b last:border-0">
+                                                        <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">
+                                                            {u.name.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium">{u.name}</p>
+                                                            <p className="text-[11px] text-gray-400">{u.email} · {u.role}</p>
+                                                        </div>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={resetCreateBrand}>Cancelar</Button>
+                        <Button disabled={!newBrandName || !selectedAdmin} onClick={resetCreateBrand} className="gap-2">
+                            <Plus className="h-4 w-4" /> Criar Marca
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

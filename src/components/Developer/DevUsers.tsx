@@ -66,6 +66,12 @@ const DevUsers: React.FC = () => {
 
     const brands = [...new Set(demoUsers.map(u => u.brand))];
 
+    const brandStores: Record<string, string[]> = {
+        'Oakberry': ['Alvalade', 'Rossio', 'Colombo'],
+        'Spike': ['Saldanha', 'Benfica'],
+        'Green Bowl': ['Amoreiras'],
+    };
+
     const statusBadge = (status: UserStatus) => {
         const s = { active: 'bg-emerald-100 text-emerald-700 border-emerald-200', pending: 'bg-amber-100 text-amber-700 border-amber-200', inactive: 'bg-gray-100 text-gray-600 border-gray-200' };
         const l = { active: 'Ativo', pending: 'Pendente', inactive: 'Inativo' };
@@ -163,6 +169,7 @@ const DevUsers: React.FC = () => {
                                 <th className="text-left p-3 font-semibold text-gray-600">Nome</th>
                                 <th className="text-left p-3 font-semibold text-gray-600">Email</th>
                                 <th className="text-left p-3 font-semibold text-gray-600">Marca</th>
+                                <th className="text-left p-3 font-semibold text-gray-600">Loja</th>
                                 <th className="text-center p-3 font-semibold text-gray-600">Status</th>
                                 <th className="text-center p-3 font-semibold text-gray-600">Tipo</th>
                                 <th className="text-center p-3 font-semibold text-gray-600">Ações</th>
@@ -174,6 +181,7 @@ const DevUsers: React.FC = () => {
                                     <td className="p-3 font-medium">{user.name}</td>
                                     <td className="p-3 text-gray-500 text-xs">{user.email}</td>
                                     <td className="p-3">{user.brand}</td>
+                                    <td className="p-3 text-gray-500 text-xs">{user.stores.join(', ')}</td>
                                     <td className="p-3 text-center">{statusBadge(user.status)}</td>
                                     <td className="p-3 text-center">{roleBadge(user.role)}</td>
                                     <td className="p-3 text-center">
@@ -302,6 +310,15 @@ const DevUsers: React.FC = () => {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs font-semibold">Loja</Label>
+                            <Select value={newUser.store} onValueChange={v => setNewUser(p => ({ ...p, store: v }))} disabled={!newUser.brand}>
+                                <SelectTrigger><SelectValue placeholder={newUser.brand ? 'Selecionar loja' : 'Selecione a marca primeiro'} /></SelectTrigger>
+                                <SelectContent>
+                                    {(brandStores[newUser.brand] || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                     <DialogFooter>

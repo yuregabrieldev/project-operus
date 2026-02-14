@@ -126,18 +126,7 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
               </div>
             </div>
           )}
-          {selectedBrand && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCreateStore}
-              className="flex items-center gap-1.5 text-xs h-8"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <Store className="w-3.5 h-3.5" />
-              Nova Loja
-            </Button>
-          )}
+          {/* Nova Loja button removed — store creation via dev brand management */}
         </div>
 
         {/* Right: Action icons + User */}

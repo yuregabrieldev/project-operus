@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { ImagePlus } from 'lucide-react';
 
 interface StoreEditFormProps {
   store: any;
@@ -24,6 +25,8 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
     contact: '',
     manager: '',
     brandId: '',
+    image: null as File | null,
+    imagePreview: '' as string,
     isActive: true
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +39,8 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
         contact: store.contact || '',
         manager: store.manager || '',
         brandId: store.brandId || '',
+        image: null,
+        imagePreview: store.imageUrl || '',
         isActive: store.isActive !== undefined ? store.isActive : true
       });
     }
@@ -46,7 +51,7 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
     if (!user) return;
 
     setIsLoading(true);
-    
+
     try {
       const updatedStore = {
         ...store,
@@ -60,12 +65,12 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
       };
 
       await updateStore(updatedStore);
-      
+
       toast({
         title: "Loja atualizada com sucesso!",
         description: `As informações da loja ${formData.name} foram atualizadas.`,
       });
-      
+
       onClose();
     } catch (error) {
       console.error('Erro ao atualizar loja:', error);
@@ -154,6 +159,22 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Imagem da Loja</Label>
+            {formData.imagePreview ? (
+              <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+                <img src={formData.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setFormData(p => ({ ...p, image: null, imagePreview: '' }))} className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-black/70">&times;</button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors">
+                <ImagePlus className="h-6 w-6 text-gray-400 mb-1" />
+                <span className="text-xs text-gray-500">Clique para adicionar imagem</span>
+                <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { setFormData(p => ({ ...p, image: f, imagePreview: URL.createObjectURL(f) })); } }} />
+              </label>
+            )}
           </div>
 
           <div className="flex items-center space-x-2">

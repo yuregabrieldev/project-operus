@@ -384,7 +384,7 @@ const CashManager: React.FC = () => {
                     <tr key={e.id} className="border-b last:border-0">
                       <td className="p-3">{new Date(e.date + 'T12:00:00').toLocaleDateString('pt-PT')}</td>
                       <td className="p-3">{fmt(e.depositValue)}</td>
-                      <td className="p-3"><Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setShowDetailDialog(false); setViewingEntry(e); }}><Plus className="h-3.5 w-3.5" /></Button></td>
+                      <td className="p-3"><Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setShowDetailDialog(false); setViewingEntry(e); }}><Eye className="h-3.5 w-3.5" /></Button></td>
                     </tr>
                   ))}
                   <tr className="bg-gray-50 font-bold">
@@ -411,15 +411,28 @@ const CashManager: React.FC = () => {
                   {storeDeposits.length === 0 ? (
                     <tr><td colSpan={3} className="p-6 text-center text-gray-500">Nenhum depósito realizado</td></tr>
                   ) : storeDeposits.map(d => (
-                    <tr key={d.id} className="border-b last:border-0">
-                      <td className="p-3">{new Date(d.date + 'T12:00:00').toLocaleDateString('pt-PT')}</td>
-                      <td className="p-3">{fmt(d.value)}</td>
-                      <td className="p-3 flex items-center gap-1">
-                        {d.hasComment && <MessageSquare className="h-3 w-3 text-gray-400" />}
-                        {d.hasAttachment && <Paperclip className="h-3 w-3 text-gray-400" />}
-                        <Plus className="h-3 w-3 text-gray-400" />
-                      </td>
-                    </tr>
+                    <React.Fragment key={d.id}>
+                      <tr className="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                        <td className="p-3">{new Date(d.date + 'T12:00:00').toLocaleDateString('pt-PT')}</td>
+                        <td className="p-3">{fmt(d.value)}</td>
+                        <td className="p-3 flex items-center gap-1.5">
+                          {d.hasComment && <span title="Tem comentário"><MessageSquare className="h-3.5 w-3.5 text-blue-400" /></span>}
+                          {d.hasAttachment && <span title="Tem comprovante"><Paperclip className="h-3.5 w-3.5 text-amber-500" /></span>}
+                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
+                            setDepositStoreId(d.storeId); setDepositFormValue(d.value); setDepositFormDate(d.date); setDepositFormComment(d.comment || ''); setShowHistoryDialog(false); setShowDepositDialog(true);
+                          }}><Edit className="h-3.5 w-3.5" /></Button>
+                        </td>
+                      </tr>
+                      {d.hasComment && d.comment && (
+                        <tr className="border-b last:border-0">
+                          <td colSpan={3} className="px-3 pb-3 pt-0">
+                            <div className="text-xs text-gray-500 bg-gray-50 rounded-md p-2 italic">
+                              <MessageSquare className="h-3 w-3 inline mr-1 text-gray-400" />{d.comment}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>

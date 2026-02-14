@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { ImagePlus } from 'lucide-react';
 
 interface StoreFormProps {
   isOpen: boolean;
@@ -21,6 +22,8 @@ export const StoreForm: React.FC<StoreFormProps> = ({ isOpen, onClose }) => {
     address: '',
     contact: '',
     manager: '',
+    image: null as File | null,
+    imagePreview: '' as string,
     isActive: true
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +33,7 @@ export const StoreForm: React.FC<StoreFormProps> = ({ isOpen, onClose }) => {
     if (!user || !selectedBrand) return;
 
     setIsLoading(true);
-    
+
     try {
       const newStore = {
         id: Date.now().toString(),
@@ -44,10 +47,10 @@ export const StoreForm: React.FC<StoreFormProps> = ({ isOpen, onClose }) => {
       };
 
       await addStore(newStore);
-      
+
       toast({
-        title: "Loja criada com sucesso!",
-        description: `A loja ${formData.name} foi criada para a marca ${selectedBrand.name}.`,
+        title: "Pedido de loja enviado!",
+        description: `O pedido para a loja ${formData.name} foi enviado para aprovação do desenvolvedor.`,
       });
 
       setFormData({
@@ -55,9 +58,11 @@ export const StoreForm: React.FC<StoreFormProps> = ({ isOpen, onClose }) => {
         address: '',
         contact: '',
         manager: '',
+        image: null,
+        imagePreview: '',
         isActive: true
       });
-      
+
       onClose();
     } catch (error) {
       console.error('Erro ao criar loja:', error);
@@ -104,6 +109,22 @@ export const StoreForm: React.FC<StoreFormProps> = ({ isOpen, onClose }) => {
               placeholder="Endereço completo da loja"
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Imagem da Loja</Label>
+            {formData.imagePreview ? (
+              <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+                <img src={formData.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setFormData(p => ({ ...p, image: null, imagePreview: '' }))} className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-black/70">&times;</button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors">
+                <ImagePlus className="h-6 w-6 text-gray-400 mb-1" />
+                <span className="text-xs text-gray-500">Clique para adicionar imagem</span>
+                <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { setFormData(p => ({ ...p, image: f, imagePreview: URL.createObjectURL(f) })); } }} />
+              </label>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,6 +47,13 @@ const MainApp = () => {
   // Developer starts on dev-dashboard, others on dashboard
   const [activeTab, setActiveTab] = useState(isDev ? 'dev-dashboard' : 'dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Smooth scroll to top on tab change
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   console.log('🚀 MainApp render - isAuthenticated:', isAuthenticated, 'needsBrandSelection:', needsBrandSelection, 'selectedBrand:', selectedBrand?.name);
 
@@ -136,14 +143,16 @@ const MainApp = () => {
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
       />
 
       <div className="flex-1 flex flex-col">
-        <Header onTabChange={setActiveTab} />
+        <Header onTabChange={handleTabChange} />
 
-        <main className="flex-1 overflow-auto">
-          {renderContent()}
+        <main ref={mainRef} className="flex-1 overflow-auto scroll-smooth">
+          <div key={activeTab} className="animate-in fade-in duration-200">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>
