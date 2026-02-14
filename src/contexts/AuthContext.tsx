@@ -5,9 +5,11 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'employee';
+  role: 'developer' | 'admin' | 'manager' | 'assistant';
   hasMultipleBrands?: boolean;
   imageUrl?: string;
+  permissions?: string[];
+  pin?: string;
 }
 
 interface AuthContextType {
@@ -62,25 +64,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Credenciais de exemplo com informação de múltiplas marcas
     const validCredentials = [
       {
+        email: 'dev@operus.com',
+        password: '123456',
+        name: 'Desenvolvedor',
+        role: 'developer' as const,
+        hasMultipleBrands: false,
+        permissions: ['*'],
+        pin: undefined as string | undefined,
+      },
+      {
         email: 'admin@operus.com',
         password: '123456',
         name: 'Administrador',
         role: 'admin' as const,
-        hasMultipleBrands: true
+        hasMultipleBrands: true,
+        permissions: ['dashboard', 'inventory', 'operations', 'transit', 'purchases', 'cashbox', 'invoices', 'licenses', 'waste', 'checklists', 'stores', 'users', 'settings'],
+        pin: undefined as string | undefined,
       },
       {
         email: 'manager@operus.com',
         password: '123456',
         name: 'Gerente',
         role: 'manager' as const,
-        hasMultipleBrands: true
+        hasMultipleBrands: true,
+        permissions: ['dashboard', 'inventory', 'operations', 'transit', 'purchases', 'cashbox', 'invoices', 'licenses', 'waste', 'checklists', 'users', 'settings'],
+        pin: undefined as string | undefined,
       },
       {
         email: 'funcionario@operus.com',
         password: '123456',
-        name: 'Funcionário',
-        role: 'employee' as const,
-        hasMultipleBrands: false
+        name: 'Assistente',
+        role: 'assistant' as const,
+        hasMultipleBrands: false,
+        permissions: ['inventory', 'operations', 'transit', 'purchases', 'waste', 'checklists'],
+        pin: '1234',
       },
     ];
 
@@ -95,6 +112,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: userCredentials.email,
         role: userCredentials.role,
         hasMultipleBrands: userCredentials.hasMultipleBrands,
+        permissions: userCredentials.permissions,
+        pin: userCredentials.pin,
       };
 
       setUser(userData);
@@ -126,8 +145,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: Math.random().toString(36),
       name,
       email,
-      role: 'employee',
+      role: 'assistant',
       hasMultipleBrands: false,
+      permissions: ['inventory', 'operations', 'transit', 'purchases', 'waste', 'checklists'],
     };
 
     setUser(userData);

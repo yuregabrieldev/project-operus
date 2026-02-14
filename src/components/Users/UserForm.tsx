@@ -21,7 +21,7 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'employee' as 'admin' | 'manager' | 'employee',
+    role: 'assistant' as 'admin' | 'manager' | 'assistant',
     selectedStores: [] as string[],
     sendWelcomeEmail: true
   });
@@ -57,7 +57,7 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
           address: store.address,
           isActive: store.isActive
         }));
-      
+
       const userData = {
         name: formData.name.trim(),
         email: formData.email.trim(),
@@ -78,7 +78,7 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
       setFormData({
         name: '',
         email: '',
-        role: 'employee',
+        role: 'assistant',
         selectedStores: [],
         sendWelcomeEmail: true
       });
@@ -108,7 +108,7 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
     setFormData({
       name: '',
       email: '',
-      role: 'employee',
+      role: 'assistant',
       selectedStores: [],
       sendWelcomeEmail: true
     });

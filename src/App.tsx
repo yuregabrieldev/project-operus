@@ -31,14 +31,22 @@ import ProductionManager from './components/Production/ProductionManager';
 import ProfilePage from './components/Profile/ProfilePage';
 import { StoreManager } from './components/Store/StoreManager';
 import { UserManager } from './components/Users/UserManager';
+import DevDashboard from './components/Developer/DevDashboard';
+import DevBrands from './components/Developer/DevBrands';
+import DevFinance from './components/Developer/DevFinance';
+import DevUsers from './components/Developer/DevUsers';
+import DevSettings from './components/Developer/DevSettings';
 
 const queryClient = new QueryClient();
 
 const MainApp = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { isAuthenticated, loading, needsBrandSelection } = useAuth();
+  const { isAuthenticated, loading, needsBrandSelection, user } = useAuth();
   const { selectedBrand } = useBrand();
+  const isDev = user?.role === 'developer';
+
+  // Developer starts on dev-dashboard, others on dashboard
+  const [activeTab, setActiveTab] = useState(isDev ? 'dev-dashboard' : 'dashboard');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   console.log('🚀 MainApp render - isAuthenticated:', isAuthenticated, 'needsBrandSelection:', needsBrandSelection, 'selectedBrand:', selectedBrand?.name);
 
@@ -59,16 +67,28 @@ const MainApp = () => {
     return <LandingPage />;
   }
 
-  // Mostrar seleção de marcas se necessário OU se não há marca selecionada
-  if (needsBrandSelection || !selectedBrand) {
+  // Developer bypasses brand selection entirely
+  if (!isDev && (needsBrandSelection || !selectedBrand)) {
     console.log('🎪 Mostrando BrandSelector - needsBrandSelection:', needsBrandSelection, 'selectedBrand:', selectedBrand);
     return <BrandSelector />;
   }
 
-  console.log('✅ Mostrando aplicação principal com marca:', selectedBrand.name);
+  console.log('✅ Mostrando aplicação principal com marca:', selectedBrand?.name);
 
   const renderContent = () => {
     switch (activeTab) {
+      // Developer pages
+      case 'dev-dashboard':
+        return <DevDashboard />;
+      case 'dev-brands':
+        return <DevBrands />;
+      case 'dev-finance':
+        return <DevFinance />;
+      case 'dev-users':
+        return <DevUsers />;
+      case 'dev-settings':
+        return <DevSettings />;
+      // Regular pages
       case 'dashboard':
         return <Dashboard />;
       case 'inventory':
@@ -106,7 +126,7 @@ const MainApp = () => {
       case 'profile':
         return <ProfilePage />;
       default:
-        return <Dashboard />;
+        return isDev ? <DevDashboard /> : <Dashboard />;
     }
   };
 

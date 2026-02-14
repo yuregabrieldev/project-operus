@@ -12,7 +12,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'employee';
+  role: 'admin' | 'manager' | 'assistant';
   stores: Store[];
   isActive: boolean;
   createdAt: Date;
@@ -22,7 +22,7 @@ interface User {
 interface CreateUserData {
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'employee';
+  role: 'admin' | 'manager' | 'assistant';
   stores: Store[];
   sendWelcomeEmail?: boolean;
 }
@@ -31,7 +31,7 @@ interface UpdateUserData {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'employee';
+  role: 'admin' | 'manager' | 'assistant';
   stores: Store[];
 }
 
@@ -92,7 +92,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           id: '2',
           name: 'Carlos Santos',
           email: 'carlos@operus.com',
-          role: 'employee',
+          role: 'assistant',
           stores: convertedStores.slice(0, 1),
           isActive: true,
           createdAt: new Date('2024-02-20'),
@@ -101,7 +101,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           id: '3',
           name: 'Maria Costa',
           email: 'maria@operus.com',
-          role: 'employee',
+          role: 'assistant',
           stores: convertedStores.slice(1, 3),
           isActive: false,
           createdAt: new Date('2024-01-10'),
@@ -114,7 +114,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addUser = (userData: CreateUserData): string => {
     const tempPassword = generateRandomPassword();
-    
+
     const newUser: User = {
       id: Math.random().toString(36).substr(2, 9),
       name: userData.name,
@@ -127,7 +127,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     setUsers(prev => [...prev, newUser]);
-    
+
     // Simular envio de email de boas-vindas
     if (userData.sendWelcomeEmail) {
       console.log(`📧 Email de boas-vindas enviado para ${userData.email} com senha temporária: ${tempPassword}`);
@@ -137,25 +137,25 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateUser = (userData: UpdateUserData) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === userData.id 
-          ? { 
-              ...user, 
-              name: userData.name,
-              email: userData.email,
-              role: userData.role,
-              stores: userData.stores
-            }
+    setUsers(prev =>
+      prev.map(user =>
+        user.id === userData.id
+          ? {
+            ...user,
+            name: userData.name,
+            email: userData.email,
+            role: userData.role,
+            stores: userData.stores
+          }
           : user
       )
     );
   };
 
   const toggleUserStatus = (userId: string) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === userId 
+    setUsers(prev =>
+      prev.map(user =>
+        user.id === userId
           ? { ...user, isActive: !user.isActive }
           : user
       )
@@ -164,11 +164,11 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const generateTempPassword = (userId: string): string => {
     const tempPassword = generateRandomPassword();
-    
+
     // Marcar que o usuário precisa trocar a senha
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === userId 
+    setUsers(prev =>
+      prev.map(user =>
+        user.id === userId
           ? { ...user, needsPasswordChange: true }
           : user
       )

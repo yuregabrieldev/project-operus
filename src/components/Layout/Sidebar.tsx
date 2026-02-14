@@ -2,7 +2,8 @@ import React from 'react';
 import {
   LayoutDashboard, Package, Settings, DollarSign, FileText,
   ClipboardList, Truck, ShoppingCart,
-  Factory, Store, Users, ChevronLeft, ChevronRight, ArrowLeftRight, Shield, Trash2
+  Factory, Store, Users, ChevronLeft, ChevronRight, ArrowLeftRight, Shield, Trash2,
+  Building2, CreditCard, Code2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,7 +21,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
   const { user } = useAuth();
   const { t } = useLanguage();
 
-  const menuItems = [
+  // Developer menu — completely separate layout
+  const devMenuItems = [
+    { id: 'dev-dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dev-brands', label: 'Marcas', icon: Building2 },
+    { id: 'dev-finance', label: 'Finanças', icon: CreditCard },
+    { id: 'dev-users', label: 'Usuários', icon: Users },
+    { id: 'dev-settings', label: 'Configurações', icon: Settings },
+  ];
+
+  // Regular menu items filtered by role
+  const allMenuItems = [
     { id: 'dashboard', label: t('sidebar.dashboard'), icon: LayoutDashboard },
     { id: 'inventory', label: t('sidebar.inventory'), icon: Package },
     { id: 'operations', label: t('sidebar.operations'), icon: ArrowLeftRight },
@@ -31,16 +42,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
     { id: 'licenses', label: 'Licenças', icon: Shield },
     { id: 'waste', label: 'Desperdício', icon: Trash2 },
     { id: 'checklists', label: t('sidebar.checklists'), icon: ClipboardList },
-    ...(user?.role === 'admin' ? [
-      { id: 'stores', label: t('sidebar.stores'), icon: Store },
-      { id: 'users', label: t('sidebar.users'), icon: Users }
-    ] : []),
+    { id: 'stores', label: t('sidebar.stores'), icon: Store },
+    { id: 'users', label: t('sidebar.users'), icon: Users },
     { id: 'settings', label: t('sidebar.settings'), icon: Settings },
   ];
 
+  const getMenuItems = () => {
+    if (user?.role === 'developer') return devMenuItems;
+
+    const userPermissions = user?.permissions || [];
+    if (userPermissions.includes('*')) return allMenuItems;
+
+    return allMenuItems.filter(item => userPermissions.includes(item.id));
+  };
+
+  const menuItems = getMenuItems();
+  const isDev = user?.role === 'developer';
+
   return (
     <aside className={cn(
-      "bg-[#0f172a] flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out",
+      "flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out",
+      isDev ? "bg-[#1a1025]" : "bg-[#0f172a]",
       isCollapsed ? "w-[68px]" : "w-60"
     )}>
       {/* Brand Header */}
@@ -49,7 +71,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
         isCollapsed ? "justify-center" : "justify-between"
       )}>
         {!isCollapsed && (
-          <span className="text-white font-bold text-xl tracking-wide">OPERUS</span>
+          <div className="flex items-center gap-2">
+            <span className="text-white font-bold text-xl tracking-wide">OPERUS</span>
+            {isDev && (
+              <span className="text-[10px] bg-purple-500/30 text-purple-300 px-1.5 py-0.5 rounded font-mono">DEV</span>
+            )}
+          </div>
         )}
         <button
           onClick={onToggle}
@@ -61,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -72,20 +99,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
               onClick={() => onTabChange(item.id)}
               className={cn(
                 "w-full flex items-center gap-3 rounded-lg transition-all duration-200",
-                isCollapsed ? "justify-center px-0 py-3" : "px-3 py-2.5",
+                isCollapsed ? "justify-center px-0 py-2.5" : "px-3 py-2",
                 isActive
-                  ? "bg-white text-[#0f172a] shadow-lg shadow-white/10"
+                  ? isDev
+                    ? "bg-purple-500/20 text-purple-300 shadow-lg shadow-purple-500/10"
+                    : "bg-white text-[#0f172a] shadow-lg shadow-white/10"
                   : "text-gray-400 hover:text-white hover:bg-white/10"
               )}
             >
               <Icon className={cn(
                 "h-5 w-5 flex-shrink-0",
-                isActive ? "text-[#0f172a]" : ""
+                isActive ? (isDev ? "text-purple-300" : "text-[#0f172a]") : ""
               )} />
               {!isCollapsed && (
                 <span className={cn(
                   "text-sm font-medium truncate",
-                  isActive ? "text-[#0f172a]" : ""
+                  isActive ? (isDev ? "text-purple-300" : "text-[#0f172a]") : ""
                 )}>
                   {item.label}
                 </span>

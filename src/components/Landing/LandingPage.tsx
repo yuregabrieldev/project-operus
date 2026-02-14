@@ -7,13 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  BarChart3, 
-  Package, 
-  Truck, 
-  FileText, 
-  Shield, 
-  Users, 
+import {
+  BarChart3,
+  Package,
+  Truck,
+  FileText,
+  Shield,
+  Users,
   CheckCircle,
   Star,
   ArrowRight,
@@ -33,7 +33,7 @@ const LandingPage: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await login(loginForm.email, loginForm.password);
-    
+
     if (success) {
       toast({
         title: "Login realizado com sucesso!",
@@ -52,7 +52,7 @@ const LandingPage: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await register(registerForm.name, registerForm.email, registerForm.password);
-    
+
     if (success) {
       toast({
         title: "Cadastro realizado com sucesso!",
@@ -186,9 +186,10 @@ const LandingPage: React.FC = () => {
                     </div>
                     <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
                       <p className="font-semibold mb-2">Credenciais de teste:</p>
+                      <p className="text-purple-700 font-medium">🔧 Dev: dev@operus.com / 123456</p>
                       <p>Admin: admin@operus.com / 123456</p>
                       <p>Gerente: manager@operus.com / 123456</p>
-                      <p>Funcionário: funcionario@operus.com / 123456</p>
+                      <p>Assistente: funcionario@operus.com / 123456</p>
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? "Entrando..." : "Entrar"}
@@ -297,7 +298,7 @@ const LandingPage: React.FC = () => {
               <span className="text-blue-600"> inteligência</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              O Operus é a solução completa para gestão de estoque, vendas e operações. 
+              O Operus é a solução completa para gestão de estoque, vendas e operações.
               Simplifique processos, economize tempo e aumente seus lucros.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

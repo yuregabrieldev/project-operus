@@ -23,7 +23,7 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'employee' as 'admin' | 'manager' | 'employee',
+    role: 'assistant' as 'admin' | 'manager' | 'assistant',
     selectedStores: [] as string[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,7 +69,7 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
           address: store.address,
           isActive: store.isActive
         }));
-      
+
       const userData = {
         id: user.id,
         name: formData.name.trim(),
@@ -144,7 +144,7 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="employee">Funcionário</SelectItem>
+                <SelectItem value="assistant">Assistente</SelectItem>
                 <SelectItem value="manager">Gerente</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
