@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Settings, Package, Truck, Bell, Shield, Download, Upload, Plus, Edit, Trash2,
   Globe, Clock, DollarSign, Lock, Key, Eye, EyeOff, AlertTriangle, Save,
-  Database, HardDrive, Mail, MessageSquare, CheckCircle
+  Database, HardDrive, Mail, MessageSquare, CheckCircle, FileText, Calendar,
+  ChevronDown, ChevronUp, CreditCard
 } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -59,6 +60,25 @@ const SettingsManager: React.FC = () => {
   const [twoFactor, setTwoFactor] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState('30');
 
+  // Subscription state
+  const [expandedSubscription, setExpandedSubscription] = useState<string | null>(null);
+
+  // Demo subscription data
+  const subscriptionData = stores.map(store => ({
+    storeId: store.id,
+    storeName: store.name,
+    plan: store.id === '1' ? 'Business' : 'Starter',
+    periodicity: store.id === '1' ? 'Anual' : 'Mensal',
+    startDate: '2025-01-01',
+    endDate: store.id === '1' ? '2026-01-01' : '2025-07-01',
+    documents: store.id === '1' ? [
+      { id: 'd1', description: 'Contrato de Assinatura Business', date: '2025-01-01', value: 1200, filename: 'contrato_business_2025.pdf' },
+      { id: 'd2', description: 'Fatura Janeiro 2025', date: '2025-01-15', value: 100, filename: 'fatura_jan_2025.pdf' },
+    ] : [
+      { id: 'd3', description: 'Contrato de Assinatura Starter', date: '2025-01-01', value: 480, filename: 'contrato_starter_2025.pdf' },
+    ],
+  }));
+
   const tabs = [
     { id: 'general', label: 'Geral', icon: Settings },
     { id: 'notifications', label: 'Notificações', icon: Bell },
@@ -66,6 +86,7 @@ const SettingsManager: React.FC = () => {
     { id: 'suppliers', label: t('settings.suppliers'), icon: Truck },
     { id: 'security', label: t('settings.security'), icon: Shield },
     { id: 'backup', label: t('settings.backup'), icon: Download },
+    { id: 'assinatura', label: 'Assinatura', icon: CreditCard },
   ];
 
   const languages = [
@@ -624,6 +645,100 @@ const SettingsManager: React.FC = () => {
     </div>
   );
 
+  // ─── Assinatura Tab ───
+  const renderAssinaturaTab = () => (
+    <div className="space-y-6">
+      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50">
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-purple-600" />
+            Assinaturas das Lojas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {subscriptionData.length === 0 ? (
+            <div className="p-12 text-center">
+              <CreditCard className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">Nenhuma assinatura encontrada</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {subscriptionData.map(sub => (
+                <div key={sub.storeId}>
+                  <div className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-bold text-lg">{sub.storeName}</h3>
+                        <Badge variant="outline" className={sub.plan === 'Business' ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200'}>
+                          {sub.plan}
+                        </Badge>
+                      </div>
+                      <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                        {sub.periodicity}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 font-semibold">Data de Início</p>
+                        <p className="font-medium flex items-center gap-1 mt-1"><Calendar className="h-3.5 w-3.5 text-green-600" />{new Date(sub.startDate + 'T12:00:00').toLocaleDateString('pt-PT')}</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 font-semibold">Data de Término</p>
+                        <p className="font-medium flex items-center gap-1 mt-1"><Calendar className="h-3.5 w-3.5 text-red-600" />{new Date(sub.endDate + 'T12:00:00').toLocaleDateString('pt-PT')}</p>
+                      </div>
+                    </div>
+
+                    {/* Documents Toggle */}
+                    {sub.documents.length > 0 && (
+                      <div className="mt-4">
+                        <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={() => setExpandedSubscription(expandedSubscription === sub.storeId ? null : sub.storeId)}>
+                          <FileText className="h-3.5 w-3.5" />
+                          Documentos ({sub.documents.length})
+                          {expandedSubscription === sub.storeId ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        </Button>
+
+                        {expandedSubscription === sub.storeId && (
+                          <div className="mt-3 border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="text-xs">Descrição</TableHead>
+                                  <TableHead className="text-xs text-center">Data</TableHead>
+                                  <TableHead className="text-xs text-right">Valor</TableHead>
+                                  <TableHead className="text-xs text-center w-20">Ficheiro</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {sub.documents.map(doc => (
+                                  <TableRow key={doc.id}>
+                                    <TableCell className="text-sm font-medium">{doc.description}</TableCell>
+                                    <TableCell className="text-sm text-center text-gray-500">{new Date(doc.date + 'T12:00:00').toLocaleDateString('pt-PT')}</TableCell>
+                                    <TableCell className="text-sm text-right font-semibold">
+                                      {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(doc.value)}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1 text-blue-600 border-blue-200 hover:bg-blue-50">
+                                        <Download className="h-3 w-3" /> PDF
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   // ─── Tab Router ───
   const renderTabContent = () => {
     switch (activeTab) {
@@ -633,6 +748,7 @@ const SettingsManager: React.FC = () => {
       case 'suppliers': return renderSuppliersTab();
       case 'security': return renderSecurityTab();
       case 'backup': return renderBackupTab();
+      case 'assinatura': return renderAssinaturaTab();
       default: return renderGeneralTab();
     }
   };
