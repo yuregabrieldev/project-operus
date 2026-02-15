@@ -23,11 +23,11 @@ interface CashRegisterFormProps {
 
 const CashRegisterForm: React.FC<CashRegisterFormProps> = ({ cashRegisterId, onClose }) => {
   const { t } = useLanguage();
-  const { 
-    stores, 
-    cashRegisters, 
-    addCashRegister, 
-    updateCashRegister 
+  const {
+    stores,
+    cashRegisters,
+    addCashRegister,
+    updateCashRegister
   } = useData();
 
   const [formData, setFormData] = useState({
@@ -38,7 +38,7 @@ const CashRegisterForm: React.FC<CashRegisterFormProps> = ({ cashRegisterId, onC
   });
 
   const isClosing = !!cashRegisterId;
-  const existingCashRegister = cashRegisterId ? 
+  const existingCashRegister = cashRegisterId ?
     cashRegisters.find(cr => cr.id === cashRegisterId) : null;
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const CashRegisterForm: React.FC<CashRegisterFormProps> = ({ cashRegisterId, onC
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isClosing && !formData.storeId) {
       toast.error('Selecione uma loja');
       return;
@@ -98,11 +98,11 @@ const CashRegisterForm: React.FC<CashRegisterFormProps> = ({ cashRegisterId, onC
           openedBy: 'current-user',
           status: 'open' as const
         };
-        
+
         addCashRegister(newCashRegister);
         toast.success('Caixa aberto com sucesso!');
       }
-      
+
       onClose();
     } catch (error) {
       toast.error('Erro ao processar caixa');
@@ -134,7 +134,7 @@ const CashRegisterForm: React.FC<CashRegisterFormProps> = ({ cashRegisterId, onC
             {isClosing ? 'Fechar Caixa' : 'Abrir Caixa'}
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isClosing && (
             <div className="space-y-2">
@@ -185,15 +185,15 @@ const CashRegisterForm: React.FC<CashRegisterFormProps> = ({ cashRegisterId, onC
                 />
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-muted/50 p-4 rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Diferença:</span>
-                  <span className={`font-bold ${difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`font-bold ${difference >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                     {formatCurrency(difference)}
                   </span>
                 </div>
                 {hasSignificantDifference && (
-                  <p className="text-xs text-amber-600 mt-1">
+                  <p className="text-xs text-amber-500 mt-1">
                     ⚠️ Diferença significativa detectada. Justificativa obrigatória.
                   </p>
                 )}
@@ -218,9 +218,9 @@ const CashRegisterForm: React.FC<CashRegisterFormProps> = ({ cashRegisterId, onC
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <Button 
-              type="submit" 
-              className={isClosing ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+            <Button
+              type="submit"
+              className={isClosing ? "bg-destructive hover:bg-destructive/90" : "bg-emerald-600 hover:bg-emerald-700"}
             >
               {isClosing ? 'Fechar Caixa' : 'Abrir Caixa'}
             </Button>

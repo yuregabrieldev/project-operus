@@ -48,7 +48,7 @@ const DAYS_OF_WEEK = [
 
 export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCancel }) => {
   const { stores } = useData();
-  
+
   const [formData, setFormData] = useState<ChecklistTemplate>({
     name: '',
     type: 'custom',
@@ -82,7 +82,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
       applicableDays: [0, 1, 2, 3, 4, 5, 6],
       isOptional: false,
     };
-    
+
     setFormData(prev => ({
       ...prev,
       items: [...prev.items, newItem]
@@ -92,7 +92,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
   const updateItem = (itemId: string, updates: Partial<ChecklistItem>) => {
     setFormData(prev => ({
       ...prev,
-      items: prev.items.map(item => 
+      items: prev.items.map(item =>
         item.id === itemId ? { ...item, ...updates } : item
       )
     }));
@@ -108,20 +108,20 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
   const toggleDay = (itemId: string, day: number) => {
     const item = formData.items.find(i => i.id === itemId);
     if (!item) return;
-    
+
     const newDays = item.applicableDays.includes(day)
       ? item.applicableDays.filter(d => d !== day)
       : [...item.applicableDays, day];
-    
+
     updateItem(itemId, { applicableDays: newDays });
   };
 
   const toggleStore = (itemId: string, storeId: string) => {
     const item = formData.items.find(i => i.id === itemId);
     if (!item) return;
-    
+
     let newStores: string[];
-    
+
     if (storeId === 'all') {
       newStores = item.applicableStores.includes('all') ? [] : ['all'];
     } else {
@@ -131,30 +131,30 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
         ? currentStores.filter(s => s !== storeId)
         : [...currentStores, storeId];
     }
-    
+
     updateItem(itemId, { applicableStores: newStores });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       alert('Nome é obrigatório');
       return;
     }
-    
+
     if (formData.items.length === 0) {
       alert('Adicione pelo menos um item ao checklist');
       return;
     }
-    
+
     // Validar se todos os itens têm pergunta
     const invalidItems = formData.items.filter(item => !item.question.trim());
     if (invalidItems.length > 0) {
       alert('Todos os itens devem ter uma pergunta');
       return;
     }
-    
+
     onSave(formData);
   };
 
@@ -176,7 +176,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
               required
             />
           </div>
-          
+
           <div>
             <Label htmlFor="type">Tipo</Label>
             <Select
@@ -212,7 +212,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
                 />
                 <Label htmlFor="all-stores">Todas as lojas</Label>
               </div>
-              
+
               {!formData.associatedStores.includes('all') && (
                 <div className="grid grid-cols-2 gap-2 ml-6">
                   {stores.map(store => (
@@ -259,8 +259,8 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
           {formData.items.map((item, index) => (
             <Card key={item.id} className="p-4">
               <div className="flex items-start gap-4">
-                <GripVertical className="h-5 w-5 text-gray-400 mt-2 cursor-move" />
-                
+                <GripVertical className="h-5 w-5 text-muted-foreground mt-2 cursor-move" />
+
                 <div className="flex-1 space-y-4">
                   <div className="flex items-center justify-between">
                     <Badge variant="outline">Item {index + 1}</Badge>
@@ -269,12 +269,12 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
                       size="sm"
                       variant="outline"
                       onClick={() => removeItem(item.id)}
-                      className="text-red-600 hover:bg-red-50"
+                      className="text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
-                  
+
                   <div>
                     <Label>Pergunta *</Label>
                     <Input
@@ -284,7 +284,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <Label>Descrição/Observações</Label>
                     <Textarea
@@ -294,7 +294,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
                       rows={2}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium">Obrigatoriedades</Label>
@@ -302,27 +302,27 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             checked={item.requiresComment}
-                            onCheckedChange={(checked) => 
+                            onCheckedChange={(checked) =>
                               updateItem(item.id, { requiresComment: !!checked })
                             }
                           />
                           <Label className="text-sm">Comentário obrigatório</Label>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             checked={item.requiresImage}
-                            onCheckedChange={(checked) => 
+                            onCheckedChange={(checked) =>
                               updateItem(item.id, { requiresImage: !!checked })
                             }
                           />
                           <Label className="text-sm">Imagem obrigatória</Label>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             checked={item.isOptional}
-                            onCheckedChange={(checked) => 
+                            onCheckedChange={(checked) =>
                               updateItem(item.id, { isOptional: !!checked })
                             }
                           />
@@ -330,7 +330,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
                       <Label className="text-sm font-medium">Dias da Semana</Label>
                       <div className="grid grid-cols-2 gap-1 mt-2">
@@ -346,7 +346,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label className="text-sm font-medium">Lojas Aplicáveis</Label>
                     <div className="space-y-2 mt-2">
@@ -357,7 +357,7 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
                         />
                         <Label className="text-sm">Todas as lojas</Label>
                       </div>
-                      
+
                       {!item.applicableStores.includes('all') && (
                         <div className="grid grid-cols-2 gap-2 ml-6">
                           {stores.map(store => (
@@ -377,9 +377,9 @@ export const ChecklistTemplateForm: React.FC<Props> = ({ template, onSave, onCan
               </div>
             </Card>
           ))}
-          
+
           {formData.items.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <p>Nenhum item adicionado ainda.</p>
               <p className="text-sm">Clique em "Adicionar Item" para começar.</p>
             </div>

@@ -112,11 +112,11 @@ const CashManager: React.FC = () => {
   // ═══ CAIXA TAB ═══
   const renderCaixaTab = () => (
     <div className="space-y-4">
-      <Card className="shadow-md border-0 bg-white/70 backdrop-blur-sm">
+      <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-gray-500">Loja</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">Loja</Label>
               <Select value={filterStore} onValueChange={setFilterStore}>
                 <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -126,7 +126,7 @@ const CashManager: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-gray-500">Mês</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">Mês</Label>
               <Select value={filterMonth} onValueChange={setFilterMonth}>
                 <SelectTrigger className="w-[140px] h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -138,7 +138,7 @@ const CashManager: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-gray-500">Ano</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">Ano</Label>
               <Select value={filterYear} onValueChange={setFilterYear}>
                 <SelectTrigger className="w-[110px] h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>{[2024, 2025, 2026].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
@@ -152,11 +152,11 @@ const CashManager: React.FC = () => {
       </Card>
 
       {filteredEntries.length === 0 ? (
-        <Card className="shadow-md border-0 bg-white/70 backdrop-blur-sm">
+        <Card>
           <CardContent className="p-12 text-center">
-            <DollarSign className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">Nenhum fechamento encontrado</p>
-            <p className="text-gray-400 text-sm mt-1">Clique em "Adicionar" para abrir o caixa</p>
+            <DollarSign className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
+            <p className="text-muted-foreground text-lg">Nenhum fechamento encontrado</p>
+            <p className="text-muted-foreground/60 text-sm mt-1">Clique em "Adicionar" para abrir o caixa</p>
           </CardContent>
         </Card>
       ) : (
@@ -174,23 +174,23 @@ const CashManager: React.FC = () => {
             const fmtDate = new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
             return (
-              <Card key={entry.id} className="shadow-lg border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover:shadow-xl transition-shadow">
-                <div className="flex flex-wrap items-center gap-3 p-4 bg-gradient-to-r from-slate-50 to-blue-50 border-b">
-                  <div className="bg-white rounded-lg px-3 py-1.5 shadow-sm border flex items-center gap-2">
-                    <Calendar className="h-3.5 w-3.5 text-blue-600" /><span className="font-bold text-sm">{fmtDate}</span>
+              <Card key={entry.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="flex flex-wrap items-center gap-3 p-4 bg-muted/30 border-b">
+                  <div className="bg-background rounded-lg px-3 py-1.5 shadow-sm border flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-primary" /><span className="font-bold text-sm">{fmtDate}</span>
                   </div>
-                  <Badge variant="outline" className={`pointer-events-none ${entry.closingTotal >= 0 ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                  <Badge variant="outline" className={`pointer-events-none ${entry.closingTotal >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>
                     {fmt(entry.closingTotal)} Vendas
                   </Badge>
-                  <Badge variant="outline" className="pointer-events-none bg-orange-100 text-orange-700 border-orange-200">
+                  <Badge variant="outline" className="pointer-events-none bg-orange-50 text-orange-700 border-orange-200">
                     {fmt(extrasTotal)} Saídas
                   </Badge>
-                  <Badge variant="outline" className={`pointer-events-none ${hasDeposit ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200'}`}>
+                  <Badge variant="outline" className={`pointer-events-none ${hasDeposit ? 'bg-primary/10 text-primary border-primary/20' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
                     {hasDeposit ? <CheckCircle className="h-3 w-3 mr-1" /> : <Clock className="h-3 w-3 mr-1" />}
                     {hasDeposit ? 'Depositado' : 'A Depositar'}
                   </Badge>
-                  {entry.noMovement && <Badge variant="outline" className="pointer-events-none bg-gray-100 text-gray-600">Sem Movimentos</Badge>}
-                  <div className="ml-auto text-sm text-gray-500">{storeName(entry.storeId)}</div>
+                  {entry.noMovement && <Badge variant="secondary" className="pointer-events-none text-muted-foreground">Sem Movimentos</Badge>}
+                  <div className="ml-auto text-sm text-muted-foreground">{storeName(entry.storeId)}</div>
                 </div>
 
                 {!entry.noMovement && (
@@ -198,48 +198,48 @@ const CashManager: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       <div className="lg:col-span-2 overflow-x-auto">
                         <table className="w-full text-sm">
-                          <thead><tr className="border-b bg-gray-50/50">
-                            <th className="text-left p-2 font-semibold text-gray-600"></th>
-                            <th className="text-center p-2 font-semibold text-gray-600">Espécie</th>
-                            <th className="text-center p-2 font-semibold text-gray-600">Cartão</th>
-                            <th className="text-center p-2 font-semibold text-gray-600">Delivery</th>
-                            <th className="text-center p-2 font-semibold text-gray-600">Total</th>
+                          <thead><tr className="border-b bg-muted/50">
+                            <th className="text-left p-2 font-semibold text-muted-foreground"></th>
+                            <th className="text-center p-2 font-semibold text-muted-foreground">Espécie</th>
+                            <th className="text-center p-2 font-semibold text-muted-foreground">Cartão</th>
+                            <th className="text-center p-2 font-semibold text-muted-foreground">Delivery</th>
+                            <th className="text-center p-2 font-semibold text-muted-foreground">Total</th>
                           </tr></thead>
                           <tbody>
                             <tr className="border-b">
-                              <td className="p-2 font-medium text-gray-700">Apuração</td>
+                              <td className="p-2 font-medium text-foreground">Apuração</td>
                               <td className="p-2 text-center">{fmt(entry.closingEspecie)}</td>
                               <td className="p-2 text-center">{fmt(entry.closingCartao)}</td>
                               <td className="p-2 text-center">{fmt(entry.closingDelivery)}</td>
                               <td className="p-2 text-center font-semibold">{fmt(entry.closingTotal)}</td>
                             </tr>
                             <tr>
-                              <td className="p-2 font-medium text-gray-700">Validação</td>
+                              <td className="p-2 font-medium text-foreground">Validação</td>
                               {[especieVal, cartaoVal, deliveryVal, totalVal].map((v, i) => (
                                 <td key={i} className="p-2 text-center">
-                                  {v === 0 ? <CheckCircle className="h-4 w-4 text-green-500 mx-auto" /> : <span className={`font-semibold ${v < 0 ? 'text-red-600' : 'text-green-600'}`}>{fmt(v)}</span>}
+                                  {v === 0 ? <CheckCircle className="h-4 w-4 text-emerald-500 mx-auto" /> : <span className={`font-semibold ${v < 0 ? 'text-destructive' : 'text-emerald-600'}`}>{fmt(v)}</span>}
                                 </td>
                               ))}
                             </tr>
                           </tbody>
                         </table>
                       </div>
-                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 space-y-2">
-                        <h4 className="font-bold text-gray-800 text-center mb-3">Caixa</h4>
-                        <div className="flex justify-between"><span className="text-gray-600 text-sm">Abertura</span><span className="font-semibold">{fmt(entry.openingValue)}</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 text-sm">Fechamento</span><span className="font-semibold">{fmt(entry.closingTotal)}</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 text-sm">(-) Depósito</span><span className="font-semibold">{fmt(entry.depositValue)}</span></div>
-                        <hr />
-                        <div className="flex justify-between"><span className="font-semibold text-gray-800">Saldo</span><span className={`font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>{fmt(saldo)}</span></div>
+                      <div className="bg-muted/30 rounded-xl p-4 space-y-2 border">
+                        <h4 className="font-bold text-foreground text-center mb-3">Caixa</h4>
+                        <div className="flex justify-between"><span className="text-muted-foreground text-sm">Abertura</span><span className="font-semibold">{fmt(entry.openingValue)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground text-sm">Fechamento</span><span className="font-semibold">{fmt(entry.closingTotal)}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground text-sm">(-) Depósito</span><span className="font-semibold">{fmt(entry.depositValue)}</span></div>
+                        <hr className="border-border" />
+                        <div className="flex justify-between"><span className="font-semibold text-foreground">Saldo</span><span className={`font-bold ${saldo >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>{fmt(saldo)}</span></div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 mt-4 pt-3 border-t text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-4 mt-4 pt-3 border-t text-sm text-muted-foreground">
                       <span>Criado por <b>{entry.openedBy}</b></span>
                       <span>• Fechado por <b>{entry.closedBy || '—'}</b></span>
                       <div className="ml-auto flex items-center gap-4">
                         <span className="flex items-center gap-1"><Paperclip className="h-3.5 w-3.5" /> {entry.attachments.length}</span>
                         <span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" /> {entry.comments.length}</span>
-                        <Button size="sm" variant="outline" onClick={() => setViewingEntry(entry)} className="border-blue-200 text-blue-600 hover:bg-blue-50">
+                        <Button size="sm" variant="outline" onClick={() => setViewingEntry(entry)} className="text-primary hover:text-primary hover:bg-muted">
                           <Eye className="h-3.5 w-3.5 mr-1" /> Ver
                         </Button>
                       </div>
@@ -272,26 +272,26 @@ const CashManager: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        <p className="text-sm text-gray-500">Gestão de depósitos pendentes das lojas do grupo</p>
-        <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+        <p className="text-sm text-muted-foreground">Gestão de depósitos pendentes das lojas do grupo</p>
+        <Card>
           <CardContent className="p-0">
             <table className="w-full text-sm">
-              <thead><tr className="border-b bg-gray-50/80">
-                <th className="text-left p-4 font-semibold text-gray-500 uppercase text-xs">Loja</th>
-                <th className="text-center p-4 font-semibold text-gray-500 uppercase text-xs">Dias</th>
-                <th className="text-center p-4 font-semibold text-gray-500 uppercase text-xs">Média Diária</th>
-                <th className="text-center p-4 font-semibold text-gray-500 uppercase text-xs">Valor Acumulado</th>
+              <thead><tr className="border-b bg-muted/50">
+                <th className="text-left p-4 font-semibold text-muted-foreground uppercase text-xs">Loja</th>
+                <th className="text-center p-4 font-semibold text-muted-foreground uppercase text-xs">Dias</th>
+                <th className="text-center p-4 font-semibold text-muted-foreground uppercase text-xs">Média Diária</th>
+                <th className="text-center p-4 font-semibold text-muted-foreground uppercase text-xs">Valor Acumulado</th>
                 <th className="text-center p-4 w-10"></th>
               </tr></thead>
               <tbody>
                 {pendingByStore.map(({ store, dias, media, acumulado }) => (
                   <React.Fragment key={store.id}>
-                    <tr className="border-b hover:bg-gray-50/50 transition-colors">
-                      <td className="p-4 font-medium">{store.name}</td>
-                      <td className="p-4 text-center text-gray-600">{dias}</td>
-                      <td className="p-4 text-center text-gray-600">{fmt(media)}</td>
+                    <tr className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="p-4 font-medium text-foreground">{store.name}</td>
+                      <td className="p-4 text-center text-muted-foreground">{dias}</td>
+                      <td className="p-4 text-center text-muted-foreground">{fmt(media)}</td>
                       <td className="p-4 text-center">
-                        <Badge variant="outline" className="pointer-events-none bg-green-100 text-green-700 border-green-200 font-semibold">{fmt(acumulado)}</Badge>
+                        <Badge variant="outline" className="pointer-events-none bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold">{fmt(acumulado)}</Badge>
                       </td>
                       <td className="p-4 text-center">
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setExpandedStore(expandedStore === store.id ? null : store.id)}>
@@ -301,9 +301,9 @@ const CashManager: React.FC = () => {
                     </tr>
                     {expandedStore === store.id && (
                       <tr><td colSpan={5} className="p-0">
-                        <div className="bg-gray-50 p-4 flex items-center justify-center gap-3 border-b">
+                        <div className="bg-muted/30 p-4 flex items-center justify-center gap-3 border-b">
                           {acumulado > 0 && (
-                            <Button size="sm" variant="outline" className="gap-2 text-green-700 border-green-200 hover:bg-green-50" onClick={() => {
+                            <Button size="sm" variant="outline" className="gap-2 text-primary border-primary/20 hover:bg-primary/10" onClick={() => {
                               setDepositStoreId(store.id); setDepositFormValue(acumulado); setDepositFormDate(today); setDepositFormComment(''); setShowDepositDialog(true);
                             }}>
                               <Banknote className="h-3.5 w-3.5" /> DEPOSITAR
@@ -322,11 +322,11 @@ const CashManager: React.FC = () => {
                     )}
                   </React.Fragment>
                 ))}
-                <tr className="bg-gray-50 font-bold">
+                <tr className="bg-muted/50 font-bold">
                   <td className="p-4">TOTAL</td>
                   <td className="p-4 text-center">-</td>
                   <td className="p-4 text-center">{fmt(totalMedia)}</td>
-                  <td className="p-4 text-center"><Badge variant="outline" className="pointer-events-none bg-green-100 text-green-700 border-green-200 font-bold">{fmt(totalAcumulado)}</Badge></td>
+                  <td className="p-4 text-center"><Badge variant="outline" className="pointer-events-none bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">{fmt(totalAcumulado)}</Badge></td>
                   <td></td>
                 </tr>
               </tbody>
@@ -343,7 +343,7 @@ const CashManager: React.FC = () => {
             </DialogHeader>
             <div className="space-y-4">
               <div className="flex items-center gap-2"><span className="text-sm font-medium">LOJA:</span><Badge variant="outline">{storeName(depositStoreId)}</Badge></div>
-              <div className="flex items-center gap-2"><span className="text-sm font-medium">VALOR ACUMULADO:</span><Badge variant="outline" className="pointer-events-none bg-green-100 text-green-700 border-green-200">{fmt(storeAcumulado)}</Badge></div>
+              <div className="flex items-center gap-2"><span className="text-sm font-medium">VALOR ACUMULADO:</span><Badge variant="outline" className="pointer-events-none bg-emerald-50 text-emerald-700 border-emerald-200">{fmt(storeAcumulado)}</Badge></div>
               <div><Label>Valor do Depósito</Label><Input type="number" step="0.01" value={depositFormValue || ''} onChange={e => setDepositFormValue(parseFloat(e.target.value) || 0)} className="mt-1" /></div>
               <div><Label>Data do Depósito</Label><Input type="date" value={depositFormDate} onChange={e => setDepositFormDate(e.target.value)} className="mt-1" /></div>
               <div><Label>Comentário</Label><Input value={depositFormComment} onChange={e => setDepositFormComment(e.target.value)} placeholder="(Opcional) Adicione qualquer comentário" className="mt-1" /></div>
@@ -363,7 +363,7 @@ const CashManager: React.FC = () => {
                 setShowDepositDialog(false);
                 setExpandedStore(null);
                 toast({ title: 'Depósito concluído!' });
-              }} className="bg-gradient-to-r from-green-600 to-emerald-600">Concluir</Button>
+              }} className="bg-primary hover:bg-primary/90">Concluir</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -426,8 +426,8 @@ const CashManager: React.FC = () => {
                       {d.hasComment && d.comment && (
                         <tr className="border-b last:border-0">
                           <td colSpan={3} className="px-3 pb-3 pt-0">
-                            <div className="text-xs text-gray-500 bg-gray-50 rounded-md p-2 italic">
-                              <MessageSquare className="h-3 w-3 inline mr-1 text-gray-400" />{d.comment}
+                            <div className="text-xs text-muted-foreground bg-muted/50 rounded-md p-2 italic">
+                              <MessageSquare className="h-3 w-3 inline mr-1 text-muted-foreground" />{d.comment}
                             </div>
                           </td>
                         </tr>
@@ -476,7 +476,7 @@ const CashManager: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        <Card className="shadow-md border-0 bg-white/70 backdrop-blur-sm">
+        <Card>
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-4 items-end">
               <div className="space-y-1">
@@ -517,31 +517,31 @@ const CashManager: React.FC = () => {
             { label: 'DELIVERY', value: totalDelivery, color: 'orange' },
             { label: 'TOTAL', value: totalTotal, color: 'green' },
           ].map(b => (
-            <div key={b.label} className={`px-5 py-3 rounded-xl border-2 border-${b.color}-200 bg-${b.color}-50 text-center`}>
-              <p className={`text-xs font-bold text-${b.color}-700 uppercase`}>{b.label}</p>
-              <p className={`text-lg font-bold text-${b.color}-700`}>{fmt(b.value)}</p>
+            <div key={b.label} className={`px-5 py-3 rounded-xl border-2 bg-muted/30 text-center ${b.label === 'TOTAL' ? 'border-primary/20 bg-primary/5' : 'border-muted'}`}>
+              <p className="text-xs font-bold text-muted-foreground uppercase">{b.label}</p>
+              <p className={`text-lg font-bold ${b.label === 'TOTAL' ? 'text-primary' : 'text-foreground'}`}>{fmt(b.value)}</p>
             </div>
           ))}
         </div>
 
         {/* Table */}
-        <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Fechamentos</CardTitle>
             <Button size="sm" variant="outline" onClick={exportXLSX} className="gap-2"><Download className="h-3.5 w-3.5" /> Exportar</Button>
           </CardHeader>
           <CardContent className="p-0">
             <table className="w-full text-sm">
-              <thead><tr className="border-b bg-gray-50/80">
-                <th className="text-left p-3 font-semibold text-gray-600">Data</th>
-                <th className="text-right p-3 font-semibold text-gray-600">Espécie</th>
-                <th className="text-right p-3 font-semibold text-gray-600">Cartão</th>
-                <th className="text-right p-3 font-semibold text-gray-600">Delivery</th>
-                <th className="text-right p-3 font-semibold text-gray-600">Total</th>
+              <thead><tr className="border-b bg-muted/50">
+                <th className="text-left p-3 font-semibold text-muted-foreground">Data</th>
+                <th className="text-right p-3 font-semibold text-muted-foreground">Espécie</th>
+                <th className="text-right p-3 font-semibold text-muted-foreground">Cartão</th>
+                <th className="text-right p-3 font-semibold text-muted-foreground">Delivery</th>
+                <th className="text-right p-3 font-semibold text-muted-foreground">Total</th>
               </tr></thead>
               <tbody>
                 {resumoEntries.map(e => (
-                  <tr key={e.id} className="border-b hover:bg-gray-50/50">
+                  <tr key={e.id} className="border-b hover:bg-muted/30">
                     <td className="p-3">{new Date(e.date + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit' })}</td>
                     <td className="p-3 text-right">{fmt(e.closingEspecie)}</td>
                     <td className="p-3 text-right">{fmt(e.closingCartao)}</td>
@@ -551,12 +551,12 @@ const CashManager: React.FC = () => {
                 ))}
                 {resumoEntries.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500">Nenhum fechamento neste período</td></tr>}
                 {resumoEntries.length > 0 && (
-                  <tr className="bg-gray-50 font-bold border-t-2">
+                  <tr className="bg-muted/50 font-bold border-t-2">
                     <td className="p-3">Total</td>
-                    <td className="p-3 text-right text-blue-700">{fmt(totalEspecie)}</td>
-                    <td className="p-3 text-right text-purple-700">{fmt(totalCartao)}</td>
-                    <td className="p-3 text-right text-orange-700">{fmt(totalDelivery)}</td>
-                    <td className="p-3 text-right text-green-700">{fmt(totalTotal)}</td>
+                    <td className="p-3 text-right text-foreground">{fmt(totalEspecie)}</td>
+                    <td className="p-3 text-right text-foreground">{fmt(totalCartao)}</td>
+                    <td className="p-3 text-right text-foreground">{fmt(totalDelivery)}</td>
+                    <td className="p-3 text-right text-primary">{fmt(totalTotal)}</td>
                   </tr>
                 )}
               </tbody>
@@ -571,10 +571,10 @@ const CashManager: React.FC = () => {
   const renderDefinicoesTab = () => (
     <div className="space-y-6">
       {/* Base Value */}
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+      <Card>
         <CardHeader><CardTitle className="text-sm">Valor Base de Caixa</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-gray-600">Deseja definir um valor base para permanecer no caixa?</p>
+          <p className="text-sm text-muted-foreground">Deseja definir um valor base para permanecer no caixa?</p>
           <div className="flex items-center gap-4">
             <Switch checked={cashSettings.baseValueEnabled} onCheckedChange={v => setCashSettings(p => ({ ...p, baseValueEnabled: v }))} />
             <span className="text-sm font-medium">{cashSettings.baseValueEnabled ? 'Ativado' : 'Desativado'}</span>
@@ -589,18 +589,18 @@ const CashManager: React.FC = () => {
       </Card>
 
       {/* Entradas/Saídas por Loja */}
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+      <Card>
         <CardHeader>
           <CardTitle className="text-sm">Considerar Entradas/Saídas?</CardTitle>
-          <p className="text-xs text-gray-500 mt-1">Ative as opções abaixo quando o sistema registrar as entradas e saídas e as considerarem no cálculo de fechamento de caixa</p>
+          <p className="text-xs text-muted-foreground mt-1">Ative as opções abaixo quando o sistema registrar as entradas e saídas e as considerarem no cálculo de fechamento de caixa</p>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {allStores.map(store => {
               const isActive = cashSettings.extrasConsideredStores.includes(store.id);
               return (
-                <div key={store.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border">
-                  <span className="font-medium text-sm">{store.name}</span>
+                <div key={store.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
+                  <span className="font-medium text-sm text-foreground">{store.name}</span>
                   <Switch checked={isActive} onCheckedChange={v => {
                     setCashSettings(p => ({
                       ...p,
@@ -617,8 +617,8 @@ const CashManager: React.FC = () => {
       </Card>
 
       {/* Card Brands */}
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-blue-600" /> Bandeiras de Cartão</CardTitle></CardHeader>
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" /> Bandeiras de Cartão</CardTitle></CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {cardBrands.map(b => (
@@ -682,19 +682,19 @@ const CashManager: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-background">
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Gestão de Caixa</h1>
-          <p className="text-gray-600 mt-1">Controle de aberturas, fechamentos e depósitos</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestão de Caixa</h1>
+          <p className="text-muted-foreground mt-1">Controle de aberturas, fechamentos e depósitos</p>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit overflow-x-auto pb-1">
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md' : 'bg-white/70 text-gray-600 hover:bg-gray-100 border'
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md font-medium text-sm transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                   }`}>
                 <Icon className="h-4 w-4" />{tab.label}
               </button>

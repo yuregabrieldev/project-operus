@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -33,7 +34,7 @@ interface ChecklistResponse {
 
 const ChecklistHistory: React.FC = () => {
   const { stores } = useData();
-  
+
   // Mock data - em produção viria da API
   const [historyData] = useState<ChecklistHistory[]>([
     {
@@ -102,32 +103,32 @@ const ChecklistHistory: React.FC = () => {
 
   const getFilteredHistory = () => {
     let filtered = historyData;
-    
+
     if (filters.store !== 'all') {
       filtered = filtered.filter(h => h.storeName === filters.store);
     }
-    
+
     if (filters.type !== 'all') {
       filtered = filtered.filter(h => h.type === filters.type);
     }
-    
+
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom);
       filtered = filtered.filter(h => h.startTime >= fromDate);
     }
-    
+
     if (filters.dateTo) {
       const toDate = new Date(filters.dateTo);
       toDate.setHours(23, 59, 59, 999);
       filtered = filtered.filter(h => h.startTime <= toDate);
     }
-    
+
     if (filters.user) {
-      filtered = filtered.filter(h => 
+      filtered = filtered.filter(h =>
         h.userName.toLowerCase().includes(filters.user.toLowerCase())
       );
     }
-    
+
     return filtered.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
   };
 
@@ -135,10 +136,10 @@ const ChecklistHistory: React.FC = () => {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'opening': return 'bg-green-100 text-green-800';
-      case 'closing': return 'bg-red-100 text-red-800';
-      case 'quality': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'opening': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      case 'closing': return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'quality': return 'bg-primary/10 text-primary border-primary/20';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -200,7 +201,7 @@ const ChecklistHistory: React.FC = () => {
     const csvContent = csvData.map(row => row.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    
+
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -220,7 +221,7 @@ const ChecklistHistory: React.FC = () => {
     const total = filteredHistory.length;
     const totalDuration = filteredHistory.reduce((sum, h) => sum + h.duration, 0);
     const avgDuration = total > 0 ? Math.round(totalDuration / total) : 0;
-    const completionRate = total > 0 ? 
+    const completionRate = total > 0 ?
       Math.round(filteredHistory.reduce((sum, h) => sum + getCompletionRate(h), 0) / total) : 0;
 
     return { total, avgDuration, completionRate };
@@ -230,69 +231,44 @@ const ChecklistHistory: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Calendar className="h-8 w-8 text-primary" />
-            Histórico de Checklists
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Visualize e analise checklists realizados
-          </p>
-        </div>
-        
-        <Button onClick={exportToCSV} className="bg-primary hover:bg-primary/90">
-          <Download className="h-4 w-4 mr-2" />
-          Exportar CSV
-        </Button>
-      </div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Realizados</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-              <Calendar className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total Realizados"
+          value={stats.total}
+          icon={Calendar}
+          variant="default"
+          valueClassName="text-2xl"
+        />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Duração Média</p>
-                <p className="text-2xl font-bold">{formatDuration(stats.avgDuration)}</p>
-              </div>
-              <Clock className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Duração Média"
+          value={formatDuration(stats.avgDuration)}
+          icon={Clock}
+          variant="default"
+          valueClassName="text-2xl"
+        />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Taxa de Conclusão</p>
-                <p className="text-2xl font-bold text-green-600">{stats.completionRate}%</p>
-              </div>
-              <User className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Taxa de Conclusão"
+          value={`${stats.completionRate}%`}
+          icon={User}
+          variant="success"
+          valueClassName="text-2xl"
+        />
       </div>
 
       {/* Filters */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
             Filtros
           </CardTitle>
+          <Button onClick={exportToCSV} className="bg-primary hover:bg-primary/90">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -388,13 +364,13 @@ const ChecklistHistory: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Store className="h-4 w-4 text-gray-400" />
+                        <Store className="h-4 w-4 text-muted-foreground" />
                         {history.storeName}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
+                        <User className="h-4 w-4 text-muted-foreground" />
                         {history.userName}
                       </div>
                     </TableCell>
@@ -408,7 +384,7 @@ const ChecklistHistory: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-400" />
+                        <Clock className="h-4 w-4 text-muted-foreground" />
                         {formatDuration(history.duration)}
                       </div>
                     </TableCell>
@@ -437,8 +413,8 @@ const ChecklistHistory: React.FC = () => {
 
           {filteredHistory.length === 0 && (
             <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Nenhum registro encontrado</p>
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum registro encontrado</p>
             </div>
           )}
         </CardContent>
@@ -450,7 +426,7 @@ const ChecklistHistory: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Detalhes do Checklist</DialogTitle>
           </DialogHeader>
-          
+
           {selectedHistory && (
             <div className="space-y-6">
               {/* Header Info */}
@@ -492,28 +468,28 @@ const ChecklistHistory: React.FC = () => {
                             <h5 className="font-medium">{response.question}</h5>
                             <Badge variant={
                               response.skipped ? "secondary" :
-                              response.response === true ? "default" :
-                              response.response === false ? "destructive" : "outline"
+                                response.response === true ? "default" :
+                                  response.response === false ? "destructive" : "outline"
                             }>
                               {response.skipped ? "Pulado" :
-                               response.response === true ? "Sim" :
-                               response.response === false ? "Não" : "Sem resposta"}
+                                response.response === true ? "Sim" :
+                                  response.response === false ? "Não" : "Sem resposta"}
                             </Badge>
                           </div>
-                          
+
                           {response.comment && (
                             <div>
                               <p className="text-sm text-muted-foreground">Comentário:</p>
                               <p className="text-sm">{response.comment}</p>
                             </div>
                           )}
-                          
+
                           {response.imageUrl && (
                             <div>
                               <p className="text-sm text-muted-foreground">Evidência:</p>
-                              <img 
-                                src={response.imageUrl} 
-                                alt="Evidência" 
+                              <img
+                                src={response.imageUrl}
+                                alt="Evidência"
                                 className="max-w-xs rounded-lg mt-1"
                               />
                             </div>

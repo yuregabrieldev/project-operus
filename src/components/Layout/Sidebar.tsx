@@ -61,8 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
 
   return (
     <aside className={cn(
-      "flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out",
-      isDev ? "bg-[#1a1025]" : "bg-[#0f172a]",
+      "flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
       isCollapsed ? "w-[68px]" : "w-60"
     )}>
       {/* Brand Header */}
@@ -74,13 +73,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
           <div className="flex items-center gap-2">
             <span className="text-white font-bold text-xl tracking-wide">OPERUS</span>
             {isDev && (
-              <span className="text-[10px] bg-purple-500/30 text-purple-300 px-1.5 py-0.5 rounded font-mono">DEV</span>
+              <span className="text-[10px] bg-sidebar-accent text-sidebar-accent-foreground px-1.5 py-0.5 rounded font-mono">DEV</span>
             )}
           </div>
         )}
         <button
           onClick={onToggle}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="p-1.5 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
@@ -101,20 +100,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
                 "w-full flex items-center gap-3 rounded-lg transition-all duration-200",
                 isCollapsed ? "justify-center px-0 py-2.5" : "px-3 py-2",
                 isActive
-                  ? isDev
-                    ? "bg-purple-500/20 text-purple-300 shadow-lg shadow-purple-500/10"
-                    : "bg-white text-[#0f172a] shadow-lg shadow-white/10"
-                  : "text-gray-400 hover:text-white hover:bg-white/10"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
               )}
             >
               <Icon className={cn(
                 "h-5 w-5 flex-shrink-0",
-                isActive ? (isDev ? "text-purple-300" : "text-[#0f172a]") : ""
+                isActive ? "text-sidebar-primary" : ""
               )} />
               {!isCollapsed && (
                 <span className={cn(
                   "text-sm font-medium truncate",
-                  isActive ? (isDev ? "text-purple-300" : "text-[#0f172a]") : ""
+                  isActive ? "text-sidebar-accent-foreground" : ""
                 )}>
                   {item.label}
                 </span>

@@ -23,12 +23,12 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
   const filteredStores = useMemo(() => {
     return stores.filter(store => {
       const matchesSearch = store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           store.address.toLowerCase().includes(searchTerm.toLowerCase());
+        store.address.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesBrand = brandFilter === 'all' || store.brandId === brandFilter;
-      const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'active' && store.isActive) ||
-                           (statusFilter === 'inactive' && !store.isActive);
-      
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'active' && store.isActive) ||
+        (statusFilter === 'inactive' && !store.isActive);
+
       return matchesSearch && matchesBrand && matchesStatus;
     });
   }, [stores, searchTerm, brandFilter, statusFilter]);
@@ -54,7 +54,7 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
       }
 
       await toggleStoreStatus(store.id);
-      
+
       toast({
         title: store.isActive ? "Loja desativada" : "Loja ativada",
         description: `A loja ${store.name} foi ${store.isActive ? 'desativada' : 'ativada'} com sucesso.`,
@@ -72,7 +72,7 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
     <Card>
       <CardHeader>
         <CardTitle>Lista de Lojas</CardTitle>
-        
+
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -83,7 +83,7 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
               className="pl-10"
             />
           </div>
-          
+
           <Select value={brandFilter} onValueChange={setBrandFilter}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filtrar por marca" />
@@ -97,7 +97,7 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
               ))}
             </SelectContent>
           </Select>
-          
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filtrar por status" />
@@ -110,12 +110,12 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
           </Select>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {filteredStores.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
-              {searchTerm || brandFilter !== 'all' || statusFilter !== 'all' 
+              {searchTerm || brandFilter !== 'all' || statusFilter !== 'all'
                 ? 'Nenhuma loja encontrada com os filtros aplicados.'
                 : 'Nenhuma loja cadastrada ainda.'
               }
@@ -167,7 +167,7 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
                           {store.isActive ? (
                             <ToggleRight className="h-4 w-4 text-green-600" />
                           ) : (
-                            <ToggleLeft className="h-4 w-4 text-gray-400" />
+                            <ToggleLeft className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
                       </div>

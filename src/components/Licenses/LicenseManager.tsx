@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -36,11 +37,11 @@ const LicenseManager: React.FC = () => {
     // Helpers
     const getStatusColor = (status: LicenseStatus) => {
         switch (status) {
-            case 'ativa': return 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100';
-            case 'expirada': return 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100';
-            case 'cancelada': return 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100';
-            case 'pendente': return 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100';
-            default: return 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100';
+            case 'ativa': return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
+            case 'expirada': return 'bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20';
+            case 'cancelada': return 'bg-muted text-muted-foreground border-border hover:bg-muted/80';
+            case 'pendente': return 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100';
+            default: return 'bg-muted/50 text-muted-foreground border-border';
         }
     };
 
@@ -201,24 +202,24 @@ const LicenseManager: React.FC = () => {
     // Form view
     if (isFormOpen) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+            <div className="min-h-screen bg-background">
                 <div className="p-6 space-y-6">
                     <div className="flex items-center gap-4">
                         <Button variant="outline" onClick={() => setIsFormOpen(false)} className="shadow-sm">
                             <ArrowLeft className="h-4 w-4 mr-2" />
-                            Voltar à Lista
+                            {t('common.back')}
                         </Button>
                         <div className="space-y-1">
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                                {selectedLicense ? 'Editar Licença' : 'Nova Licença'}
+                            <h1 className="text-2xl font-bold text-foreground">
+                                {selectedLicense ? t('licenses.editLicense') : t('licenses.newLicense')}
                             </h1>
                             {selectedLicense && (
-                                <p className="text-sm text-gray-500">{selectedLicense.name}</p>
+                                <p className="text-sm text-muted-foreground">{selectedLicense.name}</p>
                             )}
                         </div>
                     </div>
 
-                    <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm max-w-4xl">
+                    <Card className="shadow-sm border-border bg-card max-w-4xl">
                         <CardContent className="p-8">
                             <LicenseForm
                                 license={selectedLicense}
@@ -232,96 +233,76 @@ const LicenseManager: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+        <div className="min-h-screen bg-background">
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div className="space-y-2">
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                            Licenças
+                        <h1 className="text-3xl font-bold text-foreground">
+                            {t('licenses.title')}
                         </h1>
-                        <p className="text-gray-600">Gestão de licenças e renovações</p>
+                        <p className="text-muted-foreground">{t('licenses.subtitle')}</p>
                     </div>
                     <div className="flex flex-wrap gap-3">
                         <Button
                             onClick={() => setShowFilters(!showFilters)}
                             variant={showFilters ? "default" : "outline"}
-                            className="shadow-md"
+                            className="shadow-sm"
                         >
                             <Filter className="h-4 w-4 mr-2" />
-                            {showFilters ? 'Esconder Filtros' : 'Mostrar Filtros'}
+                            {showFilters ? t('common.hideFilters') : t('common.showFilters')}
                         </Button>
-                        <Button onClick={handleAddNew} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg">
+                        <Button onClick={handleAddNew} className="bg-primary hover:bg-primary/90 shadow-sm text-primary-foreground">
                             <Plus className="h-4 w-4 mr-2" />
-                            Nova Licença
+                            {t('licenses.newLicense')}
                         </Button>
                     </div>
                 </div>
 
                 {/* Dashboard Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card className="shadow-md border-0 bg-white/70 backdrop-blur-sm">
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-500">Total</p>
-                                    <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-                                </div>
-                                <Shield className="h-8 w-8 text-purple-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md border-0 bg-white/70 backdrop-blur-sm">
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-500">Ativas</p>
-                                    <p className="text-2xl font-bold text-green-600">{stats.ativa}</p>
-                                </div>
-                                <CheckCircle className="h-8 w-8 text-green-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md border-0 bg-white/70 backdrop-blur-sm">
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-500">Expiradas</p>
-                                    <p className="text-2xl font-bold text-red-600">{stats.expirada}</p>
-                                </div>
-                                <AlertCircle className="h-8 w-8 text-red-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md border-0 bg-white/70 backdrop-blur-sm">
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-500">Valor Total</p>
-                                    <p className="text-2xl font-bold text-purple-600">€{stats.totalValue.toFixed(2)}</p>
-                                </div>
-                                <FileText className="h-8 w-8 text-purple-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <StatsCard
+                        title={t('common.total')}
+                        value={stats.total}
+                        icon={Shield}
+                        variant="default"
+                    />
+                    <StatsCard
+                        title={t('licenses.active')}
+                        value={stats.ativa}
+                        icon={CheckCircle}
+                        variant="success"
+                    />
+                    <StatsCard
+                        title={t('licenses.expired')}
+                        value={stats.expirada}
+                        icon={AlertCircle}
+                        variant="destructive"
+                    />
+                    <StatsCard
+                        title={t('licenses.totalValue')}
+                        value={`€${stats.totalValue.toFixed(2)}`}
+                        icon={FileText}
+                        variant="default"
+                    />
                 </div>
 
                 {/* Search Bar */}
-                <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+                <Card className="shadow-sm border-border bg-card">
                     <CardContent className="p-6">
                         <div className="flex gap-4">
                             <div className="flex-1 relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                                 <Input
-                                    placeholder="Buscar licenças por nome ou descrição..."
+                                    placeholder={t('licenses.searchPlaceholder')}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-12 h-12 text-lg border-gray-200 focus:border-purple-500 focus:ring-purple-200"
+                                    className="pl-12 h-12 text-lg border-input focus:border-primary focus:ring-primary/20"
                                 />
                             </div>
                             <Button onClick={clearFilters} variant="outline" className="h-12 px-6">
                                 <X className="h-4 w-4 mr-2" />
-                                Limpar
+                                {t('common.clear')}
                             </Button>
                         </div>
                     </CardContent>
@@ -329,11 +310,11 @@ const LicenseManager: React.FC = () => {
 
                 {/* Advanced Filters */}
                 {showFilters && (
-                    <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-                        <CardHeader className="bg-gradient-to-r from-gray-50 to-purple-50">
-                            <CardTitle className="flex items-center gap-2">
-                                <Filter className="h-5 w-5 text-purple-600" />
-                                Filtros Avançados
+                    <Card className="shadow-sm border-border bg-card">
+                        <CardHeader className="bg-muted/50 border-b border-border py-3">
+                            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                <Filter className="h-5 w-5 text-primary" />
+                                {t('licenses.advancedFilters')}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
@@ -373,10 +354,10 @@ const LicenseManager: React.FC = () => {
 
                                 {/* Issue date range */}
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-semibold text-gray-700">Data de Emissão</Label>
+                                    <Label className="text-sm font-semibold">{t('licenses.issueDate')}</Label>
                                     <div className="flex gap-2">
-                                        <Input type="date" value={issueDateStart} onChange={(e) => setIssueDateStart(e.target.value)} className="text-sm" placeholder="Início" />
-                                        <Input type="date" value={issueDateEnd} onChange={(e) => setIssueDateEnd(e.target.value)} className="text-sm" placeholder="Fim" />
+                                        <Input type="date" value={issueDateStart} onChange={(e) => setIssueDateStart(e.target.value)} className="text-sm bg-background" placeholder={t('common.start')} />
+                                        <Input type="date" value={issueDateEnd} onChange={(e) => setIssueDateEnd(e.target.value)} className="text-sm bg-background" placeholder={t('common.end')} />
                                     </div>
                                 </div>
 
@@ -394,19 +375,19 @@ const LicenseManager: React.FC = () => {
                 )}
 
                 {/* License Table */}
-                <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-                    <CardHeader className="bg-gradient-to-r from-gray-50 to-purple-50">
+                <Card className="shadow-sm border-border bg-card">
+                    <CardHeader className="bg-muted/50 border-b border-border py-4">
                         <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div className="flex items-center gap-3">
-                                <Shield className="h-6 w-6 text-purple-600" />
-                                <span>Lista de Licenças</span>
-                                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                                    {filteredLicenses.length} de {licenses.length}
+                                <Shield className="h-6 w-6 text-primary" />
+                                <span className="text-lg font-bold text-foreground">{t('licenses.licenseList')}</span>
+                                <Badge variant="outline" className="bg-background text-foreground border-border">
+                                    {filteredLicenses.length} {t('common.of')} {licenses.length}
                                 </Badge>
                             </div>
-                            <Button size="sm" variant="outline" className="shadow-sm" onClick={exportCSV}>
+                            <Button size="sm" variant="outline" className="shadow-sm bg-background" onClick={exportCSV}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Exportar CSV
+                                {t('common.exportCSV')}
                             </Button>
                         </CardTitle>
                     </CardHeader>
@@ -414,19 +395,19 @@ const LicenseManager: React.FC = () => {
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-gray-50/50">
-                                        <TableHead className="font-semibold text-gray-700">Licença</TableHead>
-                                        <TableHead className="font-semibold text-gray-700">Loja</TableHead>
-                                        <TableHead className="font-semibold text-gray-700">Descrição</TableHead>
-                                        <TableHead className="font-semibold text-gray-700">Periodicidade</TableHead>
-                                        <TableHead className="font-semibold text-gray-700">Valor</TableHead>
-                                        <TableHead className="font-semibold text-gray-700 text-center">
+                                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                        <TableHead className="font-semibold text-muted-foreground">{t('licenses.license')}</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground">{t('licenses.store')}</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground">{t('licenses.description')}</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground">{t('licenses.periodicity')}</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground">{t('licenses.value')}</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground text-center">
                                             <Paperclip className="h-4 w-4 inline" />
                                         </TableHead>
-                                        <TableHead className="font-semibold text-gray-700">Emissão</TableHead>
-                                        <TableHead className="font-semibold text-gray-700">Renovação</TableHead>
-                                        <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                                        <TableHead className="font-semibold text-gray-700">Ações</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground">{t('licenses.issue')}</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground">{t('licenses.renewal')}</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground">{t('licenses.status')}</TableHead>
+                                        <TableHead className="font-semibold text-muted-foreground">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -434,28 +415,28 @@ const LicenseManager: React.FC = () => {
                                         const latestRenewal = getLatestRenewal(license);
                                         const latestIssue = getLatestIssueDate(license);
                                         return (
-                                            <TableRow key={license.id} className={`hover:bg-gray-50/50 transition-colors ${license.status === 'expirada' ? 'bg-red-50/30' : ''}`}>
-                                                <TableCell className="font-medium text-gray-900">{license.name}</TableCell>
-                                                <TableCell className="text-gray-700 max-w-[150px] truncate">{getStoreNames(license.storeIds)}</TableCell>
-                                                <TableCell className="text-gray-600 max-w-[180px] truncate">{license.description || '-'}</TableCell>
-                                                <TableCell className="text-gray-600">{getPeriodicityLabel(license.periodicity)}</TableCell>
-                                                <TableCell className="font-semibold text-gray-900">
+                                            <TableRow key={license.id} className={`hover:bg-muted/50 transition-colors ${license.status === 'expirada' ? 'bg-destructive/5' : ''}`}>
+                                                <TableCell className="font-medium text-foreground">{license.name}</TableCell>
+                                                <TableCell className="text-muted-foreground max-w-[150px] truncate">{getStoreNames(license.storeIds)}</TableCell>
+                                                <TableCell className="text-muted-foreground max-w-[180px] truncate">{license.description || '-'}</TableCell>
+                                                <TableCell className="text-muted-foreground">{getPeriodicityLabel(license.periodicity)}</TableCell>
+                                                <TableCell className="font-semibold text-foreground">
                                                     {latestRenewal ? `${latestRenewal.currency}${latestRenewal.value.toFixed(2)}` : '-'}
                                                 </TableCell>
                                                 <TableCell className="text-center">
                                                     <div className="flex items-center justify-center gap-1">
-                                                        <Paperclip className="h-3 w-3 text-gray-400" />
-                                                        <span className="text-sm text-gray-600">{license.attachments.length}</span>
+                                                        <Paperclip className="h-3 w-3 text-muted-foreground" />
+                                                        <span className="text-sm text-muted-foreground">{license.attachments.length}</span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-gray-600">
+                                                <TableCell className="text-muted-foreground">
                                                     {latestIssue ? formatDate(latestIssue.issueDate) : '-'}
                                                 </TableCell>
-                                                <TableCell className={license.status === 'expirada' ? 'text-red-600 font-semibold' : 'text-gray-600'}>
+                                                <TableCell className={license.status === 'expirada' ? 'text-destructive font-semibold' : 'text-muted-foreground'}>
                                                     {latestRenewal ? formatDate(latestRenewal.renewalDate) : '-'}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge className={`${getStatusColor(license.status)} transition-colors border ${license.status === 'expirada' ? 'animate-heartbeat' : ''}`}>
+                                                    <Badge className={`${getStatusColor(license.status)} transition-colors border ${license.status === 'expirada' ? 'animate-pulse' : ''}`}>
                                                         <div className="flex items-center gap-2">
                                                             {getStatusIcon(license.status)}
                                                             <span className="font-medium">{getStatusLabel(license.status)}</span>
@@ -463,8 +444,8 @@ const LicenseManager: React.FC = () => {
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Button size="sm" variant="outline" onClick={() => handleEdit(license)} className="h-8 w-8 p-0">
-                                                        <Edit className="h-3 w-3" />
+                                                    <Button size="sm" variant="ghost" onClick={() => handleEdit(license)} className="h-8 w-8 p-0 hover:bg-muted">
+                                                        <Edit className="h-4 w-4 text-muted-foreground" />
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -476,11 +457,11 @@ const LicenseManager: React.FC = () => {
 
                         {filteredLicenses.length === 0 && (
                             <div className="text-center py-12">
-                                <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                                <p className="text-gray-500 text-lg">
+                                <Shield className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                                <p className="text-muted-foreground text-lg">
                                     {searchTerm || storeFilter || statusFilter || issueDateStart || renewalDateStart
-                                        ? 'Nenhuma licença encontrada com os filtros aplicados'
-                                        : 'Nenhuma licença cadastrada'}
+                                        ? t('licenses.noLicensesFoundFilter')
+                                        : t('licenses.noLicensesFound')}
                                 </p>
                             </div>
                         )}

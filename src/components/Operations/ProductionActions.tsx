@@ -18,10 +18,10 @@ const ProductionActions: React.FC<ProductionActionsProps> = ({
       <Button onClick={onCancel} variant="outline">
         Cancelar
       </Button>
-      <Button 
-        onClick={onSubmit} 
+      <Button
+        onClick={onSubmit}
         disabled={!canExecuteProduction}
-        className={canExecuteProduction ? 'bg-blue-600 hover:bg-blue-700' : 'opacity-50 cursor-not-allowed'}
+        className={canExecuteProduction ? '' : 'opacity-50 cursor-not-allowed'}
       >
         {canExecuteProduction ? 'Executar Produção' : 'Estoque Insuficiente'}
       </Button>

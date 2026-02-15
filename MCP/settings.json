@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "figma": {
+      "command": "node",
+      "args": [
+        "C:/Users/yureg/AppData/Roaming/Kilo-Code/MCP/figma-server/build/index.js"
+      ],
+      "env": {
+        "FIGMA_TOKEN": ""
+      }
+    }
+  }
+}

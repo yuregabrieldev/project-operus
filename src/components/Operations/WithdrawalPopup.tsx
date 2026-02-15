@@ -115,29 +115,29 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
 
                 <div className="p-6">
                     {/* Product Name */}
-                    <h3 className="text-lg font-bold text-gray-900 text-center uppercase pr-8">
+                    <h3 className="text-lg font-bold text-foreground text-center uppercase pr-8">
                         {product.name}
                     </h3>
 
                     {/* Current Stock */}
-                    <p className="text-sm text-gray-500 text-center mt-1">
-                        {t('stockPopup.currentStock')}: <span className="font-bold text-gray-900">{item.currentQuantity}</span>
+                    <p className="text-sm text-muted-foreground text-center mt-1">
+                        {t('stockPopup.currentStock')}: <span className="font-bold text-foreground">{item.currentQuantity}</span>
                     </p>
 
                     {/* Unit Badge */}
                     <div className="flex justify-center mt-2 mb-4">
-                        <Badge className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200 px-3 py-0.5">
+                        <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-200 px-3 py-0.5">
                             1 {product.unit || 'UN.'}
                         </Badge>
                     </div>
 
                     {/* Product Image */}
                     <div className="flex justify-center mb-5">
-                        <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                        <div className="w-28 h-28 rounded-2xl bg-muted/50 flex items-center justify-center overflow-hidden border border-border">
                             {product.imageUrl ? (
                                 <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover rounded-2xl" />
                             ) : (
-                                <Package className="h-12 w-12 text-slate-300" />
+                                <Package className="h-12 w-12 text-muted-foreground/30" />
                             )}
                         </div>
                     </div>
@@ -146,7 +146,7 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
                     <div className="flex items-center justify-center gap-4 mb-5">
                         <button
                             onClick={handleDecrement}
-                            className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-all shadow-lg hover:shadow-xl active:scale-95"
+                            className="w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-all shadow-lg hover:shadow-xl active:scale-95"
                         >
                             <Minus className="h-6 w-6" />
                         </button>
@@ -157,11 +157,11 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
                                 const val = parseInt(e.target.value) || 1;
                                 setQuantity(Math.min(item.currentQuantity, Math.max(1, val)));
                             }}
-                            className="w-24 text-center text-2xl font-bold border-gray-300 rounded-xl h-14"
+                            className="w-24 text-center text-2xl font-bold border-input rounded-xl h-14 bg-background"
                         />
                         <button
                             onClick={handleIncrement}
-                            className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-all shadow-lg hover:shadow-xl active:scale-95"
+                            className="w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-all shadow-lg hover:shadow-xl active:scale-95"
                         >
                             <Plus className="h-6 w-6" />
                         </button>
@@ -171,7 +171,7 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
                     <Button
                         onClick={handleWithdraw}
                         disabled={quantity <= 0 || quantity > item.currentQuantity}
-                        className="w-full h-14 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold shadow-lg hover:shadow-xl transition-all active:scale-[0.98] disabled:opacity-40"
+                        className="w-full h-14 rounded-xl text-base font-semibold shadow-lg hover:shadow-xl transition-all active:scale-[0.98] disabled:opacity-40"
                     >
                         {t('operationsPage.withdrawButton').replace('{count}', String(quantity))}
                     </Button>
@@ -180,7 +180,7 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
                     <div className="mt-5">
                         <button
                             onClick={() => setShowHistory(!showHistory)}
-                            className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {showHistory ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             {showHistory ? 'âˆ’' : '+'} {t('stockPopup.viewHistory')}
@@ -188,34 +188,34 @@ const WithdrawalPopup: React.FC<WithdrawalPopupProps> = ({
 
                         {/* History List */}
                         {showHistory && (
-                            <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-xl">
+                            <div className="mt-2 max-h-48 overflow-y-auto border border-border rounded-xl">
                                 {operationLogs.length > 0 ? (
-                                    <div className="divide-y divide-gray-100">
+                                    <div className="divide-y divide-border">
                                         {operationLogs.map((log: any) => (
                                             <div key={log.id} className="px-3 py-2.5 flex items-start gap-2.5 text-xs">
-                                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                    <User className="h-3 w-3 text-gray-500" />
+                                                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                    <User className="h-3 w-3 text-muted-foreground" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-gray-500">
-                                                        <span className="font-medium text-gray-700">{formatDate(log.createdAt)}</span>
+                                                    <p className="text-muted-foreground">
+                                                        <span className="font-medium text-foreground">{formatDate(log.createdAt)}</span>
                                                         {' '}({log.userId})
                                                     </p>
-                                                    <p className={`mt-0.5 font-medium ${log.actionType === 'entry' ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                    <p className={`mt-0.5 font-medium ${log.actionType === 'entry' ? 'text-emerald-600' : 'text-destructive'}`}>
                                                         {log.actionType === 'withdrawal'
                                                             ? `${t('operationsPage.historyWithdrawn')} ${log.quantity} ${product.unit || 'UN.'}`
                                                             : `${t('operationsPage.historyAdded')} ${log.quantity} ${product.unit || 'UN.'}`
                                                         }
                                                     </p>
                                                     {log.notes && (
-                                                        <p className="text-gray-400 mt-0.5 italic">"{log.notes}"</p>
+                                                        <p className="text-muted-foreground mt-0.5 italic">"{log.notes}"</p>
                                                     )}
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="px-4 py-6 text-center text-gray-400 text-sm">
+                                    <div className="px-4 py-6 text-center text-muted-foreground text-sm">
                                         {t('stockPopup.noHistory')}
                                     </div>
                                 )}

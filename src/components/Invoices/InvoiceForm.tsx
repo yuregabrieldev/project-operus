@@ -435,10 +435,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
   };
 
   // Section divider
-  const SectionTitle: React.FC<{ title: string; color?: string }> = ({ title, color = 'text-purple-700' }) => (
+  const SectionTitle: React.FC<{ title: string; color?: string }> = ({ title, color = 'text-primary' }) => (
     <div className="pt-4 pb-2">
       <h3 className={`text-sm font-bold ${color} tracking-wider uppercase`}>{title}</h3>
-      <div className="h-0.5 bg-gradient-to-r from-purple-200 to-transparent mt-1" />
+      <div className="h-0.5 bg-gradient-to-r from-primary/20 to-transparent mt-1" />
     </div>
   );
 
@@ -468,9 +468,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
         {/* Store + Supplier Row */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-gray-700">{t('invoices.store')} *</Label>
+            <Label className="text-sm font-semibold">{t('invoices.store')} *</Label>
             <Select value={formData.storeId} onValueChange={(v) => handleChange('storeId', v)}>
-              <SelectTrigger className="bg-purple-50/50 border-purple-200 focus:border-purple-400">
+              <SelectTrigger className="bg-primary/5 border-primary/20 focus:border-primary">
                 <SelectValue placeholder={t('invoices.selectStore')} />
               </SelectTrigger>
               <SelectContent>
@@ -481,17 +481,17 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Label className="text-sm font-semibold flex items-center gap-2">
               {t('common.supplier')} *
               <span
-                className="text-purple-600 text-xs cursor-pointer hover:underline"
+                className="text-primary text-xs cursor-pointer hover:underline"
                 onClick={() => setShowSupplierPopup(true)}
               >
                 +{t('invoices.new')}
               </span>
             </Label>
             <Select value={formData.supplierId} onValueChange={(v) => handleChange('supplierId', v)}>
-              <SelectTrigger className="bg-white border-gray-200">
+              <SelectTrigger>
                 <SelectValue placeholder={t('common.select_supplier')} />
               </SelectTrigger>
               <SelectContent>
@@ -504,34 +504,31 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
         </div>
 
         {/* Invoice Number + Issue + Due Dates */}
-        <div className="p-4 rounded-lg border border-purple-100 bg-purple-50/30 space-y-3">
+        <div className="p-4 rounded-lg border border-primary/10 bg-primary/5 space-y-3">
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">{t('invoices.number')}</Label>
+              <Label className="text-sm font-semibold">{t('invoices.number')}</Label>
               <Input
                 value={formData.invoiceNumber}
                 onChange={(e) => handleChange('invoiceNumber', e.target.value)}
-                className="bg-white"
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">{t('invoices.issueDate')} *</Label>
+              <Label className="text-sm font-semibold">{t('invoices.issueDate')} *</Label>
               <Input
                 type="date"
                 value={formData.issueDate}
                 onChange={(e) => handleChange('issueDate', e.target.value)}
-                className="bg-white"
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">{t('invoices.dueDate')} *</Label>
+              <Label className="text-sm font-semibold">{t('invoices.dueDate')} *</Label>
               <Input
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => handleChange('dueDate', e.target.value)}
-                className="bg-white"
                 required
               />
             </div>
@@ -541,59 +538,56 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
               type="checkbox"
               checked={formData.directDebit}
               onChange={(e) => handleChange('directDebit', e.target.checked)}
-              className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+              className="w-4 h-4 text-primary rounded focus:ring-primary"
             />
-            <span className="text-sm font-medium text-red-600">✓ {t('invoices.directDebit')}</span>
+            <span className="text-sm font-medium text-destructive">✓ {t('invoices.directDebit')}</span>
           </label>
         </div>
 
         {/* Order Number + Receipt */}
-        <div className="p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+        <div className="p-4 rounded-lg border border-border bg-muted/50">
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">{t('invoices.orderNumber')}</Label>
+              <Label className="text-sm font-semibold">{t('invoices.orderNumber')}</Label>
               <Input
                 value={formData.orderNumber}
                 onChange={(e) => handleChange('orderNumber', e.target.value)}
-                className="bg-white"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">{t('invoices.receiptDate')} *</Label>
+              <Label className="text-sm font-semibold">{t('invoices.receiptDate')} *</Label>
               <Input
                 type="date"
                 value={formData.orderReceiptDate}
                 onChange={(e) => handleChange('orderReceiptDate', e.target.value)}
-                className="bg-white"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">{t('invoices.receiptTime')}</Label>
+              <Label className="text-sm font-semibold">{t('invoices.receiptTime')}</Label>
               <Input
                 type="time"
                 value={formData.orderReceiptTime}
                 onChange={(e) => handleChange('orderReceiptTime', e.target.value)}
-                className="bg-white"
               />
             </div>
           </div>
         </div>
 
         {/* Cost Center - Dropdown */}
-        <div className="p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+        <div className="p-4 rounded-lg border border-border bg-muted/50">
           <div className="flex items-center justify-between mb-2">
-            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Label className="text-sm font-semibold flex items-center gap-2">
               📊 {t('invoices.costCenter')}
             </Label>
             <span
-              className="text-purple-600 text-xs cursor-pointer hover:underline flex items-center gap-1"
+              className="text-primary text-xs cursor-pointer hover:underline flex items-center gap-1"
               onClick={() => { setShowCostCenterPopup(true); setCcSearchTerm(''); setCcFormView(false); }}
             >
               <Plus className="h-3 w-3" /> {t('invoices.add')}
             </span>
           </div>
           <Select value={formData.costCenter} onValueChange={(v) => handleChange('costCenter', v)}>
-            <SelectTrigger className="bg-white">
+            <SelectTrigger>
               <SelectValue placeholder={t('invoices.costCenterPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
@@ -606,7 +600,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
 
         {/* Value */}
         <div className="space-y-1.5">
-          <Label className="text-sm font-semibold text-gray-700">{t('invoices.amount')}</Label>
+          <Label className="text-sm font-semibold">{t('invoices.amount')}</Label>
           <div className="flex gap-2">
             <Select value={formData.currency} onValueChange={(v) => handleChange('currency', v)}>
               <SelectTrigger className="w-24">
@@ -631,7 +625,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
 
         {/* Description */}
         <div className="space-y-1.5">
-          <Label className="text-sm font-semibold text-gray-700">{t('invoices.descriptionLabel')} *</Label>
+          <Label className="text-sm font-semibold">{t('invoices.descriptionLabel')} *</Label>
           <Textarea
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
@@ -641,7 +635,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
         </div>
 
         {/* Attachments Section */}
-        <SectionTitle title={t('invoices.attachmentsTitle')} color="text-purple-700" />
+        <SectionTitle title={t('invoices.attachmentsTitle')} color="text-primary" />
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Button
@@ -649,7 +643,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
-              className="border-purple-200 text-purple-700 hover:bg-purple-50"
+              className="border-primary/20 text-primary hover:bg-primary/5"
             >
               <Upload className="h-4 w-4 mr-1" /> + {t('invoices.addFile')}
             </Button>
@@ -667,15 +661,15 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {attachments.map(att => (
                 <div key={att.id} className="p-3 border border-gray-200 rounded-lg bg-white space-y-2">
-                  <p className="text-xs font-medium text-gray-700 truncate" title={att.name}>{att.name}</p>
+                  <p className="text-xs font-medium truncate" title={att.name}>{att.name}</p>
                   <div className="flex justify-center">
-                    <FileText className="h-10 w-10 text-purple-400" />
+                    <FileText className="h-10 w-10 text-primary/40" />
                   </div>
                   {/* Type dropdown */}
                   <select
                     value={att.type}
                     onChange={(e) => handleAttachmentTypeChange(att.id, e.target.value)}
-                    className="w-full text-xs border border-gray-200 rounded px-2 py-1 bg-white text-gray-700"
+                    className="w-full text-xs border border-border rounded px-2 py-1 bg-background"
                   >
                     {ATTACHMENT_TYPES.map(type => (
                       <option key={type} value={type}>{type}</option>
@@ -687,7 +681,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
                       <button
                         type="button"
                         onClick={() => handleDownloadAsPdf(att)}
-                        className="text-purple-500 hover:text-purple-700 transition-colors"
+                        className="text-primary hover:text-primary/80 transition-colors"
                         title={t('invoices.downloadAsPdf')}
                       >
                         <FileDown className="h-4 w-4" />
@@ -696,7 +690,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
                     <button
                       type="button"
                       onClick={() => handleDownloadAttachment(att)}
-                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                       title={t('invoices.download')}
                     >
                       <Download className="h-4 w-4" />
@@ -704,7 +698,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
                     <button
                       type="button"
                       onClick={() => handleViewAttachment(att)}
-                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                       title={t('invoices.view')}
                     >
                       <Eye className="h-4 w-4" />
@@ -712,7 +706,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
                     <button
                       type="button"
                       onClick={() => handleDeleteAttachment(att.id)}
-                      className="text-red-400 hover:text-red-600 transition-colors"
+                      className="text-destructive hover:text-destructive/80 transition-colors"
                       title={t('common.delete')}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -726,23 +720,22 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
 
         {/* Payment Information */}
         <div ref={paymentSectionRef}>
-          <SectionTitle title={t('invoices.paymentInfo')} color="text-purple-700" />
+          <SectionTitle title={t('invoices.paymentInfo')} color="text-primary" />
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">
-                {t('invoices.paymentDate')} {isPaid && <span className="text-red-500">*</span>}
+              <Label className="text-sm font-semibold">
+                {t('invoices.paymentDate')} {isPaid && <span className="text-destructive">*</span>}
               </Label>
               <Input
                 type="date"
                 value={formData.paymentDate}
                 onChange={(e) => handleChange('paymentDate', e.target.value)}
-                className="bg-white"
                 required={isPaid}
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">
-                {t('invoices.paymentMethod')} {isPaid && <span className="text-red-500">*</span>}
+              <Label className="text-sm font-semibold">
+                {t('invoices.paymentMethod')} {isPaid && <span className="text-destructive">*</span>}
               </Label>
               <Select value={formData.paymentMethod} onValueChange={(v) => handleChange('paymentMethod', v)}>
                 <SelectTrigger>
@@ -757,38 +750,37 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-gray-700">{t('invoices.financialInstitution')}</Label>
+              <Label className="text-sm font-semibold">{t('invoices.financialInstitution')}</Label>
               <Input
                 value={formData.financialInstitution}
                 onChange={(e) => handleChange('financialInstitution', e.target.value)}
                 placeholder={t('invoices.financialInstitution')}
-                className="bg-white"
               />
             </div>
           </div>
         </div>
 
-        <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
-          <div className={`w-10 h-5 rounded-full relative transition-colors ${formData.markedAsPaid ? 'bg-purple-600' : 'bg-gray-300'}`}>
-            <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all shadow-sm ${formData.markedAsPaid ? 'left-5' : 'left-0.5'}`} />
+        <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-muted/50 transition-colors">
+          <div className={`w-10 h-5 rounded-full relative transition-colors ${formData.markedAsPaid ? 'bg-primary' : 'bg-muted'}`}>
+            <div className={`w-4 h-4 bg-background rounded-full absolute top-0.5 transition-all shadow-sm ${formData.markedAsPaid ? 'left-5' : 'left-0.5'}`} />
           </div>
-          <span className="text-sm font-medium text-gray-700">{t('invoices.markAsPaid')}</span>
+          <span className="text-sm font-medium">{t('invoices.markAsPaid')}</span>
           <input type="checkbox" className="sr-only" checked={formData.markedAsPaid} onChange={(e) => handleTogglePaid(e.target.checked)} />
         </label>
 
         {/* Observations */}
-        <SectionTitle title={t('invoices.observationsTitle')} color="text-gray-700" />
+        <SectionTitle title={t('invoices.observationsTitle')} color="text-muted-foreground" />
         <div className="space-y-3">
           {observations.length > 0 && (
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {observations.map((obs, idx) => (
-                <div key={idx} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                    <User className="h-4 w-4 text-purple-600" />
+                <div key={idx} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <User className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{obs.user}: {obs.text}</p>
-                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                    <p className="text-sm font-medium">{obs.user}: {obs.text}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <Clock className="h-3 w-3" /> {obs.date}
                     </p>
                   </div>
@@ -804,7 +796,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
               className="flex-1"
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addObservation(); } }}
             />
-            <Button type="button" onClick={addObservation} size="sm" className="bg-purple-600 hover:bg-purple-700 px-4">
+            <Button type="button" onClick={addObservation} size="sm" className="bg-primary hover:bg-primary/90 px-4">
               <Send className="h-4 w-4 mr-1" /> {t('invoices.add')}
             </Button>
           </div>
@@ -815,7 +807,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
           <Button type="button" variant="outline" onClick={onClose} className="px-8">
             {t('common.cancel')}
           </Button>
-          <Button type="submit" className="bg-purple-600 hover:bg-purple-700 px-8">
+          <Button type="submit" className="bg-primary hover:bg-primary/90 px-8">
             {t('common.save')}
           </Button>
         </div>

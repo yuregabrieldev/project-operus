@@ -9,12 +9,12 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Plus, 
-  Trash2, 
-  GripVertical, 
-  Image, 
-  MessageSquare, 
+import {
+  Plus,
+  Trash2,
+  GripVertical,
+  Image,
+  MessageSquare,
   AlertCircle,
   Store,
   Calendar,
@@ -115,7 +115,7 @@ const ChecklistTemplateBuilder: React.FC<ChecklistTemplateBuilderProps> = ({
   const updateItem = (itemId: string, updates: Partial<ChecklistTemplateItem>) => {
     setFormData(prev => ({
       ...prev,
-      items: prev.items.map(item => 
+      items: prev.items.map(item =>
         item.id === itemId ? { ...item, ...updates } : item
       )
     }));
@@ -228,8 +228,8 @@ const ChecklistTemplateBuilder: React.FC<ChecklistTemplateBuilderProps> = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="frequency">Frequência</Label>
-              <Select 
-                value={formData.frequency} 
+              <Select
+                value={formData.frequency}
                 onValueChange={(value: any) => setFormData(prev => ({ ...prev, frequency: value }))}
               >
                 <SelectTrigger>
@@ -291,7 +291,7 @@ const ChecklistTemplateBuilder: React.FC<ChecklistTemplateBuilderProps> = ({
               />
               <Label htmlFor="all-stores" className="font-medium">Todas as lojas</Label>
             </div>
-            
+
             {!formData.associatedStores.includes('all') && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
                 {stores.map((store) => (
@@ -354,7 +354,7 @@ const ChecklistTemplateBuilder: React.FC<ChecklistTemplateBuilderProps> = ({
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <GripVertical className="h-5 w-5 text-muted-foreground mt-3 cursor-move" />
-                    
+
                     <div className="flex-1 space-y-4">
                       <div className="flex justify-between items-start">
                         <Badge variant="outline">Item {index + 1}</Badge>
@@ -362,7 +362,7 @@ const ChecklistTemplateBuilder: React.FC<ChecklistTemplateBuilderProps> = ({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeItem(item.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -395,7 +395,7 @@ const ChecklistTemplateBuilder: React.FC<ChecklistTemplateBuilderProps> = ({
                           />
                           <Label className="text-sm">Obrigatório</Label>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
                           <Switch
                             checked={item.requiresComment}
@@ -404,7 +404,7 @@ const ChecklistTemplateBuilder: React.FC<ChecklistTemplateBuilderProps> = ({
                           <MessageSquare className="h-4 w-4" />
                           <Label className="text-sm">Requer comentário</Label>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
                           <Switch
                             checked={item.requiresImage}

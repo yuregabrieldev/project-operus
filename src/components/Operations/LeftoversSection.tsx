@@ -30,9 +30,9 @@ const LeftoversSection: React.FC<LeftoversSectionProps> = ({
 }) => {
   const { products } = useData();
 
-  const leftoverProducts = products.filter(p => 
-    p.categoryId === '5' || 
-    p.name.toLowerCase().includes('casca') || 
+  const leftoverProducts = products.filter(p =>
+    p.categoryId === '5' ||
+    p.name.toLowerCase().includes('casca') ||
     p.name.toLowerCase().includes('sobra')
   );
 
@@ -41,7 +41,7 @@ const LeftoversSection: React.FC<LeftoversSectionProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Leaf className="h-5 w-5 text-green-600" />
+            <Leaf className="h-5 w-5 text-emerald-600" />
             Sobras/Resíduos
           </div>
           <Button onClick={onAddLeftover} size="sm" variant="outline">
@@ -53,7 +53,7 @@ const LeftoversSection: React.FC<LeftoversSectionProps> = ({
       <CardContent>
         <div className="space-y-4">
           {leftovers.map((leftover, index) => (
-            <div key={index} className="flex items-center gap-4 p-4 border rounded-lg bg-green-50">
+            <div key={index} className="flex items-center gap-4 p-4 border border-emerald-100 rounded-lg bg-emerald-50/30">
               <div className="flex-1 grid grid-cols-4 gap-4">
                 <div>
                   <Label>Produto</Label>
@@ -120,18 +120,18 @@ const LeftoversSection: React.FC<LeftoversSectionProps> = ({
                   </Select>
                 </div>
               </div>
-              <Button 
-                onClick={() => onRemoveLeftover(index)} 
-                size="sm" 
+              <Button
+                onClick={() => onRemoveLeftover(index)}
+                size="sm"
                 variant="ghost"
-                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           ))}
           {leftovers.length === 0 && (
-            <p className="text-gray-500 text-center py-4">Nenhuma sobra adicionada</p>
+            <p className="text-muted-foreground text-center py-4">Nenhuma sobra adicionada</p>
           )}
         </div>
       </CardContent>

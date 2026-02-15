@@ -36,7 +36,7 @@ const ChecklistConfigManager: React.FC = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { stores } = useData();
-  
+
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([
     {
       id: '1',
@@ -79,7 +79,7 @@ const ChecklistConfigManager: React.FC = () => {
       createdAt: new Date()
     }
   ]);
-  
+
   const [selectedTemplate, setSelectedTemplate] = useState<ChecklistTemplate | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -134,8 +134,8 @@ const ChecklistConfigManager: React.FC = () => {
   const handleSaveTemplate = (templateData: Partial<ChecklistTemplate>) => {
     if (selectedTemplate) {
       // Edit existing
-      setTemplates(prev => prev.map(t => 
-        t.id === selectedTemplate.id 
+      setTemplates(prev => prev.map(t =>
+        t.id === selectedTemplate.id
           ? { ...t, ...templateData } as ChecklistTemplate
           : t
       ));
@@ -161,8 +161,8 @@ const ChecklistConfigManager: React.FC = () => {
   };
 
   const toggleTemplateStatus = (templateId: string) => {
-    setTemplates(prev => prev.map(t => 
-      t.id === templateId 
+    setTemplates(prev => prev.map(t =>
+      t.id === templateId
         ? { ...t, isActive: !t.isActive }
         : t
     ));
@@ -198,15 +198,15 @@ const ChecklistConfigManager: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Settings className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Settings className="h-6 w-6 text-primary" />
             Configuração de Checklists
           </h1>
           <p className="text-muted-foreground mt-2">
             Gerencie templates de checklists e suas configurações
           </p>
         </div>
-        
+
         <Button onClick={handleCreateNew} className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-2" />
           Novo Template

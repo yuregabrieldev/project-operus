@@ -68,22 +68,22 @@ const OperationsManager: React.FC = () => {
   ];
 
   return (
-    <div className="p-4 md:p-6 space-y-5 max-w-5xl mx-auto">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('sidebar.operations')}</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{t('operationsPage.subtitle')}</p>
+        <h1 className="text-3xl font-bold text-foreground">{t('sidebar.operations')}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t('operationsPage.subtitle')}</p>
       </div>
 
       {/* Section Tabs */}
-      <div className="flex gap-2 border-b border-gray-200 pb-0">
+      <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all duration-200 border-b-2 -mb-[1px] rounded-t-lg ${activeTab === tab.id
-                ? 'border-blue-600 text-blue-600 bg-blue-50/50'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === tab.id
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
               }`}
           >
             <tab.icon className="h-4 w-4" />
@@ -102,8 +102,8 @@ const OperationsManager: React.FC = () => {
                 key={store.id}
                 onClick={() => setSelectedStoreId(store.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${selectedStoreId === store.id
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                   }`}
               >
                 <Store className="h-4 w-4" />
@@ -115,17 +115,17 @@ const OperationsManager: React.FC = () => {
           {/* Search and Filters */}
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('operationsPage.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11 rounded-xl border-gray-200 text-sm"
+                className="pl-10 h-11 rounded-xl border-input text-sm bg-background"
               />
             </div>
 
             <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-              <SelectTrigger className="w-40 h-11 rounded-xl bg-white border-gray-200">
+              <SelectTrigger className="w-40 h-11 rounded-xl bg-background border-input">
                 <SelectValue placeholder={t('inventory.filterByCategory')} />
               </SelectTrigger>
               <SelectContent>
@@ -150,35 +150,35 @@ const OperationsManager: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setWithdrawalProduct({ product, item, store: selectedStore, category })}
-                  className="group flex flex-col items-center bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg hover:border-blue-200 hover:scale-[1.02] transition-all duration-200 cursor-pointer active:scale-95 text-center"
+                  className="group flex flex-col items-center bg-card rounded-2xl border border-border p-4 hover:shadow-lg hover:border-primary/50 hover:scale-[1.02] transition-all duration-200 cursor-pointer active:scale-95 text-center"
                 >
                   {/* Product Image */}
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center mb-3 overflow-hidden border border-slate-200 group-hover:border-blue-200 transition-colors">
+                  <div className="w-16 h-16 rounded-xl bg-muted/50 flex items-center justify-center mb-3 overflow-hidden border border-border group-hover:border-primary/50 transition-colors">
                     {product.imageUrl ? (
                       <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover rounded-xl" />
                     ) : (
-                      <Package className="h-7 w-7 text-slate-300" />
+                      <Package className="h-7 w-7 text-muted-foreground/50" />
                     )}
                   </div>
 
                   {/* Product Name */}
-                  <p className="text-xs font-semibold text-gray-900 leading-tight mb-1.5 uppercase line-clamp-2 min-h-[2rem]">
+                  <p className="text-xs font-semibold text-foreground leading-tight mb-1.5 uppercase line-clamp-2 min-h-[2rem]">
                     {product.name}
                   </p>
 
                   {/* Category Badge */}
                   {category && (
-                    <Badge className="text-[10px] bg-blue-100 text-blue-700 hover:bg-blue-100 px-2 py-0 mb-2">
+                    <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border px-2 py-0 mb-2">
                       {category.name}
                     </Badge>
                   )}
 
                   {/* Stock Quantity */}
-                  <div className={`text-lg font-bold ${isCritical ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-emerald-600'
+                  <div className={`text-lg font-bold ${isCritical ? 'text-destructive' : isLow ? 'text-orange-500' : 'text-emerald-600'
                     }`}>
                     {item.currentQuantity}
                   </div>
-                  <span className="text-[10px] text-gray-400 uppercase">{product.unit || 'UN.'}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">{product.unit || 'UN.'}</span>
                 </button>
               );
             })}
@@ -187,8 +187,8 @@ const OperationsManager: React.FC = () => {
           {/* Empty State */}
           {storeProducts.length === 0 && (
             <div className="text-center py-16">
-              <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">{t('operationsPage.noProducts')}</p>
+              <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">{t('operationsPage.noProducts')}</p>
             </div>
           )}
 

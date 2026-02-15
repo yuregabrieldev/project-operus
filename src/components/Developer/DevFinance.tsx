@@ -379,16 +379,16 @@ const DevFinance: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">Finanças & Receitas</h1>
 
             {/* Tab Switch */}
-            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+            <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit">
                 <button
                     onClick={() => setActiveTab('financas')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'financas' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'financas' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                     Finanças
                 </button>
                 <button
                     onClick={() => setActiveTab('receitas')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'receitas' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'receitas' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                     Receitas
                 </button>

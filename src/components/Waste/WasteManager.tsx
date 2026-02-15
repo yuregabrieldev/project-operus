@@ -315,30 +315,30 @@ const WasteManager: React.FC = () => {
         if (!selectedVariant) {
             // Show variant selection
             return (
-                <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 p-6">
-                    <Button variant="outline" onClick={() => setSelectedProduct(null)} className="mb-4 shadow-sm">
+                <div className="min-h-screen bg-background p-6">
+                    <Button variant="ghost" onClick={() => setSelectedProduct(null)} className="mb-4 text-muted-foreground hover:text-foreground">
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Voltar
                     </Button>
-                    <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm max-w-lg mx-auto">
-                        <CardHeader className="text-center">
+                    <Card className="max-w-lg mx-auto border-border shadow-sm">
+                        <CardHeader className="text-center bg-muted/30 pb-6 border-b border-border">
                             {selectedProduct.imageUrl && (
-                                <img src={selectedProduct.imageUrl} alt={selectedProduct.name} className="w-24 h-24 object-cover rounded-xl mx-auto mb-3 shadow-md" />
+                                <img src={selectedProduct.imageUrl} alt={selectedProduct.name} className="w-24 h-24 object-cover rounded-xl mx-auto mb-3 shadow-sm border border-border" />
                             )}
-                            <CardTitle className="text-xl">{selectedProduct.name}</CardTitle>
+                            <CardTitle className="text-lg font-bold text-foreground">{selectedProduct.name}</CardTitle>
                             {selectedProduct.sku && (
-                                <p className="text-sm text-gray-500">SKU: {selectedProduct.sku}</p>
+                                <p className="text-sm text-muted-foreground">SKU: {selectedProduct.sku}</p>
                             )}
                         </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-gray-500 mb-4 text-center">Selecione a variante</p>
+                        <CardContent className="pt-6">
+                            <p className="text-sm text-muted-foreground mb-4 text-center font-medium">Selecione a variante</p>
                             {variants.length > 0 ? (
                                 <div className="space-y-2">
                                     {variants.map(v => (
                                         <button
                                             key={v.id}
                                             onClick={() => setSelectedVariant(v)}
-                                            className="w-full p-4 rounded-xl border-2 border-gray-200 hover:border-purple-400 hover:bg-purple-50 transition-all text-left font-semibold text-gray-700"
+                                            className="w-full p-4 rounded-xl border border-border hover:bg-muted/50 transition-all text-left font-semibold text-foreground hover:border-primary/50"
                                         >
                                             {v.name}
                                         </button>
@@ -346,9 +346,9 @@ const WasteManager: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="text-center py-8">
-                                    <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                                    <p className="text-gray-400">Nenhuma variante atribuída a este produto</p>
-                                    <p className="text-xs text-gray-400 mt-1">Vá para Definições para atribuir variantes</p>
+                                    <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                                    <p className="text-muted-foreground">Nenhuma variante atribuída a este produto</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Vá para Definições para atribuir variantes</p>
                                 </div>
                             )}
                         </CardContent>
@@ -360,26 +360,26 @@ const WasteManager: React.FC = () => {
         // Show waste entry form
         const selectedReasonObj = wasteReasons.find(r => r.id === wasteReasonId);
         return (
-            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 p-6">
-                <Button variant="outline" onClick={() => setSelectedVariant(null)} className="mb-4 shadow-sm">
+            <div className="min-h-screen bg-background p-6">
+                <Button variant="ghost" onClick={() => setSelectedVariant(null)} className="mb-4 text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Voltar
                 </Button>
-                <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm max-w-lg mx-auto">
+                <Card className="max-w-lg mx-auto border-border shadow-sm">
                     <CardContent className="p-8">
                         <div className="text-center mb-6">
                             {selectedProduct.imageUrl && (
-                                <img src={selectedProduct.imageUrl} alt={selectedProduct.name} className="w-20 h-20 object-cover rounded-xl mx-auto mb-3 shadow-md" />
+                                <img src={selectedProduct.imageUrl} alt={selectedProduct.name} className="w-20 h-20 object-cover rounded-xl mx-auto mb-3 shadow-sm border border-border" />
                             )}
-                            <h2 className="text-2xl font-bold text-gray-800">{selectedProduct.name.toUpperCase()}</h2>
-                            <p className="text-gray-500 font-medium">{selectedVariant.name.toUpperCase()}</p>
+                            <h2 className="text-lg font-bold text-foreground">{selectedProduct.name.toUpperCase()}</h2>
+                            <p className="text-muted-foreground font-medium">{selectedVariant.name.toUpperCase()}</p>
                         </div>
 
                         {/* Quantity selector */}
                         <div className="flex items-center justify-center gap-4 mb-6">
                             <button
                                 onClick={() => setWasteQuantity(Math.max(0.5, wasteQuantity - 0.5))}
-                                className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow"
+                                className="w-14 h-14 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 flex items-center justify-center transition-colors border border-border"
                             >
                                 <Minus className="h-6 w-6" />
                             </button>
@@ -389,11 +389,11 @@ const WasteManager: React.FC = () => {
                                     const val = parseFloat(e.target.value.replace(',', '.'));
                                     if (!isNaN(val) && val >= 0) setWasteQuantity(val);
                                 }}
-                                className="w-24 text-center text-3xl font-bold h-16 border-2 border-gray-200 rounded-xl"
+                                className="w-24 text-center text-3xl font-bold h-16 border-2 border-border rounded-xl bg-background text-foreground focus:ring-primary focus:border-primary"
                             />
                             <button
                                 onClick={() => setWasteQuantity(wasteQuantity + 0.5)}
-                                className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow"
+                                className="w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center transition-colors shadow-sm"
                             >
                                 <Plus className="h-6 w-6" />
                             </button>
@@ -401,9 +401,9 @@ const WasteManager: React.FC = () => {
 
                         {/* Reason */}
                         <div className="mb-4">
-                            <Label className="font-bold text-gray-700">Motivo:</Label>
+                            <Label className="font-bold text-foreground">Motivo:</Label>
                             <Select value={wasteReasonId} onValueChange={setWasteReasonId}>
-                                <SelectTrigger className="mt-1 border-2 border-gray-200 rounded-xl h-12">
+                                <SelectTrigger className="mt-1 border border-input rounded-xl h-12">
                                     <SelectValue placeholder="Selecione o motivo" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -417,12 +417,12 @@ const WasteManager: React.FC = () => {
                         {/* Comment (required for "Outros") */}
                         {selectedReasonObj?.name === 'Outros' && (
                             <div className="mb-4">
-                                <Label className="font-bold text-gray-700">Comentario:</Label>
+                                <Label className="font-bold text-foreground">Comentario:</Label>
                                 <Textarea
                                     value={wasteComment}
                                     onChange={(e) => setWasteComment(e.target.value)}
                                     placeholder="Defina um outro motivo."
-                                    className="mt-1 border-2 border-gray-200 rounded-xl min-h-[80px]"
+                                    className="mt-1 border border-input rounded-xl min-h-[80px]"
                                 />
                             </div>
                         )}
@@ -430,28 +430,28 @@ const WasteManager: React.FC = () => {
                         {/* Add button */}
                         <Button
                             onClick={handleAddWaste}
-                            className="w-full h-14 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-lg font-semibold shadow-lg mt-2"
+                            className="w-full h-14 rounded-full text-lg font-semibold mt-2 shadow-sm"
                         >
                             Adicionar ao Desperdício
                         </Button>
 
                         {/* Product history */}
-                        <div className="mt-8 border-t pt-4">
+                        <div className="mt-8 border-t border-border pt-4">
                             {productHistory.length > 0 ? (
                                 <>
                                     <div className="space-y-3 max-h-64 overflow-y-auto">
                                         {productHistory.slice(0, showHistory ? undefined : 3).map(record => {
                                             const variant = wasteVariants.find(v => v.id === record.variantId);
                                             return (
-                                                <div key={record.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center flex-shrink-0">
-                                                        <span className="text-white text-xs font-bold">{record.userName.charAt(0)}</span>
+                                                <div key={record.id} className="flex items-start gap-3 p-3 bg-muted/30 rounded-xl border border-border/50">
+                                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                                        <span className="text-primary text-xs font-bold">{record.userName.charAt(0)}</span>
                                                     </div>
                                                     <div className="flex-1">
-                                                        <p className="text-sm font-semibold text-gray-700">
+                                                        <p className="text-sm font-semibold text-foreground">
                                                             {formatDateTime(record.createdAt)} ({record.userName})
                                                         </p>
-                                                        <p className="text-sm text-gray-500">
+                                                        <p className="text-sm text-muted-foreground">
                                                             Adicionou {record.quantity} ({selectedProduct.name}{variant ? ` - ${variant.name}` : ''}) ao desperdício.
                                                         </p>
                                                     </div>
@@ -459,7 +459,7 @@ const WasteManager: React.FC = () => {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="text-orange-500 hover:text-orange-700 h-7 px-2"
+                                                            className="text-destructive hover:text-destructive h-7 px-2 hover:bg-destructive/10"
                                                             onClick={() => handleUndoWaste(record.id)}
                                                         >
                                                             <Undo2 className="h-3 w-3 mr-1" />
@@ -473,14 +473,14 @@ const WasteManager: React.FC = () => {
                                     {productHistory.length > 3 && (
                                         <button
                                             onClick={() => setShowHistory(!showHistory)}
-                                            className="text-sm text-purple-600 font-semibold mt-2 hover:underline"
+                                            className="text-sm text-primary font-semibold mt-2 hover:underline"
                                         >
                                             {showHistory ? '— Esconder histórico' : `+ Ver mais (${productHistory.length - 3})`}
                                         </button>
                                     )}
                                 </>
                             ) : (
-                                <p className="text-sm text-gray-400 text-center">Nenhum histórico de desperdício</p>
+                                <p className="text-sm text-muted-foreground text-center">Nenhum histórico de desperdício</p>
                             )}
                         </div>
                     </CardContent>
@@ -496,11 +496,11 @@ const WasteManager: React.FC = () => {
         return (
             <div className="space-y-6">
                 {/* Filters */}
-                <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+                <Card className="border-border shadow-sm">
                     <CardContent className="p-4">
                         <div className="flex flex-wrap gap-4">
                             <div className="flex-1 min-w-[200px] relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                                 <Input
                                     placeholder="Buscar produto..."
                                     value={wasteSearch}
@@ -536,7 +536,7 @@ const WasteManager: React.FC = () => {
 
                 {/* Today's history button */}
                 <div className="flex justify-end">
-                    <Button variant="outline" onClick={() => setShowTodayHistory(!showTodayHistory)} className="shadow-sm">
+                    <Button variant="outline" onClick={() => setShowTodayHistory(!showTodayHistory)}>
                         <Clock className="h-4 w-4 mr-2" />
                         {showTodayHistory ? 'Esconder histórico de hoje' : `Histórico de hoje (${todayRecords.length})`}
                     </Button>
@@ -544,41 +544,41 @@ const WasteManager: React.FC = () => {
 
                 {/* Today's History Panel */}
                 {showTodayHistory && todayRecords.length > 0 && (
-                    <Card className="shadow-lg border-0 bg-orange-50/50 backdrop-blur-sm">
-                        <CardHeader className="pb-2">
+                    <Card className="border-border shadow-sm">
+                        <CardHeader className="pb-2 bg-muted/30 border-b border-border">
                             <CardTitle className="text-base flex items-center gap-2">
-                                <Clock className="h-5 w-5 text-orange-600" />
+                                <Clock className="h-5 w-5 text-primary" />
                                 Desperdiçados Hoje
-                                <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200">
+                                <Badge variant="outline" className="bg-background">
                                     {todayRecords.length}
                                 </Badge>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-4">
                             <div className="space-y-2 max-h-48 overflow-y-auto">
                                 {todayRecords.map(record => {
                                     const product = getProductById(record.productId);
                                     const variant = wasteVariants.find(v => v.id === record.variantId);
                                     const reason = wasteReasons.find(r => r.id === record.reasonId);
                                     return (
-                                        <div key={record.id} className="flex items-center justify-between p-2 bg-white/80 rounded-lg">
+                                        <div key={record.id} className="flex items-center justify-between p-2 bg-card rounded-lg border border-border hover:bg-muted/50 transition-colors">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0">
-                                                    <span className="text-white text-xs font-bold">{record.userName.charAt(0)}</span>
+                                                <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                                                    <span className="text-destructive text-xs font-bold">{record.userName.charAt(0)}</span>
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-semibold">{product?.name} {variant ? `(${variant.name})` : ''}</p>
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-sm font-semibold text-foreground">{product?.name} {variant ? `(${variant.name})` : ''}</p>
+                                                    <p className="text-xs text-muted-foreground">
                                                         {formatDateTime(record.createdAt)} — {record.userName} — {reason?.name}{record.comment ? ` - ${record.comment}` : ''}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Badge variant="outline" className="text-orange-700 border-orange-200 bg-orange-50">
+                                                <Badge variant="outline">
                                                     Qtd: {record.quantity}
                                                 </Badge>
                                                 {canUndoRecord(record) && (
-                                                    <Button variant="ghost" size="sm" className="text-orange-500 h-7 px-2" onClick={() => handleUndoWaste(record.id)}>
+                                                    <Button variant="ghost" size="sm" className="text-destructive h-7 px-2 hover:bg-destructive/10 hover:text-destructive" onClick={() => handleUndoWaste(record.id)}>
                                                         <Undo2 className="h-3 w-3" />
                                                     </Button>
                                                 )}
@@ -592,45 +592,49 @@ const WasteManager: React.FC = () => {
                 )}
 
                 {/* Product Grid by Category */}
-                {Object.entries(productsByCategory).map(([catName, prods]) => (
-                    <div key={catName}>
-                        <h3 className="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2">
-                            <Package className="h-5 w-5 text-purple-600" />
-                            {catName}
-                        </h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                            {prods.map(product => (
-                                <Card
-                                    key={product.id}
-                                    className="cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-0 shadow-md bg-white/70 backdrop-blur-sm"
-                                    onClick={() => { setSelectedProduct(product); setSelectedVariant(null); setWasteQuantity(1); setWasteReasonId(''); setWasteComment(''); setShowHistory(false); }}
-                                >
-                                    <CardContent className="p-3 text-center">
-                                        {product.imageUrl ? (
-                                            <img src={product.imageUrl} alt={product.name} className="w-16 h-16 object-cover rounded-xl mx-auto mb-2 shadow-sm" />
-                                        ) : (
-                                            <div className="w-16 h-16 rounded-xl mx-auto mb-2 bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
-                                                <Package className="h-8 w-8 text-purple-400" />
-                                            </div>
-                                        )}
-                                        <p className="font-semibold text-sm text-gray-800 truncate">{product.name}</p>
-                                        {product.sku && (
-                                            <p className="text-xs text-gray-400 truncate">{product.sku}</p>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))}
+                {
+                    Object.entries(productsByCategory).map(([catName, prods]) => (
+                        <div key={catName}>
+                            <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+                                <Package className="h-5 w-5 text-primary" />
+                                {catName}
+                            </h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                                {prods.map(product => (
+                                    <Card
+                                        key={product.id}
+                                        className="cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-border bg-card"
+                                        onClick={() => { setSelectedProduct(product); setSelectedVariant(null); setWasteQuantity(1); setWasteReasonId(''); setWasteComment(''); setShowHistory(false); }}
+                                    >
+                                        <CardContent className="p-3 text-center">
+                                            {product.imageUrl ? (
+                                                <img src={product.imageUrl} alt={product.name} className="w-16 h-16 object-cover rounded-xl mx-auto mb-2 shadow-sm border border-border" />
+                                            ) : (
+                                                <div className="w-16 h-16 rounded-xl mx-auto mb-2 bg-primary/10 flex items-center justify-center">
+                                                    <Package className="h-8 w-8 text-primary" />
+                                                </div>
+                                            )}
+                                            <p className="font-semibold text-sm text-foreground truncate">{product.name}</p>
+                                            {product.sku && (
+                                                <p className="text-xs text-muted-foreground truncate">{product.sku}</p>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                }
 
-                {Object.keys(productsByCategory).length === 0 && (
-                    <div className="text-center py-16">
-                        <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500 text-lg">Nenhum produto encontrado</p>
-                    </div>
-                )}
-            </div>
+                {
+                    Object.keys(productsByCategory).length === 0 && (
+                        <div className="text-center py-16">
+                            <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-muted-foreground text-lg">Nenhum produto encontrado</p>
+                        </div>
+                    )
+                }
+            </div >
         );
     };
 
@@ -638,10 +642,10 @@ const WasteManager: React.FC = () => {
     const renderReportTab = () => (
         <div className="space-y-6">
             {/* Filters */}
-            <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-orange-50 pb-2">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <Filter className="h-5 w-5 text-orange-600" />
+            <Card className="border-border shadow-sm">
+                <CardHeader className="bg-muted/30 border-b border-border pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base text-foreground">
+                        <Filter className="h-5 w-5 text-primary" />
                         Filtros do Relatório
                     </CardTitle>
                 </CardHeader>
@@ -688,18 +692,18 @@ const WasteManager: React.FC = () => {
             </Card>
 
             {/* Table + Export */}
-            <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-orange-50">
+            <Card className="border-border shadow-sm">
+                <CardHeader className="bg-muted/30 border-b border-border pb-4">
                     <CardTitle className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <FileSpreadsheet className="h-6 w-6 text-orange-600" />
-                            <span>Relatório de Desperdício</span>
-                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                            <FileSpreadsheet className="h-6 w-6 text-primary" />
+                            <span className="text-lg text-foreground">Relatório de Desperdício</span>
+                            <Badge variant="outline" className="bg-background">
                                 {filteredReportRecords.length} registros
                             </Badge>
                         </div>
-                        <Button size="sm" variant="outline" className="shadow-sm bg-green-600 text-white hover:bg-green-700 border-0" onClick={exportXLSX}>
-                            <Download className="h-4 w-4 mr-2" />
+                        <Button size="sm" variant="outline" className="gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary" onClick={exportXLSX}>
+                            <Download className="h-4 w-4" />
                             Exportar XLSX
                         </Button>
                     </CardTitle>
@@ -708,14 +712,14 @@ const WasteManager: React.FC = () => {
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-gray-50/50">
-                                    <TableHead className="font-semibold">Produto</TableHead>
-                                    <TableHead className="font-semibold">SKU</TableHead>
-                                    <TableHead className="font-semibold">Variante</TableHead>
-                                    <TableHead className="font-semibold">Usuário</TableHead>
-                                    <TableHead className="font-semibold">Data / Horário</TableHead>
-                                    <TableHead className="font-semibold text-center">Quantidade</TableHead>
-                                    <TableHead className="font-semibold">Motivo</TableHead>
+                                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                    <TableHead className="font-semibold text-foreground">Produto</TableHead>
+                                    <TableHead className="font-semibold text-foreground">SKU</TableHead>
+                                    <TableHead className="font-semibold text-foreground">Variante</TableHead>
+                                    <TableHead className="font-semibold text-foreground">Usuário</TableHead>
+                                    <TableHead className="font-semibold text-foreground">Data / Horário</TableHead>
+                                    <TableHead className="font-semibold text-center text-foreground">Quantidade</TableHead>
+                                    <TableHead className="font-semibold text-foreground">Motivo</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -724,16 +728,16 @@ const WasteManager: React.FC = () => {
                                     const variant = wasteVariants.find(v => v.id === record.variantId);
                                     const reason = wasteReasons.find(r => r.id === record.reasonId);
                                     return (
-                                        <TableRow key={record.id}>
-                                            <TableCell className="font-medium">{product?.name || '-'}</TableCell>
-                                            <TableCell className="text-gray-500">{product?.sku || '-'}</TableCell>
-                                            <TableCell>{variant?.name || '-'}</TableCell>
-                                            <TableCell className="text-gray-700">{record.userName}</TableCell>
-                                            <TableCell className="text-gray-600">{formatDateTime(record.createdAt)}</TableCell>
-                                            <TableCell className="text-center font-semibold">{record.quantity}</TableCell>
+                                        <TableRow key={record.id} className="hover:bg-muted/30 border-border">
+                                            <TableCell className="font-medium text-foreground">{product?.name || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{product?.sku || '-'}</TableCell>
+                                            <TableCell className="text-foreground">{variant?.name || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{record.userName}</TableCell>
+                                            <TableCell className="text-muted-foreground">{formatDateTime(record.createdAt)}</TableCell>
+                                            <TableCell className="text-center font-semibold text-foreground">{record.quantity}</TableCell>
                                             <TableCell>
-                                                <span className="text-gray-600">{reason?.name || '-'}</span>
-                                                {record.comment && <span className="text-xs text-gray-400 ml-1">({record.comment})</span>}
+                                                <span className="text-foreground">{reason?.name || '-'}</span>
+                                                {record.comment && <span className="text-xs text-muted-foreground ml-1">({record.comment})</span>}
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -743,8 +747,8 @@ const WasteManager: React.FC = () => {
                     </div>
                     {filteredReportRecords.length === 0 && (
                         <div className="text-center py-12">
-                            <FileSpreadsheet className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500 text-lg">Nenhum registro de desperdício encontrado</p>
+                            <FileSpreadsheet className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                            <p className="text-muted-foreground text-lg">Nenhum registro de desperdício encontrado</p>
                         </div>
                     )}
                 </CardContent>
@@ -756,17 +760,17 @@ const WasteManager: React.FC = () => {
     const renderSettingsTab = () => (
         <div className="space-y-6">
             {/* Variants */}
-            <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-purple-50">
+            <Card className="border-border shadow-sm">
+                <CardHeader className="bg-muted/30 border-b border-border pb-4">
                     <CardTitle className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <Settings className="h-6 w-6 text-purple-600" />
-                            <span>Variantes</span>
-                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                            <Settings className="h-6 w-6 text-primary" />
+                            <span className="text-foreground">Variantes</span>
+                            <Badge variant="outline" className="bg-background">
                                 {wasteVariants.length}
                             </Badge>
                         </div>
-                        <Button size="sm" onClick={() => { setEditingVariant(null); setVariantName(''); setShowVariantDialog(true); }} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+                        <Button size="sm" onClick={() => { setEditingVariant(null); setVariantName(''); setShowVariantDialog(true); }}>
                             <Plus className="h-4 w-4 mr-2" />
                             Nova Variante
                         </Button>
@@ -775,32 +779,32 @@ const WasteManager: React.FC = () => {
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-gray-50/50">
-                                <TableHead className="font-semibold">Nome</TableHead>
-                                <TableHead className="font-semibold text-center">Produtos Atribuídos</TableHead>
-                                <TableHead className="font-semibold text-right">Ações</TableHead>
+                            <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                <TableHead className="font-semibold text-foreground">Nome</TableHead>
+                                <TableHead className="font-semibold text-center text-foreground">Produtos Atribuídos</TableHead>
+                                <TableHead className="font-semibold text-right text-foreground">Ações</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {wasteVariants.map(variant => (
-                                <TableRow key={variant.id}>
-                                    <TableCell className="font-medium">{variant.name}</TableCell>
+                                <TableRow key={variant.id} className="hover:bg-muted/30 border-border">
+                                    <TableCell className="font-medium text-foreground">{variant.name}</TableCell>
                                     <TableCell className="text-center">
-                                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                        <Badge variant="outline" className="bg-background">
                                             {variant.productIds.length} produtos
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex gap-1 justify-end">
-                                            <Button variant="outline" size="sm" onClick={() => { setEditingVariant(variant); setVariantName(variant.name); setShowVariantDialog(true); }}>
+                                            <Button variant="outline" size="sm" onClick={() => { setEditingVariant(variant); setVariantName(variant.name); setShowVariantDialog(true); }} className="h-8">
                                                 <Edit className="h-3 w-3 mr-1" />
                                                 Editar
                                             </Button>
-                                            <Button variant="outline" size="sm" onClick={() => handleOpenAssign(variant)} className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                                            <Button variant="outline" size="sm" onClick={() => handleOpenAssign(variant)} className="h-8">
                                                 <Users className="h-3 w-3 mr-1" />
                                                 Atribuir
                                             </Button>
-                                            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setDeletingVariantId(variant.id); setShowDeleteConfirm(true); }}>
+                                            <Button variant="outline" size="sm" className="text-destructive border-destructive/20 hover:bg-destructive/10 h-8" onClick={() => { setDeletingVariantId(variant.id); setShowDeleteConfirm(true); }}>
                                                 <Trash2 className="h-3 w-3 mr-1" />
                                                 Excluir
                                             </Button>
@@ -812,25 +816,25 @@ const WasteManager: React.FC = () => {
                     </Table>
                     {wasteVariants.length === 0 && (
                         <div className="text-center py-12">
-                            <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500">Nenhuma variante cadastrada</p>
+                            <Settings className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                            <p className="text-muted-foreground">Nenhuma variante cadastrada</p>
                         </div>
                     )}
                 </CardContent>
             </Card>
 
             {/* Reasons */}
-            <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-orange-50">
+            <Card className="border-border shadow-sm">
+                <CardHeader className="bg-muted/30 border-b border-border pb-4">
                     <CardTitle className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <AlertTriangle className="h-6 w-6 text-orange-600" />
-                            <span>Motivos de Desperdício</span>
-                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                            <AlertTriangle className="h-6 w-6 text-primary" />
+                            <span className="text-foreground">Motivos de Desperdício</span>
+                            <Badge variant="outline" className="bg-background">
                                 {wasteReasons.length}
                             </Badge>
                         </div>
-                        <Button size="sm" onClick={() => { setEditingReason(null); setReasonName(''); setShowReasonDialog(true); }} className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700">
+                        <Button size="sm" onClick={() => { setEditingReason(null); setReasonName(''); setShowReasonDialog(true); }}>
                             <Plus className="h-4 w-4 mr-2" />
                             Novo Motivo
                         </Button>
@@ -839,22 +843,22 @@ const WasteManager: React.FC = () => {
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-gray-50/50">
-                                <TableHead className="font-semibold">Nome</TableHead>
-                                <TableHead className="font-semibold text-right">Ações</TableHead>
+                            <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                <TableHead className="font-semibold text-foreground">Nome</TableHead>
+                                <TableHead className="font-semibold text-right text-foreground">Ações</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {wasteReasons.map(reason => (
-                                <TableRow key={reason.id}>
-                                    <TableCell className="font-medium">{reason.name}</TableCell>
+                                <TableRow key={reason.id} className="hover:bg-muted/30 border-border">
+                                    <TableCell className="font-medium text-foreground">{reason.name}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex gap-1 justify-end">
-                                            <Button variant="outline" size="sm" onClick={() => { setEditingReason(reason); setReasonName(reason.name); setShowReasonDialog(true); }}>
+                                            <Button variant="outline" size="sm" onClick={() => { setEditingReason(reason); setReasonName(reason.name); setShowReasonDialog(true); }} className="h-8">
                                                 <Edit className="h-3 w-3 mr-1" />
                                                 Editar
                                             </Button>
-                                            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setDeletingReasonId(reason.id); setShowDeleteReasonConfirm(true); }}>
+                                            <Button variant="outline" size="sm" className="text-destructive border-destructive/20 hover:bg-destructive/10 h-8" onClick={() => { setDeletingReasonId(reason.id); setShowDeleteReasonConfirm(true); }}>
                                                 <Trash2 className="h-3 w-3 mr-1" />
                                                 Excluir
                                             </Button>
@@ -953,8 +957,8 @@ const WasteManager: React.FC = () => {
                                                     key={product.id}
                                                     onClick={() => toggleAssignProduct(product.id)}
                                                     className={`p-3 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${isSelected
-                                                            ? 'bg-purple-50 border-purple-400 text-purple-700'
-                                                            : 'bg-white border-gray-200 hover:bg-gray-50'
+                                                        ? 'bg-purple-50 border-purple-400 text-purple-700'
+                                                        : 'bg-white border-gray-200 hover:bg-gray-50'
                                                         }`}
                                                 >
                                                     {product.imageUrl ? (
@@ -998,7 +1002,7 @@ const WasteManager: React.FC = () => {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowReasonDialog(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveReason} className="bg-gradient-to-r from-orange-600 to-red-600">Salvar</Button>
+                        <Button onClick={handleSaveReason}>Salvar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -1026,28 +1030,28 @@ const WasteManager: React.FC = () => {
 
     // ─── Main Render ───
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+        <div className="min-h-screen bg-background">
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
                         Desperdício
                     </h1>
-                    <p className="text-gray-600">Gestão de desperdício de produtos</p>
+                    <p className="text-muted-foreground">Gestão de desperdício de produtos</p>
                 </div>
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-3 bg-white/70 shadow-md">
-                        <TabsTrigger value="waste" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white">
+                    <TabsList>
+                        <TabsTrigger value="waste" className="flex items-center gap-2">
                             <Trash2 className="h-4 w-4" />
                             Desperdício
                         </TabsTrigger>
-                        <TabsTrigger value="report" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white">
+                        <TabsTrigger value="report" className="flex items-center gap-2">
                             <FileSpreadsheet className="h-4 w-4" />
                             Relatório
                         </TabsTrigger>
-                        <TabsTrigger value="settings" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white">
+                        <TabsTrigger value="settings" className="flex items-center gap-2">
                             <Settings className="h-4 w-4" />
                             Definições
                         </TabsTrigger>

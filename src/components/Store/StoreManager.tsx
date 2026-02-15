@@ -49,7 +49,7 @@ export const StoreManager: React.FC = () => {
             Gerencie todas as lojas do sistema
           </p>
         </div>
-        
+
         <Button onClick={() => setIsCreateFormOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Adicionar Loja
@@ -58,9 +58,9 @@ export const StoreManager: React.FC = () => {
 
       <StoreList onEditStore={handleEditStore} />
 
-      <StoreForm 
-        isOpen={isCreateFormOpen} 
-        onClose={() => setIsCreateFormOpen(false)} 
+      <StoreForm
+        isOpen={isCreateFormOpen}
+        onClose={() => setIsCreateFormOpen(false)}
       />
 
       {editingStore && (

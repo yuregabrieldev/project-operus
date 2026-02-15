@@ -47,13 +47,13 @@ const InvoiceManager: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'finalizado_pago': return 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100';
-      case 'pedido_realizado': return 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100';
-      case 'contas_a_pagar': return 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100';
-      case 'mercadoria_recebida': return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100';
+      case 'finalizado_pago': return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
+      case 'pedido_realizado': return 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100';
+      case 'contas_a_pagar': return 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100';
+      case 'mercadoria_recebida': return 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100';
       case 'cancelado':
       case 'finalizado_outros':
-      default: return 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100';
+      default: return 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
     }
   };
 
@@ -270,7 +270,7 @@ const InvoiceManager: React.FC = () => {
   // Full-page form view
   if (isFormOpen) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-background">
         <div className="p-6 space-y-6">
           {/* Back + Title */}
           <div className="flex items-center gap-4">
@@ -283,11 +283,11 @@ const InvoiceManager: React.FC = () => {
               {t('invoices.backToList')}
             </Button>
             <div className="space-y-1">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold text-foreground">
                 {selectedInvoice ? t('invoices.editInvoice') : t('invoices.newInvoice')}
               </h1>
               {selectedInvoice && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {t('invoices.number')}: {selectedInvoice.invoiceNumber}
                 </p>
               )}
@@ -295,7 +295,7 @@ const InvoiceManager: React.FC = () => {
           </div>
 
           {/* Form Card */}
-          <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm max-w-4xl">
+          <Card>
             <CardContent className="p-8">
               <InvoiceForm
                 invoice={selectedInvoice}
@@ -310,27 +310,26 @@ const InvoiceManager: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-background">
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-foreground">
               {t('invoices.title')}
             </h1>
-            <p className="text-gray-600">{t('invoices.description')}</p>
+            <p className="text-muted-foreground">{t('invoices.description')}</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Button
               onClick={() => setShowFilters(!showFilters)}
               variant={showFilters ? "default" : "outline"}
-              className="shadow-md"
             >
               <Filter className="h-4 w-4 mr-2" />
               {showFilters ? t('invoices.hideFilters') : t('invoices.showFilters')}
             </Button>
-            <Button onClick={handleAddNew} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">
+            <Button onClick={handleAddNew} className="shadow-sm">
               <Plus className="h-4 w-4 mr-2" />
               {t('invoices.newInvoice')}
             </Button>
@@ -338,16 +337,16 @@ const InvoiceManager: React.FC = () => {
         </div>
 
         {/* Search Bar */}
-        <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+        <Card>
           <CardContent className="p-6">
             <div className="flex gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <Input
                   placeholder={t('invoices.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 h-12 text-lg border-gray-200 focus:border-blue-500 focus:ring-blue-200"
+                  className="pl-12 h-12 text-lg"
                 />
               </div>
               <Button onClick={clearFilters} variant="outline" className="h-12 px-6">
@@ -360,10 +359,10 @@ const InvoiceManager: React.FC = () => {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-            <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
+          <Card>
+            <CardHeader className="bg-muted/50">
               <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-blue-600" />
+                <Filter className="h-5 w-5 text-primary" />
                 {t('invoices.advancedFilters')}
               </CardTitle>
             </CardHeader>
@@ -371,7 +370,7 @@ const InvoiceManager: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Status Dropdown */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">{t('common.status')}</Label>
+                  <Label className="text-sm font-semibold">{t('common.status')}</Label>
                   <Select value={statusFilter || '__all__'} onValueChange={(v) => setStatusFilter(v === '__all__' ? '' : v)}>
                     <SelectTrigger className="h-10">
                       <SelectValue />
@@ -391,10 +390,10 @@ const InvoiceManager: React.FC = () => {
                         <span className="text-green-600">{t('invoices.status_finalizado_pago')}</span>
                       </SelectItem>
                       <SelectItem value="cancelado">
-                        <span className="text-gray-500">{t('invoices.status_cancelado')}</span>
+                        <span className="text-muted-foreground">{t('invoices.status_cancelado')}</span>
                       </SelectItem>
                       <SelectItem value="finalizado_outros">
-                        <span className="text-gray-500">{t('invoices.status_finalizado_outros')}</span>
+                        <span className="text-muted-foreground">{t('invoices.status_finalizado_outros')}</span>
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -402,7 +401,7 @@ const InvoiceManager: React.FC = () => {
 
                 {/* Supplier Dropdown */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">{t('invoices.supplierFilter')}</Label>
+                  <Label className="text-sm font-semibold">{t('invoices.supplierFilter')}</Label>
                   <Select value={supplierFilter || '__all__'} onValueChange={(v) => setSupplierFilter(v === '__all__' ? '' : v)}>
                     <SelectTrigger className="h-10">
                       <SelectValue />
@@ -418,10 +417,10 @@ const InvoiceManager: React.FC = () => {
 
                 {/* Issue Date Dynamic Dropdown */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">{t('invoices.issueDate')}</Label>
+                  <Label className="text-sm font-semibold">{t('invoices.issueDate')}</Label>
                   <Select value={issueDatePreset} onValueChange={handleIssueDatePreset}>
                     <SelectTrigger className="h-10">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -440,10 +439,10 @@ const InvoiceManager: React.FC = () => {
 
                 {/* Due Date Dynamic Dropdown */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">{t('invoices.dueDate')}</Label>
+                  <Label className="text-sm font-semibold">{t('invoices.dueDate')}</Label>
                   <Select value={dueDatePreset} onValueChange={handleDueDatePreset}>
                     <SelectTrigger className="h-10">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -462,7 +461,7 @@ const InvoiceManager: React.FC = () => {
 
                 {/* Amount Range */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">{t('invoices.amountRange')}</Label>
+                  <Label className="text-sm font-semibold">{t('invoices.amountRange')}</Label>
                   <div className="flex gap-2">
                     <Input type="number" placeholder={t('invoices.min')} value={minAmount} onChange={(e) => setMinAmount(e.target.value)} className="text-sm" />
                     <Input type="number" placeholder={t('invoices.max')} value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} className="text-sm" />
@@ -475,72 +474,72 @@ const InvoiceManager: React.FC = () => {
 
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <Card className="bg-primary/5 border-primary/10">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm font-medium">{t('invoices.totalInvoices')}</p>
-                  <p className="text-3xl font-bold">{dashboardStats.totalInvoices}</p>
-                  <p className="text-blue-100 text-sm mt-1">€{dashboardStats.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-primary/70 text-sm font-medium">{t('invoices.totalInvoices')}</p>
+                  <p className="text-3xl font-bold text-primary">{dashboardStats.totalInvoices}</p>
+                  <p className="text-primary/60 text-sm mt-1">€{dashboardStats.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
-                <FileText className="h-10 w-10 text-blue-200" />
+                <FileText className="h-10 w-10 text-primary/20" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 to-green-600 text-white">
+          <Card className="bg-emerald-50/50 border-emerald-100">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-100 text-sm font-medium">{t('invoices.paidLabel')}</p>
-                  <p className="text-3xl font-bold">{dashboardStats.paidCount}</p>
-                  <p className="text-green-100 text-sm mt-1">€{dashboardStats.paidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-emerald-600 text-sm font-medium">{t('invoices.paidLabel')}</p>
+                  <p className="text-3xl font-bold text-emerald-700">{dashboardStats.paidCount}</p>
+                  <p className="text-emerald-600/60 text-sm mt-1">€{dashboardStats.paidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
-                <CheckCircle className="h-10 w-10 text-green-200" />
+                <CheckCircle className="h-10 w-10 text-emerald-600/20" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
+          <Card className="bg-amber-50/50 border-amber-100">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-yellow-100 text-sm font-medium">{t('invoices.pendingLabel')}</p>
-                  <p className="text-3xl font-bold">{dashboardStats.pendingCount}</p>
-                  <p className="text-yellow-100 text-sm mt-1">€{dashboardStats.pendingAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-amber-600 text-sm font-medium">{t('invoices.pendingLabel')}</p>
+                  <p className="text-3xl font-bold text-amber-700">{dashboardStats.pendingCount}</p>
+                  <p className="text-amber-600/60 text-sm mt-1">€{dashboardStats.pendingAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
-                <Clock className="h-10 w-10 text-yellow-200" />
+                <Clock className="h-10 w-10 text-amber-600/20" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-red-500 to-red-600 text-white">
+          <Card className="bg-rose-50/50 border-rose-100">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-red-100 text-sm font-medium">{t('invoices.overdueLabel')}</p>
-                  <p className="text-3xl font-bold">{dashboardStats.overdueCount}</p>
-                  <p className="text-red-100 text-sm mt-1">€{dashboardStats.overdueAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-rose-600 text-sm font-medium">{t('invoices.overdueLabel')}</p>
+                  <p className="text-3xl font-bold text-rose-700">{dashboardStats.overdueCount}</p>
+                  <p className="text-rose-600/60 text-sm mt-1">€{dashboardStats.overdueAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
-                <AlertCircle className="h-10 w-10 text-red-200" />
+                <AlertCircle className="h-10 w-10 text-rose-600/20" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Invoices Table */}
-        <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
+        <Card>
+          <CardHeader className="bg-muted/50 border-b">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <FileText className="h-6 w-6 text-blue-600" />
+                <FileText className="h-6 w-6 text-primary" />
                 <span>{t('invoices.listTitle')}</span>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                   {filteredInvoices.length} de {invoices.length}
                 </Badge>
               </div>
               <div className="flex items-center gap-4">
-                <div className="text-sm font-normal text-gray-600">
+                <div className="text-sm font-normal text-muted-foreground">
                   Total: €{dashboardStats.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
                 <Button size="sm" variant="outline" className="shadow-sm" onClick={exportCSV}>
@@ -554,15 +553,15 @@ const InvoiceManager: React.FC = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50/50">
-                    <TableHead className="font-semibold text-gray-700">{t('invoices.number')}</TableHead>
-                    <TableHead className="font-semibold text-gray-700">{t('invoices.supplierFilter')}</TableHead>
-                    <TableHead className="font-semibold text-gray-700">{t('invoices.amount')}</TableHead>
-                    <TableHead className="font-semibold text-gray-700">{t('invoices.issueDate')}</TableHead>
-                    <TableHead className="font-semibold text-gray-700">{t('invoices.dueDate')}</TableHead>
-                    <TableHead className="font-semibold text-gray-700">{t('invoices.paymentDate')}</TableHead>
-                    <TableHead className="font-semibold text-gray-700">{t('common.status')}</TableHead>
-                    <TableHead className="font-semibold text-gray-700">{t('common.actions')}</TableHead>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-semibold">{t('invoices.number')}</TableHead>
+                    <TableHead className="font-semibold">{t('invoices.supplierFilter')}</TableHead>
+                    <TableHead className="font-semibold">{t('invoices.amount')}</TableHead>
+                    <TableHead className="font-semibold">{t('invoices.issueDate')}</TableHead>
+                    <TableHead className="font-semibold">{t('invoices.dueDate')}</TableHead>
+                    <TableHead className="font-semibold">{t('invoices.paymentDate')}</TableHead>
+                    <TableHead className="font-semibold">{t('common.status')}</TableHead>
+                    <TableHead className="font-semibold">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

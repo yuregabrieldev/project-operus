@@ -65,11 +65,11 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
 
     const getStatusColor = (s: LicenseStatus) => {
         switch (s) {
-            case 'ativa': return 'bg-green-100 text-green-700 border-green-300';
-            case 'expirada': return 'bg-red-100 text-red-700 border-red-300';
-            case 'cancelada': return 'bg-gray-100 text-gray-700 border-gray-300';
-            case 'pendente': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-            default: return 'bg-gray-100 text-gray-700 border-gray-300';
+            case 'ativa': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            case 'expirada': return 'bg-destructive/10 text-destructive border-destructive/20';
+            case 'cancelada': return 'bg-muted text-muted-foreground border-border';
+            case 'pendente': return 'bg-amber-50 text-amber-700 border-amber-200';
+            default: return 'bg-muted/50 text-muted-foreground border-border';
         }
     };
 
@@ -232,69 +232,69 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
         <div className="space-y-6">
             {/* Header with status badge */}
             <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-800">
-                    {license ? 'Editar os dados da licença' : 'Nova Licença'}
+                <h2 className="text-lg font-bold text-foreground">
+                    {license ? t('licenses.editLicenseData') : t('licenses.newLicense')}
                 </h2>
-                <Badge className={`${getStatusColor(status)} border ${status === 'expirada' ? 'animate-heartbeat' : ''}`}>
+                <Badge className={`${getStatusColor(status)} border ${status === 'expirada' ? 'animate-pulse' : ''}`}>
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                 </Badge>
             </div>
 
             {/* Main data section */}
-            <Card className="border border-blue-100">
+            <Card className="border border-border bg-card shadow-sm">
                 <CardContent className="p-6 space-y-4">
                     <div className="flex items-start justify-between">
                         <div className="flex-1 space-y-4">
                             {/* Store */}
                             <div>
-                                <Label className="text-xs text-gray-500 font-medium">Lojas*</Label>
-                                <p className="text-sm font-semibold text-gray-800">
-                                    {storeNames || <span className="text-gray-400">Selecione as lojas</span>}
+                                <Label className="text-xs text-muted-foreground font-medium">{t('licenses.store')}*</Label>
+                                <p className="text-sm font-semibold text-foreground">
+                                    {storeNames || <span className="text-muted-foreground">{t('licenses.selectStore')}</span>}
                                 </p>
                             </div>
 
                             {/* License name */}
                             <div>
-                                <Label className="text-xs text-gray-500 font-medium">Licença*</Label>
+                                <Label className="text-xs text-muted-foreground font-medium">{t('licenses.licenseName')}*</Label>
                                 <Input
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    placeholder="Nome da licença"
+                                    placeholder={t('licenses.licenseNamePlaceholder')}
                                     className="mt-1"
                                 />
                             </div>
 
                             {/* Description */}
                             <div>
-                                <Label className="text-xs text-gray-500 font-medium">Descrição</Label>
+                                <Label className="text-xs text-muted-foreground font-medium">{t('licenses.description')}</Label>
                                 <Textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Descrição da licença"
+                                    placeholder={t('licenses.descriptionPlaceholder')}
                                     className="mt-1 min-h-[60px]"
                                 />
                             </div>
 
                             {/* Periodicity */}
                             <div>
-                                <Label className="text-xs text-gray-500 font-medium">Periodicidade*</Label>
+                                <Label className="text-xs text-muted-foreground font-medium">{t('licenses.periodicity')}*</Label>
                                 <Select value={periodicity} onValueChange={(v: License['periodicity']) => setPeriodicity(v)}>
                                     <SelectTrigger className="mt-1">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="mensal">Mensal</SelectItem>
-                                        <SelectItem value="trimestral">Trimestral</SelectItem>
-                                        <SelectItem value="semestral">Semestral</SelectItem>
-                                        <SelectItem value="anual">Anual</SelectItem>
+                                        <SelectItem value="mensal">{t('licenses.monthly')}</SelectItem>
+                                        <SelectItem value="trimestral">{t('licenses.quarterly')}</SelectItem>
+                                        <SelectItem value="semestral">{t('licenses.biannual')}</SelectItem>
+                                        <SelectItem value="anual">{t('licenses.annual')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             {/* Alert days */}
                             <div>
-                                <p className="text-sm font-semibold text-gray-800 mt-2">
-                                    A enviar alerta a partir de{' '}
+                                <p className="text-sm font-semibold text-foreground mt-2">
+                                    {t('licenses.alertDaysPrefix')}{' '}
                                     <Input
                                         type="number"
                                         value={alertDays}
@@ -302,26 +302,26 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                                         className="w-16 inline-block mx-1 h-8 text-center"
                                         min="1"
                                     />{' '}
-                                    dias
+                                    {t('licenses.days')}
                                 </p>
                             </div>
                         </div>
 
                         <Button variant="outline" onClick={() => { setTempStoreIds(storeIds); setShowStoreDialog(true); }} className="ml-4">
-                            Editar
+                            {t('common.edit')}
                         </Button>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Renewals section */}
-            <Card className="border border-blue-100">
+            <Card className="border border-border bg-card shadow-sm">
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-base font-semibold">Renovações*</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => setShowRenewalDialog(true)} className="bg-indigo-600 text-white hover:bg-indigo-700 border-0">
+                        <CardTitle className="text-base font-semibold text-foreground">{t('licenses.renewals')}*</CardTitle>
+                        <Button size="sm" variant="outline" onClick={() => setShowRenewalDialog(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow-sm">
                             <Plus className="h-3 w-3 mr-1" />
-                            Adicionar
+                            {t('common.add')}
                         </Button>
                     </div>
                 </CardHeader>
@@ -329,10 +329,10 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                     {renewals.length > 0 ? (
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="text-xs"><Calendar className="h-3 w-3 inline mr-1" />Emissão</TableHead>
-                                    <TableHead className="text-xs"><Calendar className="h-3 w-3 inline mr-1" />Renovação</TableHead>
-                                    <TableHead className="text-xs"><DollarSign className="h-3 w-3 inline mr-1" />Valor</TableHead>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead className="text-xs text-muted-foreground"><Calendar className="h-3 w-3 inline mr-1" />{t('licenses.issue')}</TableHead>
+                                    <TableHead className="text-xs text-muted-foreground"><Calendar className="h-3 w-3 inline mr-1" />{t('licenses.renewal')}</TableHead>
+                                    <TableHead className="text-xs text-muted-foreground"><DollarSign className="h-3 w-3 inline mr-1" />{t('licenses.value')}</TableHead>
                                     <TableHead className="text-xs w-10"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -340,15 +340,15 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                                 {renewals.map((renewal, i) => {
                                     const isActive = new Date(renewal.renewalDate) > new Date();
                                     return (
-                                        <TableRow key={renewal.id}>
-                                            <TableCell className="text-sm">{formatDate(renewal.issueDate)}</TableCell>
-                                            <TableCell className="text-sm">{formatDate(renewal.renewalDate)}</TableCell>
-                                            <TableCell className="text-sm">{renewal.currency}{renewal.value.toFixed(2)}</TableCell>
+                                        <TableRow key={renewal.id} className="hover:bg-muted/50">
+                                            <TableCell className="text-sm text-foreground">{formatDate(renewal.issueDate)}</TableCell>
+                                            <TableCell className="text-sm text-foreground">{formatDate(renewal.renewalDate)}</TableCell>
+                                            <TableCell className="text-sm text-foreground">{renewal.currency}{renewal.value.toFixed(2)}</TableCell>
                                             <TableCell>
                                                 {isActive ? (
-                                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                                    <CheckCircle className="h-4 w-4 text-emerald-500" />
                                                 ) : (
-                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500" onClick={() => handleDeleteRenewal(renewal.id)}>
+                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRenewal(renewal.id)}>
                                                         <Trash2 className="h-3 w-3" />
                                                     </Button>
                                                 )}
@@ -360,21 +360,21 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                         </Table>
                     ) : (
                         <div className="text-center py-6">
-                            <FileText className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                            <p className="text-sm text-gray-400">Nenhuma renovação adicionada</p>
+                            <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">{t('licenses.noRenewals')}</p>
                         </div>
                     )}
                 </CardContent>
             </Card>
 
             {/* Contacts section */}
-            <Card className="border border-blue-100">
+            <Card className="border border-border bg-card shadow-sm">
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-base font-semibold">Contactos</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => { setEditingContactId(null); setContactForm({ name: '', phone: '', email: '' }); setShowContactDialog(true); }} className="bg-indigo-600 text-white hover:bg-indigo-700 border-0">
+                        <CardTitle className="text-base font-semibold text-foreground">{t('licenses.contacts')}</CardTitle>
+                        <Button size="sm" variant="outline" onClick={() => { setEditingContactId(null); setContactForm({ name: '', phone: '', email: '' }); setShowContactDialog(true); }} className="bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow-sm">
                             <Plus className="h-3 w-3 mr-1" />
-                            Adicionar
+                            {t('common.add')}
                         </Button>
                     </div>
                 </CardHeader>
@@ -382,25 +382,25 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                     {contacts.length > 0 ? (
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="text-xs"><User className="h-3 w-3 inline mr-1" />Nome</TableHead>
-                                    <TableHead className="text-xs"><Phone className="h-3 w-3 inline mr-1" />Telemóvel</TableHead>
-                                    <TableHead className="text-xs"><Mail className="h-3 w-3 inline mr-1" />Email</TableHead>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead className="text-xs text-muted-foreground"><User className="h-3 w-3 inline mr-1" />{t('licenses.contactName')}</TableHead>
+                                    <TableHead className="text-xs text-muted-foreground"><Phone className="h-3 w-3 inline mr-1" />{t('licenses.contactPhone')}</TableHead>
+                                    <TableHead className="text-xs text-muted-foreground"><Mail className="h-3 w-3 inline mr-1" />{t('licenses.contactEmail')}</TableHead>
                                     <TableHead className="text-xs w-16"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {contacts.map(contact => (
-                                    <TableRow key={contact.id}>
-                                        <TableCell className="text-sm">{contact.name}</TableCell>
-                                        <TableCell className="text-sm text-gray-500">{contact.phone || '-'}</TableCell>
-                                        <TableCell className="text-sm text-gray-500">{contact.email || '-'}</TableCell>
+                                    <TableRow key={contact.id} className="hover:bg-muted/50">
+                                        <TableCell className="text-sm text-foreground">{contact.name}</TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">{contact.phone || '-'}</TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">{contact.email || '-'}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-1">
-                                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500" onClick={() => handleDeleteContact(contact.id)}>
+                                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteContact(contact.id)}>
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
-                                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-500" onClick={() => handleEditContact(contact)}>
+                                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-primary hover:text-primary hover:bg-primary/10" onClick={() => handleEditContact(contact)}>
                                                     <Edit className="h-3 w-3" />
                                                 </Button>
                                             </div>
@@ -411,21 +411,21 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                         </Table>
                     ) : (
                         <div className="text-center py-6">
-                            <User className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                            <p className="text-sm text-gray-400">Nenhum contacto foi encontrado</p>
+                            <User className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">{t('licenses.noContacts')}</p>
                         </div>
                     )}
                 </CardContent>
             </Card>
 
             {/* Attachments section */}
-            <Card className="border border-blue-100">
+            <Card className="border border-border bg-card shadow-sm">
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-base font-semibold">Anexos</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => { setAttachmentDesc(''); setAttachmentFile(null); setShowAttachmentDialog(true); }} className="bg-indigo-600 text-white hover:bg-indigo-700 border-0">
+                        <CardTitle className="text-base font-semibold text-foreground">{t('licenses.attachments')}</CardTitle>
+                        <Button size="sm" variant="outline" onClick={() => { setAttachmentDesc(''); setAttachmentFile(null); setShowAttachmentDialog(true); }} className="bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow-sm">
                             <Plus className="h-3 w-3 mr-1" />
-                            Adicionar
+                            {t('common.add')}
                         </Button>
                     </div>
                 </CardHeader>
@@ -433,24 +433,24 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                     {attachments.length > 0 ? (
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="text-xs"><FileText className="h-3 w-3 inline mr-1" />Descrição</TableHead>
-                                    <TableHead className="text-xs"><Calendar className="h-3 w-3 inline mr-1" />Data de Criação</TableHead>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead className="text-xs text-muted-foreground"><FileText className="h-3 w-3 inline mr-1" />{t('licenses.description')}</TableHead>
+                                    <TableHead className="text-xs text-muted-foreground"><Calendar className="h-3 w-3 inline mr-1" />{t('licenses.createdAt')}</TableHead>
                                     <TableHead className="text-xs w-16"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {attachments.map(att => (
-                                    <TableRow key={att.id}>
-                                        <TableCell className="text-sm">{att.description}</TableCell>
-                                        <TableCell className="text-sm text-gray-500">{formatDate(att.createdAt)}</TableCell>
+                                    <TableRow key={att.id} className="hover:bg-muted/50">
+                                        <TableCell className="text-sm text-foreground">{att.description}</TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">{formatDate(att.createdAt)}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-1">
-                                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500" onClick={() => handleDeleteAttachment(att.id)}>
+                                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteAttachment(att.id)}>
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
                                                 {att.file && (
-                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-gray-500" onClick={() => handleViewAttachment(att)}>
+                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => handleViewAttachment(att)}>
                                                         <Eye className="h-3 w-3" />
                                                     </Button>
                                                 )}
@@ -462,11 +462,11 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                         </Table>
                     ) : (
                         <div className="text-center py-6">
-                            <Paperclip className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                            <p className="text-sm text-gray-400">Nenhum anexo foi encontrado</p>
-                            <Button variant="outline" className="mt-3 bg-indigo-600 text-white hover:bg-indigo-700 border-0" onClick={() => { setAttachmentDesc(''); setAttachmentFile(null); setShowAttachmentDialog(true); }}>
+                            <Paperclip className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">{t('licenses.noAttachments')}</p>
+                            <Button variant="outline" className="mt-3 bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow-sm" onClick={() => { setAttachmentDesc(''); setAttachmentFile(null); setShowAttachmentDialog(true); }}>
                                 <Plus className="h-3 w-3 mr-1" />
-                                Adicionar
+                                {t('common.add')}
                             </Button>
                         </div>
                     )}
@@ -474,24 +474,24 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
             </Card>
 
             {/* Observations section */}
-            <Card className="border border-blue-100">
+            <Card className="border border-border bg-card shadow-sm">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-semibold">Observações</CardTitle>
+                    <CardTitle className="text-base font-semibold text-foreground">{t('licenses.observations')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {observations.length > 0 && (
                         <div className="space-y-2 max-h-48 overflow-y-auto">
                             {observations.map((obs, i) => (
-                                <div key={i} className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-white text-xs font-bold">{obs.user.charAt(0)}</span>
+                                <div key={i} className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg">
+                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        <span className="text-primary text-xs font-bold">{obs.user.charAt(0)}</span>
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-sm">
-                                            <span className="font-semibold text-gray-700">{obs.user}:</span>{' '}
-                                            <span className="text-gray-600">{obs.text}</span>
+                                            <span className="font-semibold text-foreground">{obs.user}:</span>{' '}
+                                            <span className="text-muted-foreground">{obs.text}</span>
                                         </p>
-                                        <p className="text-xs text-gray-400">{obs.date}</p>
+                                        <p className="text-xs text-muted-foreground/60">{obs.date}</p>
                                     </div>
                                 </div>
                             ))}
@@ -501,13 +501,13 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                         <Input
                             value={newObservation}
                             onChange={(e) => setNewObservation(e.target.value)}
-                            placeholder="Adicionar nova observação"
+                            placeholder={t('licenses.newObservationPlaceholder')}
                             className="flex-1"
                             onKeyDown={(e) => { if (e.key === 'Enter') handleAddObservation(); }}
                         />
-                        <Button onClick={handleAddObservation} className="bg-indigo-600 hover:bg-indigo-700">
+                        <Button onClick={handleAddObservation} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
                             <MessageSquare className="h-4 w-4 mr-1" />
-                            Adicionar
+                            {t('common.add')}
                         </Button>
                     </div>
                 </CardContent>
@@ -515,15 +515,15 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
 
             {/* Action buttons */}
             <div className="flex items-center justify-center gap-3 pt-4">
-                <Button variant="outline" onClick={onClose}>
-                    Voltar
+                <Button variant="outline" onClick={onClose} className="shadow-sm">
+                    {t('common.back')}
                 </Button>
-                <Button onClick={handleSubmit} className="bg-indigo-600 hover:bg-indigo-700">
-                    {license ? 'Salvar Alterações' : 'Criar Licença'}
+                <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
+                    {license ? t('common.saveChanges') : t('licenses.createLicense')}
                 </Button>
                 {license && license.status !== 'cancelada' && (
-                    <Button variant="destructive" onClick={handleCancel}>
-                        Cancelar licença
+                    <Button variant="destructive" onClick={handleCancel} className="shadow-sm">
+                        {t('licenses.cancelLicense')}
                     </Button>
                 )}
             </div>
@@ -623,7 +623,7 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
             <Dialog open={showStoreDialog} onOpenChange={setShowStoreDialog}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle>Selecionar Lojas</DialogTitle>
+                        <DialogTitle>{t('licenses.selectStores')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                         {stores.map(store => (
@@ -631,20 +631,20 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                                 key={store.id}
                                 onClick={() => toggleTempStore(store.id)}
                                 className={`w-full text-left p-3 rounded-lg border transition-colors ${tempStoreIds.includes(store.id)
-                                        ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                                    ? 'bg-primary/5 border-primary text-primary'
+                                    : 'bg-card border-border hover:bg-muted/50'
                                     }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <span className="font-medium text-sm">{store.name}</span>
-                                    {tempStoreIds.includes(store.id) && <CheckCircle className="h-4 w-4 text-indigo-600" />}
+                                    {tempStoreIds.includes(store.id) && <CheckCircle className="h-4 w-4 text-primary" />}
                                 </div>
                             </button>
                         ))}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowStoreDialog(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveStores} className="bg-indigo-600 hover:bg-indigo-700">Confirmar</Button>
+                        <Button variant="outline" onClick={() => setShowStoreDialog(false)}>{t('common.cancel')}</Button>
+                        <Button onClick={handleSaveStores} className="bg-primary hover:bg-primary/90 text-primary-foreground">{t('common.confirm')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

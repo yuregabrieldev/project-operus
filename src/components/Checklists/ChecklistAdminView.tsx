@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  Settings, 
-  Plus, 
-  Search, 
-  Edit, 
-  Copy, 
-  Trash2, 
+import {
+  Settings,
+  Plus,
+  Search,
+  Edit,
+  Copy,
+  Trash2,
   Eye,
   Filter,
   MoreHorizontal,
@@ -41,7 +42,7 @@ interface ChecklistTemplate {
 const ChecklistAdminView: React.FC = () => {
   const { user } = useAuth();
   const { stores } = useData();
-  
+
   // Mock data - replace with real data
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([
     {
@@ -142,14 +143,14 @@ const ChecklistAdminView: React.FC = () => {
   const handleSaveTemplate = (templateData: any) => {
     if (selectedTemplate) {
       // Edit existing
-      setTemplates(prev => prev.map(t => 
-        t.id === selectedTemplate.id 
-          ? { 
-              ...t, 
-              ...templateData, 
-              lastEditedAt: new Date(),
-              itemsCount: templateData.items?.length || t.itemsCount
-            }
+      setTemplates(prev => prev.map(t =>
+        t.id === selectedTemplate.id
+          ? {
+            ...t,
+            ...templateData,
+            lastEditedAt: new Date(),
+            itemsCount: templateData.items?.length || t.itemsCount
+          }
           : t
       ));
       toast({
@@ -180,8 +181,8 @@ const ChecklistAdminView: React.FC = () => {
   };
 
   const toggleTemplateStatus = (templateId: string) => {
-    setTemplates(prev => prev.map(t => 
-      t.id === templateId 
+    setTemplates(prev => prev.map(t =>
+      t.id === templateId
         ? { ...t, isActive: !t.isActive, lastEditedAt: new Date() }
         : t
     ));
@@ -198,10 +199,10 @@ const ChecklistAdminView: React.FC = () => {
 
   const getFrequencyColor = (frequency: string) => {
     switch (frequency) {
-      case 'daily': return 'bg-blue-100 text-blue-800';
-      case 'weekly': return 'bg-green-100 text-green-800';
-      case 'monthly': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'daily': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      case 'weekly': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      case 'monthly': return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -215,75 +216,40 @@ const ChecklistAdminView: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Settings className="h-8 w-8 text-primary" />
-            Gerenciar Templates de Checklist
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Configure e gerencie templates reutilizáveis para checklists
-          </p>
-        </div>
-        
-        <Button onClick={handleCreateNew} className="bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Template
-        </Button>
-      </div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{templates.length}</p>
-              </div>
-              <CheckSquare className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total"
+          value={templates.length}
+          icon={CheckSquare}
+          variant="neutral"
+          valueClassName="text-2xl"
+        />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Ativos</p>
-                <p className="text-2xl font-bold text-green-600">{activeTemplates}</p>
-              </div>
-              <Store className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Ativos"
+          value={activeTemplates}
+          icon={Store}
+          variant="success"
+          valueClassName="text-2xl"
+        />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Uso Total</p>
-                <p className="text-2xl font-bold text-blue-600">{totalUsage}</p>
-              </div>
-              <Calendar className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Uso Total"
+          value={totalUsage}
+          icon={Calendar}
+          variant="default"
+          valueClassName="text-2xl"
+        />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Mais Usado</p>
-                <p className="text-lg font-bold text-purple-600">
-                  {templates.reduce((max, t) => t.usageCount > max.usageCount ? t : max, templates[0])?.name || 'N/A'}
-                </p>
-              </div>
-              <Eye className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Mais Usado"
+          value={templates.reduce((max, t) => t.usageCount > max.usageCount ? t : max, templates[0])?.name || 'N/A'}
+          icon={Eye}
+          variant="purple"
+          className="col-span-1"
+          valueClassName="text-xl truncate"
+        />
       </div>
 
       {/* Search and Filters */}
@@ -299,10 +265,16 @@ const ChecklistAdminView: React.FC = () => {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filtros
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                Filtros
+              </Button>
+              <Button onClick={handleCreateNew} className="bg-primary hover:bg-primary/90">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Template
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -380,9 +352,9 @@ const ChecklistAdminView: React.FC = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             {template.isActive ? 'Desativar' : 'Ativar'}
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleDelete(template.id)}
-                            className="text-red-600"
+                            className="text-destructive"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Excluir

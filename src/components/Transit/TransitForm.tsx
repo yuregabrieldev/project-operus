@@ -15,7 +15,7 @@ interface TransitFormProps {
 export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) => {
   const { t } = useLanguage();
   const { products, stores, addMovement, updateMovement, getProductById, getStoreById } = useData();
-  
+
   const [formData, setFormData] = useState({
     productId: '',
     fromStoreId: '',
@@ -38,7 +38,7 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.fromStoreId === formData.toStoreId) {
       toast({
         title: t('common.error'),
@@ -72,7 +72,7 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
         description: t('transit.movement_created_successfully'),
       });
     }
-    
+
     onClose();
   };
 
@@ -86,10 +86,10 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'in_transit': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'delivered': return 'bg-emerald-500/10 text-emerald-600 border-white/0';
+      case 'in_transit': return 'bg-primary/10 text-primary border-white/0';
+      case 'pending': return 'bg-amber-500/10 text-amber-600 border-white/0';
+      default: return 'bg-muted text-muted-foreground border-white/0';
     }
   };
 
@@ -122,13 +122,13 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('common.product')}
           </label>
           <select
             value={formData.productId}
             onChange={(e) => handleChange('productId', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             required
             disabled={!!movement}
           >
@@ -140,7 +140,7 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
             ))}
           </select>
           {selectedProduct && (
-            <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+            <div className="mt-2 p-2 bg-muted/50 rounded text-sm">
               <p><strong>{t('common.product')}:</strong> {selectedProduct.name}</p>
               <p><strong>SKU:</strong> {selectedProduct.sku}</p>
               <p><strong>{t('inventory.costPrice')}:</strong> R$ {selectedProduct.costPrice.toFixed(2)}</p>
@@ -149,7 +149,7 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('common.quantity')}
           </label>
           <input
@@ -157,20 +157,20 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
             value={formData.quantity}
             onChange={(e) => handleChange('quantity', e.target.value)}
             min="1"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             required
             disabled={!!movement}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('transit.from')}
           </label>
           <select
             value={formData.fromStoreId}
             onChange={(e) => handleChange('fromStoreId', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={!!movement}
           >
             <option value="">{t('transit.external')}</option>
@@ -183,13 +183,13 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('transit.to')}
           </label>
           <select
             value={formData.toStoreId}
             onChange={(e) => handleChange('toStoreId', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             required
             disabled={!!movement}
           >
@@ -204,13 +204,13 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
 
         {movement && (
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               {t('common.status')}
             </label>
             <select
               value={formData.status}
               onChange={(e) => handleChange('status', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="pending">{t('transit.pending')}</option>
               <option value="in_transit">{t('transit.in_transit')}</option>
@@ -229,12 +229,12 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
             <div className="flex items-center justify-between">
               <div className="text-center">
                 <p className="font-semibold">{fromStore?.name || t('transit.external')}</p>
-                <p className="text-sm text-gray-500">{t('transit.origin')}</p>
+                <p className="text-sm text-muted-foreground">{t('transit.origin')}</p>
               </div>
               <div className="flex-1 mx-4">
                 <div className="h-0.5 bg-blue-300 relative">
                   <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                    <div className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
                       {formData.quantity} {t('common.units')}
                     </div>
                   </div>
@@ -242,7 +242,7 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
               </div>
               <div className="text-center">
                 <p className="font-semibold">{toStore?.name || t('transit.external')}</p>
-                <p className="text-sm text-gray-500">{t('transit.destination')}</p>
+                <p className="text-sm text-muted-foreground">{t('transit.destination')}</p>
               </div>
             </div>
           </CardContent>
@@ -254,12 +254,12 @@ export const TransitForm: React.FC<TransitFormProps> = ({ movement, onClose }) =
           {t('common.cancel')}
         </Button>
         {!movement && (
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="bg-primary hover:bg-primary/90">
             {t('transit.create_transfer')}
           </Button>
         )}
         {movement && (
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="bg-primary hover:bg-primary/90">
             {t('common.update')}
           </Button>
         )}

@@ -108,7 +108,7 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 h-16 flex items-center">
+    <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-6 h-16 flex items-center shadow-sm relative z-40">
       <div className="flex items-center justify-between w-full">
         {/* Left: Brand info */}
         <div className="flex items-center space-x-4">
@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
           {/* Dark Mode Toggle */}
           <button
             onClick={toggleDarkMode}
-            className="p-2.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             title={darkMode ? "Modo Claro" : "Modo Noturno"}
           >
             {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -148,14 +148,14 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
                 setShowUserMenu(false);
                 setShowNotifications(false);
               }}
-              className="p-2.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               title="Idioma"
             >
               <Globe className="h-5 w-5" />
             </button>
 
             {showLangMenu && (
-              <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 top-full mt-2 w-44 bg-popover rounded-xl shadow-xl border border-border py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 {(['pt', 'en', 'es'] as const).map((lang) => (
                   <button
                     key={lang}
@@ -168,8 +168,8 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
                       });
                     }}
                     className={cn(
-                      "flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors",
-                      language === lang ? "text-blue-600 font-medium bg-blue-50" : "text-gray-700"
+                      "flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors",
+                      language === lang ? "text-primary font-medium bg-accent/50" : "text-popover-foreground"
                     )}
                   >
                     <span className="text-base">{languageFlags[lang]}</span>
@@ -188,23 +188,23 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
                 setShowUserMenu(false);
                 setShowLangMenu(false);
               }}
-              className="p-2.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors relative"
+              className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors relative"
               title="Notificações"
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 rounded-full text-white text-[10px] font-bold px-1">
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive rounded-full text-destructive-foreground text-[10px] font-bold px-1">
                   {unreadCount}
                 </span>
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
+              <div className="absolute right-0 top-full mt-2 w-80 bg-popover rounded-xl shadow-xl border border-border py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-2 border-b border-border flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground">Notificações</h3>
                   {unreadCount > 0 && (
-                    <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
+                    <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-xs">
                       {unreadCount} novas
                     </Badge>
                   )}
@@ -214,24 +214,24 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
                     <div
                       key={notif.id}
                       className={cn(
-                        "px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-b-0",
-                        !notif.read && "bg-blue-50/50"
+                        "px-4 py-3 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer border-b border-border last:border-b-0",
+                        !notif.read && "bg-accent/30"
                       )}
                     >
                       <div className="flex items-start gap-2">
                         {!notif.read && (
-                          <span className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0" />
+                          <span className="w-2 h-2 bg-primary rounded-full mt-1.5 flex-shrink-0" />
                         )}
                         <div className={cn(!notif.read ? "" : "ml-4")}>
-                          <p className="text-sm text-gray-800">{notif.text}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{notif.time}</p>
+                          <p className="text-sm text-foreground">{notif.text}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{notif.time}</p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="px-4 py-2 border-t border-gray-100">
-                  <button className="text-xs text-blue-600 hover:text-blue-800 font-medium w-full text-center">
+                <div className="px-4 py-2 border-t border-border">
+                  <button className="text-xs text-primary hover:text-primary/80 font-medium w-full text-center">
                     Ver todas as notificações
                   </button>
                 </div>
@@ -240,7 +240,7 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
           </div>
 
           {/* Divider */}
-          <div className="w-px h-8 bg-gray-200 mx-2" />
+          <div className="w-px h-8 bg-border mx-2" />
 
           {/* User Profile Dropdown */}
           <div className="relative" ref={userMenuRef}>
@@ -250,68 +250,68 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
                 setShowLangMenu(false);
                 setShowNotifications(false);
               }}
-              className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               {user?.imageUrl ? (
                 <img
                   src={user.imageUrl}
                   alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                  className="w-8 h-8 rounded-full object-cover border-2 border-border"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground text-xs font-bold">
                   {user?.name ? getInitials(user.name) : 'U'}
                 </div>
               )}
-              <span className="text-sm font-medium text-gray-700 hidden md:block">
+              <span className="text-sm font-medium text-muted-foreground hidden md:block">
                 {user?.name}
               </span>
               <ChevronDown className={cn(
-                "h-4 w-4 text-gray-400 transition-transform duration-200 hidden md:block",
+                "h-4 w-4 text-muted-foreground transition-transform duration-200 hidden md:block",
                 showUserMenu && "rotate-180"
               )} />
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-popover rounded-xl shadow-xl border border-border py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 {/* User Info */}
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{user?.email}</p>
+                <div className="px-4 py-3 border-b border-border">
+                  <p className="text-sm font-semibold text-foreground">{user?.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
                 </div>
 
                 {/* Menu Items */}
                 <div className="py-1">
                   <button
-                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     onClick={() => {
                       setShowUserMenu(false);
                       onTabChange?.('profile');
                     }}
                   >
-                    <User className="h-4 w-4 text-gray-400" />
+                    <User className="h-4 w-4 text-muted-foreground" />
                     Perfil
                   </button>
                   <button
-                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     onClick={() => {
                       setShowUserMenu(false);
                       onTabChange?.('settings');
                     }}
                   >
-                    <Settings className="h-4 w-4 text-gray-400" />
+                    <Settings className="h-4 w-4 text-muted-foreground" />
                     Configurações
                   </button>
                 </div>
 
                 {/* Logout */}
-                <div className="border-t border-gray-100 py-1">
+                <div className="border-t border-border py-1">
                   <button
                     onClick={() => {
                       setShowUserMenu(false);
                       handleLogout();
                     }}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
                     Sair

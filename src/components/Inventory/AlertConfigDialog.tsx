@@ -67,7 +67,7 @@ const AlertConfigDialog: React.FC<AlertConfigDialogProps> = ({
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
             {/* Dialog */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-6">
                     {/* Title */}
                     <h3 className="text-base font-bold text-gray-900 mb-1">

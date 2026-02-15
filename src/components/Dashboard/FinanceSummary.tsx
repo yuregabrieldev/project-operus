@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatsCard } from '@/components/ui/stats-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
 import { FinanceChart } from './FinanceChart';
@@ -105,7 +106,7 @@ const FinanceSummary: React.FC = () => {
     <div className="space-y-6">
       {/* Header com filtro de período */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">{t('finance.title')}</h2>
+        <h1 className="text-3xl font-bold text-foreground">{t('finance.title')}</h1>
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder={t('finance.selectPeriod')} />
@@ -122,79 +123,38 @@ const FinanceSummary: React.FC = () => {
 
       {/* Cards de resumo financeiro */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Receitas */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('finance.revenue')}</CardTitle>
-            <div className="h-4 w-4 text-green-600">
-              <DollarSign className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(financeData.receitas)}
-            </div>
-            <p className="text-xs text-muted-foreground flex items-center">
-              <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-              +12% {t('finance.comparePeriod')}
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title={t('finance.revenue')}
+          value={formatCurrency(financeData.receitas)}
+          subtitle={t('finance.comparePeriod')}
+          icon={DollarSign}
+          variant="success"
+          description={`+12% ${t('finance.comparePeriod')}`}
+        />
 
-        {/* Despesas */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('finance.expenses')}</CardTitle>
-            <div className="h-4 w-4 text-red-600">
-              <TrendingDown className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(financeData.despesas)}
-            </div>
-            <p className="text-xs text-muted-foreground flex items-center">
-              <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-              -5% {t('finance.comparePeriod')}
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title={t('finance.expenses')}
+          value={formatCurrency(financeData.despesas)}
+          subtitle={`-5% ${t('finance.comparePeriod')}`}
+          icon={TrendingDown}
+          variant="destructive"
+        />
 
-        {/* Saldo */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('finance.balance')}</CardTitle>
-            <div className="h-4 w-4 text-blue-600">
-              <TrendingUp className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${financeData.saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-              {formatCurrency(financeData.saldo)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t('finance.revenue')} - {t('finance.expenses')}
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title={t('finance.balance')}
+          value={formatCurrency(financeData.saldo)}
+          subtitle={`${t('finance.revenue')} - ${t('finance.expenses')}`}
+          icon={TrendingUp}
+          variant={financeData.saldo >= 0 ? 'default' : 'destructive'}
+        />
 
-        {/* Margem */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('finance.margin')}</CardTitle>
-            <div className="h-4 w-4 text-purple-600">
-              <Target className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${financeData.margem >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
-              {formatPercentage(financeData.margem)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              ({t('finance.balance')} / {t('finance.revenue')}) × 100
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title={t('finance.margin')}
+          value={formatPercentage(financeData.margem)}
+          subtitle={`(${t('finance.balance')} / ${t('finance.revenue')}) × 100`}
+          icon={Target}
+          variant="purple"
+        />
       </div>
 
       {/* Gráfico de fluxo financeiro */}

@@ -117,7 +117,7 @@ const PurchaseOrders: React.FC = () => {
                 supplierId: selectedOrder.supplierId,
                 invoiceNumber: orderNumber,
                 amount: totalAmount,
-                status: 'pending',
+                status: 'contas_a_pagar',
                 issueDate: new Date(),
                 dueDate: new Date(Date.now() + 30 * 86400000),
             });
@@ -168,13 +168,13 @@ const PurchaseOrders: React.FC = () => {
                     <CardContent className="pt-6 space-y-6">
                         {/* Header */}
                         <div className="flex items-center gap-3">
-                            <ShoppingCart className="h-5 w-5 text-gray-700" />
-                            <h2 className="text-lg font-bold text-gray-900">{t('orders.orderDetails')}</h2>
+                            <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+                            <h2 className="text-2xl font-bold text-foreground">{t('orders.orderDetails')}</h2>
                             <Badge
                                 variant="outline"
                                 className={selectedOrder.hasInvoiceManagement
-                                    ? 'bg-green-50 text-green-700 border-green-300'
-                                    : 'bg-amber-50 text-amber-700 border-amber-300'
+                                    ? 'bg-green-500/10 text-green-700 border-green-500/20'
+                                    : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20'
                                 }
                             >
                                 {t('orders.invoice')}
@@ -182,8 +182,8 @@ const PurchaseOrders: React.FC = () => {
                             <Badge
                                 variant="outline"
                                 className={selectedOrder.hasTransitGenerated
-                                    ? 'bg-green-50 text-green-700 border-green-300'
-                                    : 'bg-amber-50 text-amber-700 border-amber-300'
+                                    ? 'bg-green-500/10 text-green-700 border-green-500/20'
+                                    : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20'
                                 }
                             >
                                 {t('orders.transit')}
@@ -193,27 +193,27 @@ const PurchaseOrders: React.FC = () => {
                         {/* Meta */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
-                                <span className="text-gray-500 text-xs uppercase">{t('orders.createdAt')}</span>
+                                <span className="text-muted-foreground text-xs uppercase">{t('orders.createdAt')}</span>
                                 <p className="font-medium">{selectedOrder.createdAt.toLocaleDateString('pt-BR')} {selectedOrder.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                             <div>
-                                <span className="text-gray-500 text-xs uppercase">{t('orders.createdBy')}</span>
+                                <span className="text-muted-foreground text-xs uppercase">{t('orders.createdBy')}</span>
                                 <p className="font-medium">{selectedOrder.userId}</p>
                             </div>
                         </div>
 
                         <div>
-                            <span className="text-gray-500 text-xs uppercase flex items-center gap-1">
+                            <span className="text-muted-foreground text-xs uppercase flex items-center gap-1">
                                 <Package className="h-3 w-3" /> {t('orders.supplier')}
                             </span>
-                            <p className="font-bold text-gray-900">{supplier?.name || '-'}</p>
+                            <p className="font-bold text-foreground">{supplier?.name || '-'}</p>
                         </div>
 
                         <div>
-                            <span className="text-gray-500 text-xs uppercase flex items-center gap-1">
+                            <span className="text-muted-foreground text-xs uppercase flex items-center gap-1">
                                 <Store className="h-3 w-3" /> {t('orders.stores')}
                             </span>
-                            <p className="font-medium text-gray-900">{storeNames}</p>
+                            <p className="font-medium text-foreground">{storeNames}</p>
                         </div>
 
                         {/* Products Table */}
@@ -224,7 +224,7 @@ const PurchaseOrders: React.FC = () => {
                             <div className="border rounded-lg">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-gray-50">
+                                        <TableRow className="bg-muted/50">
                                             <TableHead className="font-bold">{t('orders.productName')}</TableHead>
                                             <TableHead className="font-bold">{t('orders.store')}</TableHead>
                                             <TableHead className="font-bold">{t('orders.unitOfMeasure')}</TableHead>
@@ -239,8 +239,8 @@ const PurchaseOrders: React.FC = () => {
                                                 <TableRow key={idx}>
                                                     <TableCell className="uppercase font-medium">{product?.name || '-'}</TableCell>
                                                     <TableCell>{store?.name || '-'}</TableCell>
-                                                    <TableCell className="text-blue-600">{item.unit}</TableCell>
-                                                    <TableCell className="text-blue-600 font-semibold">{item.quantity}</TableCell>
+                                                    <TableCell className="text-primary">{item.unit}</TableCell>
+                                                    <TableCell className="text-primary font-semibold">{item.quantity}</TableCell>
                                                 </TableRow>
                                             );
                                         })}
@@ -257,7 +257,7 @@ const PurchaseOrders: React.FC = () => {
                             </Button>
                             {needsTransit && (
                                 <Button
-                                    className="bg-purple-700 hover:bg-purple-800 gap-2"
+                                    className="gap-2"
                                     onClick={() => setShowTransitDialog(true)}
                                 >
                                     <Truck className="h-4 w-4" />
@@ -270,7 +270,7 @@ const PurchaseOrders: React.FC = () => {
 
                 {/* Transit Creation Dialog */}
                 <Dialog open={showTransitDialog} onOpenChange={setShowTransitDialog}>
-                    <DialogContent className="max-w-lg">
+                    <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>{t('purchases.transitCreation')}</DialogTitle>
                         </DialogHeader>
@@ -303,7 +303,7 @@ const PurchaseOrders: React.FC = () => {
                                 <Button
                                     onClick={handleCreateTransit}
                                     disabled={isCreatingTransit || !orderNumber.trim() || !observation.trim()}
-                                    className="flex-1 bg-purple-700 hover:bg-purple-800"
+                                    className="flex-1"
                                 >
                                     {isCreatingTransit ? (
                                         <>
@@ -328,17 +328,14 @@ const PurchaseOrders: React.FC = () => {
     // ---- LIST VIEW ----
     return (
         <div className="p-6 space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900">{t('orders.title')}</h1>
-                <p className="text-gray-600 mt-2">{t('orders.description')}</p>
-            </div>
+
 
             {/* Filters */}
             <Card>
                 <CardContent className="pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label className="text-xs font-semibold text-gray-500 uppercase mb-1.5 block">{t('orders.supplier')}</Label>
+                            <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">{t('orders.supplier')}</Label>
                             <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
                                 <SelectTrigger>
                                     <SelectValue placeholder={t('purchases.allSuppliers')} />
@@ -353,7 +350,7 @@ const PurchaseOrders: React.FC = () => {
                         </div>
 
                         <div>
-                            <Label className="text-xs font-semibold text-gray-500 uppercase mb-1.5 block">{t('orders.stores')}</Label>
+                            <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">{t('orders.stores')}</Label>
                             <Popover open={storeDropdownOpen} onOpenChange={setStoreDropdownOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" role="combobox" className="w-full justify-between text-left font-normal h-10">
@@ -428,26 +425,26 @@ const PurchaseOrders: React.FC = () => {
                                             <TableCell className="text-center font-semibold">{getTotalQty(order)}</TableCell>
                                             <TableCell className="text-center">
                                                 <Badge className={order.hasInvoiceManagement
-                                                    ? 'bg-green-100 text-green-700 border-green-300 hover:bg-green-100'
-                                                    : 'bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-100'
+                                                    ? 'bg-green-500/10 text-green-700 border-green-500/20'
+                                                    : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20'
                                                 }>
                                                     {order.hasInvoiceManagement ? t('orders.yes') : t('orders.no')}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <Badge className={order.hasTransitGenerated
-                                                    ? 'bg-green-100 text-green-700 border-green-300 hover:bg-green-100'
-                                                    : 'bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-100'
+                                                    ? 'bg-green-500/10 text-green-700 border-green-500/20'
+                                                    : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20'
                                                 }>
                                                     {order.hasTransitGenerated ? t('orders.yes') : t('orders.no')}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex gap-1">
-                                                    <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(order.id)}>
+                                                    <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(order.id)}>
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
-                                                    <Button size="icon" variant="ghost" className="text-blue-600 hover:text-blue-800 hover:bg-blue-50" onClick={() => setSelectedOrder(order)}>
+                                                    <Button size="icon" variant="ghost" className="text-primary hover:text-primary hover:bg-primary/10" onClick={() => setSelectedOrder(order)}>
                                                         <FileEdit className="h-4 w-4" />
                                                     </Button>
                                                 </div>

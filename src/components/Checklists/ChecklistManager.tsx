@@ -52,17 +52,22 @@ const ChecklistManager: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header Navigation */}
-      <div className="border-b bg-card">
-        <div className="p-4">
-          <Tabs value={activeView} onValueChange={(value) => setActiveView(value as any)} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-4">
+      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as any)} className="w-full">
+        {/* Header Navigation */}
+        <div className="border-b bg-card">
+          <div className="p-6 space-y-4">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Checklists</h1>
+              <p className="text-sm text-muted-foreground mt-1">Gerencie seus checklists e auditorias</p>
+            </div>
+
+            <TabsList>
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <UserCheck className="h-4 w-4" />
                 <span className="hidden sm:inline">Meus Checklists</span>
                 <span className="sm:hidden">Checklist</span>
               </TabsTrigger>
-              
+
               {isAdmin && (
                 <TabsTrigger value="admin" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
@@ -70,45 +75,45 @@ const ChecklistManager: React.FC = () => {
                   <span className="sm:hidden">Admin</span>
                 </TabsTrigger>
               )}
-              
+
               <TabsTrigger value="history" className="flex items-center gap-2">
                 <History className="h-4 w-4" />
                 <span className="hidden sm:inline">Histórico</span>
                 <span className="sm:hidden">Histórico</span>
               </TabsTrigger>
             </TabsList>
-
-            {/* Content */}
-            <div className="mt-6">
-              <TabsContent value="dashboard" className="space-y-6">
-                <ChecklistDashboard 
-                  onChecklistAction={handleChecklistAction}
-                  onCreateNew={handleCreateNew}
-                  onManageTemplates={handleManageTemplates}
-                />
-              </TabsContent>
-
-              {isAdmin && (
-                <TabsContent value="admin" className="space-y-6">
-                  <ChecklistAdminView />
-                </TabsContent>
-              )}
-
-              <TabsContent value="history" className="space-y-6">
-                <ChecklistHistory />
-              </TabsContent>
-            </div>
-          </Tabs>
+          </div>
         </div>
-      </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <TabsContent value="dashboard" className="space-y-6 mt-0">
+            <ChecklistDashboard
+              onChecklistAction={handleChecklistAction}
+              onCreateNew={handleCreateNew}
+              onManageTemplates={handleManageTemplates}
+            />
+          </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="admin" className="space-y-6 mt-0">
+              <ChecklistAdminView />
+            </TabsContent>
+          )}
+
+          <TabsContent value="history" className="space-y-6 mt-0">
+            <ChecklistHistory />
+          </TabsContent>
+        </div>
+      </Tabs>
 
       {/* Non-admin users trying to access admin view */}
       {!isAdmin && activeView === 'admin' && (
         <div className="p-6">
           <Card>
             <CardContent className="p-8 text-center">
-              <AlertCircle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-foreground">Acesso Restrito</h3>
               <p className="text-muted-foreground mb-4">
                 Apenas administradores e gerentes podem acessar o gerenciamento de templates.
               </p>

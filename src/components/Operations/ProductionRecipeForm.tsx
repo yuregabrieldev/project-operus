@@ -16,7 +16,7 @@ interface ProductionRecipeFormProps {
 
 const ProductionRecipeForm: React.FC<ProductionRecipeFormProps> = ({ onClose }) => {
   const { products, addRecipe } = useData();
-  
+
   const [recipeName, setRecipeName] = useState('');
   const [finalProductId, setFinalProductId] = useState('');
   const [expectedYield, setExpectedYield] = useState(0);
@@ -171,7 +171,7 @@ const ProductionRecipeForm: React.FC<ProductionRecipeFormProps> = ({ onClose }) 
         <CardContent>
           <div className="space-y-4">
             {ingredients.map((ingredient, index) => (
-              <div key={index} className="flex items-center gap-4 p-4 border rounded-lg bg-gray-50">
+              <div key={index} className="flex items-center gap-4 p-4 border border-border rounded-lg bg-muted/30">
                 <div className="flex-1 grid grid-cols-3 gap-4">
                   <div>
                     <Label>Insumo</Label>
@@ -221,11 +221,11 @@ const ProductionRecipeForm: React.FC<ProductionRecipeFormProps> = ({ onClose }) 
                   </div>
                 </div>
                 {ingredients.length > 1 && (
-                  <Button 
-                    onClick={() => removeIngredient(index)} 
-                    size="sm" 
+                  <Button
+                    onClick={() => removeIngredient(index)}
+                    size="sm"
                     variant="ghost"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -238,9 +238,9 @@ const ProductionRecipeForm: React.FC<ProductionRecipeFormProps> = ({ onClose }) 
 
       {/* Preview da Fórmula */}
       {recipeName && finalProductId && ingredients.some(i => i.productId) && (
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-primary/5 border-primary/20">
           <CardHeader>
-            <CardTitle className="text-blue-800">Preview da Fórmula</CardTitle>
+            <CardTitle className="text-primary">Preview da Fórmula</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4 text-sm">
@@ -248,14 +248,14 @@ const ProductionRecipeForm: React.FC<ProductionRecipeFormProps> = ({ onClose }) 
                 {ingredients.filter(i => i.productId).map((ing, idx) => {
                   const product = insumos.find(p => p.id === ing.productId);
                   return product ? (
-                    <Badge key={idx} variant="outline" className="bg-white">
+                    <Badge key={idx} variant="outline" className="bg-background border-border">
                       {ing.quantity} {ing.unit} {product.name}
                     </Badge>
                   ) : null;
                 })}
               </div>
-              <ArrowRight className="h-4 w-4 text-blue-600" />
-              <Badge className="bg-blue-600 text-white">
+              <ArrowRight className="h-4 w-4 text-primary" />
+              <Badge className="bg-primary text-primary-foreground">
                 {expectedYield} {yieldUnit} {produtosFinals.find(p => p.id === finalProductId)?.name}
               </Badge>
             </div>

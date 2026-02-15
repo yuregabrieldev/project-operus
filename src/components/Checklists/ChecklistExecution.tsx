@@ -53,19 +53,19 @@ interface ChecklistExecutionProps {
   onCancel?: () => void;
 }
 
-const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({ 
-  checklistId, 
+const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
+  checklistId,
   createNew = false,
-  onComplete, 
-  onCancel 
+  onComplete,
+  onCancel
 }) => {
   const { stores } = useData();
   const { user } = useAuth();
-  const { 
-    templates, 
-    executions, 
-    addExecution, 
-    updateExecution, 
+  const {
+    templates,
+    executions,
+    addExecution,
+    updateExecution,
     deleteExecution,
     addToHistory,
     getTemplateById,
@@ -90,10 +90,10 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     // Online/offline detection
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -148,7 +148,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     if (!template || !currentExecution) return null;
     const templateItem = template.items[currentExecution.currentItemIndex];
     if (!templateItem) return null;
-    
+
     // Convert ChecklistTemplateItem to ChecklistItem
     return {
       id: templateItem.id,
@@ -177,19 +177,19 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
 
   const canProceed = (): boolean => {
     if (!currentExecution) return false;
-    
+
     const currentResponse = currentExecution.responses[currentExecution.currentItemIndex];
     const currentItem = getCurrentItem();
-    
+
     if (!currentItem || currentResponse.skipped) return true;
-    
+
     // Check if response is given
     if (currentResponse.response === null) return false;
-    
+
     // Check required fields
     if (currentItem.requiresComment && !currentResponse.comment?.trim()) return false;
     if (currentItem.requiresImage && !currentResponse.imageUrl) return false;
-    
+
     return true;
   };
 
@@ -224,7 +224,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
 
   const skipItem = () => {
     if (!currentExecution) return;
-    
+
     const currentItem = getCurrentItem();
     if (!currentItem || !currentItem.isOptional) {
       toast({
@@ -245,7 +245,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     const newExecution = { ...currentExecution, status: 'draft' as const };
     updateExecution(newExecution.id, newExecution);
     setCurrentExecution(null);
-    
+
     toast({
       title: "Rascunho salvo",
       description: "Checklist salvo como rascunho.",
@@ -270,7 +270,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     addToHistory(completedExecution);
     deleteExecution(completedExecution.id);
     setCurrentExecution(null);
-    
+
     toast({
       title: "Checklist concluído",
       description: `${completedExecution.templateName} foi concluído com sucesso.`,
@@ -290,7 +290,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
   const syncToServer = async () => {
     // Mock sync - em produção faria POST para API
     console.log('Syncing to server:', syncQueue);
-    
+
     // Simular sucesso
     setTimeout(() => {
       setSyncQueue([]);
@@ -311,11 +311,11 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     if (!currentExecution) return 0;
     const template = getCurrentTemplate();
     if (!template) return 0;
-    
-    const completedItems = currentExecution.responses.filter(r => 
+
+    const completedItems = currentExecution.responses.filter(r =>
       r.response !== null || r.skipped
     ).length;
-    
+
     return Math.round((completedItems / template.items.length) * 100);
   };
 
@@ -407,9 +407,9 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
                 <div className="mt-2">
                   {currentResponse.imageUrl ? (
                     <div className="space-y-2">
-                      <img 
-                        src={currentResponse.imageUrl} 
-                        alt="Evidência" 
+                      <img
+                        src={currentResponse.imageUrl}
+                        alt="Evidência"
                         className="w-full max-w-xs rounded-lg"
                       />
                       <Button
@@ -460,7 +460,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
               <ChevronLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
-            
+
             <Button
               variant="outline"
               onClick={previousItem}
@@ -469,7 +469,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
               <ChevronLeft className="h-4 w-4 mr-2" />
               Anterior
             </Button>
-            
+
             {currentItem && !currentItem.isOptional && (
               <Button variant="outline" onClick={skipItem}>
                 Pular
@@ -482,11 +482,11 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
               <Save className="h-4 w-4 mr-2" />
               Salvar Rascunho
             </Button>
-            
+
             <Button
               onClick={nextItem}
               disabled={!canProceed()}
-              className={currentExecution.currentItemIndex === template.items.length - 1 ? 
+              className={currentExecution.currentItemIndex === template.items.length - 1 ?
                 "bg-green-600 hover:bg-green-700" : ""
               }
             >
@@ -513,14 +513,14 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl font-bold">
             {createNew ? 'Novo Checklist' : 'Checklists Pendentes'}
           </h1>
           <p className="text-muted-foreground mt-2">
             {createNew ? 'Selecione um template para criar um novo checklist' : 'Execute checklists e mantenha a qualidade operacional'}
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onCancel}>
             <ChevronLeft className="h-4 w-4 mr-2" />
@@ -575,11 +575,11 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
                     <h3 className="font-semibold">{template.name}</h3>
                     <Badge className={
                       template.type === 'opening' ? 'bg-green-100 text-green-800' :
-                      template.type === 'closing' ? 'bg-red-100 text-red-800' :
-                      'bg-blue-100 text-blue-800'
+                        template.type === 'closing' ? 'bg-red-100 text-red-800' :
+                          'bg-blue-100 text-blue-800'
                     }>
                       {template.type === 'opening' ? 'Abertura' :
-                       template.type === 'closing' ? 'Fechamento' : 'Qualidade'}
+                        template.type === 'closing' ? 'Fechamento' : 'Qualidade'}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
@@ -613,7 +613,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
                   <div>
                     <h4 className="font-medium">{execution.templateName}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {stores.find(s => s.id === execution.storeId)?.name} • 
+                      {stores.find(s => s.id === execution.storeId)?.name} •
                       Iniciado em {new Date(execution.startTime).toLocaleString('pt-BR')}
                     </p>
                   </div>

@@ -98,10 +98,10 @@ const SettingsManager: React.FC = () => {
   // ─── General Tab ───
   const renderGeneralTab = () => (
     <div className="space-y-6">
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-blue-600" />
+            <Globe className="h-5 w-5 text-primary" />
             Idioma e Região
           </CardTitle>
         </CardHeader>
@@ -138,10 +138,10 @@ const SettingsManager: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-green-50">
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-green-600" />
+            <DollarSign className="h-5 w-5 text-primary" />
             Moeda e Formato
           </CardTitle>
         </CardHeader>
@@ -182,19 +182,19 @@ const SettingsManager: React.FC = () => {
 
   // ─── Notifications Tab ───
   const renderNotificationsTab = () => (
-    <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-orange-50">
+    <Card className="shadow-sm border bg-card">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5 text-orange-600" />
+          <Bell className="h-5 w-5 text-primary" />
           Notificações
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-1">
         {/* Stock alerts */}
-        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-              <Package className="h-5 w-5 text-red-600" />
+              <Package className="h-5 w-5 text-destructive" />
             </div>
             <div>
               <h4 className="font-semibold text-gray-800">{t('settings.low_stock_alerts')}</h4>
@@ -204,10 +204,10 @@ const SettingsManager: React.FC = () => {
           <Switch checked={notifLowStock} onCheckedChange={setNotifLowStock} />
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-yellow-600" />
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <DollarSign className="h-5 w-5 text-amber-600" />
             </div>
             <div>
               <h4 className="font-semibold text-gray-800">{t('settings.overdue_invoices')}</h4>
@@ -217,10 +217,10 @@ const SettingsManager: React.FC = () => {
           <Switch checked={notifOverdueInvoices} onCheckedChange={setNotifOverdueInvoices} />
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-              <Shield className="h-5 w-5 text-purple-600" />
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Shield className="h-5 w-5 text-primary" />
             </div>
             <div>
               <h4 className="font-semibold text-gray-800">Expiração de Licenças</h4>
@@ -230,10 +230,10 @@ const SettingsManager: React.FC = () => {
           <Switch checked={notifLicenseExpiry} onCheckedChange={setNotifLicenseExpiry} />
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-              <Trash2 className="h-5 w-5 text-orange-600" />
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Trash2 className="h-5 w-5 text-amber-600" />
             </div>
             <div>
               <h4 className="font-semibold text-gray-800">Alerta de Desperdício</h4>
@@ -243,10 +243,10 @@ const SettingsManager: React.FC = () => {
           <Switch checked={notifWasteAlert} onCheckedChange={setNotifWasteAlert} />
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <CheckCircle className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
               <h4 className="font-semibold text-gray-800">Checklists Pendentes</h4>
@@ -258,12 +258,12 @@ const SettingsManager: React.FC = () => {
 
         <hr className="my-4" />
 
-        <h3 className="text-lg font-bold text-gray-700 px-4 pt-2">Canais de Notificação</h3>
+        <h3 className="text-lg font-bold px-4 pt-2">Canais de Notificação</h3>
 
-        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-              <Mail className="h-5 w-5 text-indigo-600" />
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <Mail className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <h4 className="font-semibold text-gray-800">{t('settings.email_notifications')}</h4>
@@ -273,10 +273,10 @@ const SettingsManager: React.FC = () => {
           <Switch checked={notifEmail} onCheckedChange={setNotifEmail} />
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <MessageSquare className="h-5 w-5 text-green-600" />
+            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <MessageSquare className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
               <h4 className="font-semibold text-gray-800">Notificações Push</h4>
@@ -287,7 +287,7 @@ const SettingsManager: React.FC = () => {
         </div>
 
         <div className="px-4 pt-4">
-          <Button onClick={() => toast({ title: 'Notificações salvas!' })} className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700">
+          <Button onClick={() => toast({ title: 'Notificações salvas!' })}>
             <Save className="h-4 w-4 mr-2" />
             Salvar Preferências
           </Button>
@@ -301,15 +301,15 @@ const SettingsManager: React.FC = () => {
   const [newCatName, setNewCatName] = useState('');
 
   const renderCategoriesTab = () => (
-    <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-purple-50">
+    <Card className="shadow-sm border bg-card">
+      <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-purple-600" />
+            <Package className="h-5 w-5 text-primary" />
             Categorias
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">{categories.length}</Badge>
+            <Badge variant="outline">{categories.length}</Badge>
           </div>
-          <Button size="sm" onClick={() => { setNewCatName(''); setShowCatAddDialog(true); }} className="bg-gradient-to-r from-purple-600 to-indigo-600">
+          <Button size="sm" onClick={() => { setNewCatName(''); setShowCatAddDialog(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Categoria
           </Button>
@@ -318,7 +318,7 @@ const SettingsManager: React.FC = () => {
       <CardContent className="p-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50/50">
+            <TableRow>
               <TableHead className="font-semibold">Nome</TableHead>
               <TableHead className="font-semibold text-center">Produtos</TableHead>
               <TableHead className="font-semibold text-right">Ações</TableHead>
@@ -332,7 +332,7 @@ const SettingsManager: React.FC = () => {
                   <TableCell className="font-medium">{cat.name}</TableCell>
                   <TableCell className="text-center text-gray-500">{productCount}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50"
+                    <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10"
                       onClick={() => {
                         if (productCount > 0) {
                           toast({ title: 'Não é possível excluir', description: `Esta categoria tem ${productCount} produto(s) associado(s)`, variant: 'destructive' });
@@ -375,8 +375,9 @@ const SettingsManager: React.FC = () => {
               if (!newCatName.trim()) return;
               addCategory({ name: newCatName.trim() });
               toast({ title: 'Categoria criada!' });
+              toast({ title: 'Categoria criada!' });
               setShowCatAddDialog(false);
-            }} className="bg-gradient-to-r from-purple-600 to-indigo-600">Salvar</Button>
+            }}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -385,15 +386,15 @@ const SettingsManager: React.FC = () => {
 
   // ─── Suppliers Tab ───
   const renderSuppliersTab = () => (
-    <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-teal-50">
+    <Card className="shadow-sm border bg-card">
+      <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Truck className="h-5 w-5 text-teal-600" />
+            <Truck className="h-5 w-5 text-primary" />
             Fornecedores
-            <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200">{suppliers.length}</Badge>
+            <Badge variant="outline">{suppliers.length}</Badge>
           </div>
-          <Button size="sm" onClick={() => { setSupName(''); setSupContact(''); setSupEmail(''); setShowSupDialog(true); }} className="bg-gradient-to-r from-teal-600 to-green-600">
+          <Button size="sm" onClick={() => { setSupName(''); setSupContact(''); setSupEmail(''); setShowSupDialog(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Fornecedor
           </Button>
@@ -413,10 +414,10 @@ const SettingsManager: React.FC = () => {
             {suppliers.map(sup => (
               <TableRow key={sup.id}>
                 <TableCell className="font-medium">{sup.name}</TableCell>
-                <TableCell className="text-gray-600">{sup.contact}</TableCell>
-                <TableCell className="text-gray-600">{sup.email}</TableCell>
+                <TableCell className="text-muted-foreground">{sup.contact}</TableCell>
+                <TableCell className="text-muted-foreground">{sup.email}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50"
+                  <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10"
                     onClick={() => { deleteSupplier(sup.id); toast({ title: 'Fornecedor removido!' }); }}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -460,7 +461,7 @@ const SettingsManager: React.FC = () => {
               addSupplier({ name: supName.trim(), contact: supContact.trim(), email: supEmail.trim() });
               toast({ title: 'Fornecedor adicionado!' });
               setShowSupDialog(false);
-            }} className="bg-gradient-to-r from-teal-600 to-green-600">Salvar</Button>
+            }}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -470,10 +471,10 @@ const SettingsManager: React.FC = () => {
   // ─── Security Tab ───
   const renderSecurityTab = () => (
     <div className="space-y-6">
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-red-50">
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-red-600" />
+            <Lock className="h-5 w-5 text-primary" />
             Alterar Senha
           </CardTitle>
         </CardHeader>
@@ -500,7 +501,7 @@ const SettingsManager: React.FC = () => {
             <Label className="font-semibold">Confirmar Nova Senha</Label>
             <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
             {confirmPassword && newPassword !== confirmPassword && (
-              <p className="text-xs text-red-500">As senhas não coincidem</p>
+              <p className="text-xs text-destructive">As senhas não coincidem</p>
             )}
           </div>
           <Button onClick={() => {
@@ -509,29 +510,29 @@ const SettingsManager: React.FC = () => {
             if (newPassword.length < 6) { toast({ title: 'A senha deve ter no mínimo 6 caracteres', variant: 'destructive' }); return; }
             toast({ title: 'Senha alterada com sucesso!' });
             setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
-          }} className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700">
+          }}>
             <Key className="h-4 w-4 mr-2" />
             Alterar Senha
           </Button>
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-indigo-50">
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-indigo-600" />
+            <Shield className="h-5 w-5 text-primary" />
             Segurança da Conta
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50">
+          <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50">
             <div>
-              <h4 className="font-semibold text-gray-800">Autenticação de Dois Fatores (2FA)</h4>
-              <p className="text-sm text-gray-500">Adiciona uma camada extra de segurança à sua conta</p>
+              <h4 className="font-semibold">Autenticação de Dois Fatores (2FA)</h4>
+              <p className="text-sm text-muted-foreground">Adiciona uma camada extra de segurança à sua conta</p>
             </div>
             <Switch checked={twoFactor} onCheckedChange={(v) => { setTwoFactor(v); toast({ title: v ? '2FA ativado!' : '2FA desativado!' }); }} />
           </div>
-          <div className="p-4 rounded-xl hover:bg-gray-50">
+          <div className="p-4 rounded-xl hover:bg-muted/50">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-semibold text-gray-800">Tempo Limite da Sessão</h4>
@@ -579,17 +580,17 @@ const SettingsManager: React.FC = () => {
 
   const renderBackupTab = () => (
     <div className="space-y-6">
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5 text-blue-600" />
+            <Download className="h-5 w-5 text-primary" />
             Exportar Dados
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          <p className="text-gray-600">{t('settings.export_description')}</p>
+          <p className="text-muted-foreground">{t('settings.export_description')}</p>
           <div className="flex gap-3">
-            <Button onClick={exportData} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+            <Button onClick={exportData}>
               <Download className="h-4 w-4 mr-2" />
               Exportar JSON
             </Button>
@@ -597,15 +598,15 @@ const SettingsManager: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-green-50">
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5 text-green-600" />
+            <Upload className="h-5 w-5 text-primary" />
             Importar Dados
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          <p className="text-gray-600">{t('settings.import_description')}</p>
+          <p className="text-muted-foreground">{t('settings.import_description')}</p>
           <Button variant="outline" disabled>
             <Upload className="h-4 w-4 mr-2" />
             {t('settings.import_file')}
@@ -614,29 +615,29 @@ const SettingsManager: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-purple-50">
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-purple-600" />
+            <Database className="h-5 w-5 text-primary" />
             Informações do Sistema
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="p-3 bg-muted rounded-lg">
               <p className="text-gray-500 text-xs">Versão</p>
               <p className="font-semibold">1.0.0</p>
             </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-xs">Último Backup</p>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-muted-foreground text-xs">Último Backup</p>
               <p className="font-semibold">Nunca</p>
             </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-xs">Base de Dados</p>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-muted-foreground text-xs">Base de Dados</p>
               <p className="font-semibold">Local Storage</p>
             </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-xs">Total de Registros</p>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-muted-foreground text-xs">Total de Registros</p>
               <p className="font-semibold">{stores.length + categories.length + suppliers.length}</p>
             </div>
           </div>
@@ -648,18 +649,18 @@ const SettingsManager: React.FC = () => {
   // ─── Assinatura Tab ───
   const renderAssinaturaTab = () => (
     <div className="space-y-6">
-      <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50">
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-purple-600" />
+            <CreditCard className="h-5 w-5 text-primary" />
             Assinaturas das Lojas
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {subscriptionData.length === 0 ? (
             <div className="p-12 text-center">
-              <CreditCard className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">Nenhuma assinatura encontrada</p>
+              <CreditCard className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-muted-foreground">Nenhuma assinatura encontrada</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -669,22 +670,22 @@ const SettingsManager: React.FC = () => {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <h3 className="font-bold text-lg">{sub.storeName}</h3>
-                        <Badge variant="outline" className={sub.plan === 'Business' ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200'}>
+                        <Badge variant="outline" className={sub.plan === 'Business' ? 'bg-primary/20 text-primary border-primary/20' : 'bg-primary/10 text-primary border-primary/10'}>
                           {sub.plan}
                         </Badge>
                       </div>
-                      <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                      <Badge variant="outline" className="bg-muted text-muted-foreground">
                         {sub.periodicity}
                       </Badge>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-500 font-semibold">Data de Início</p>
-                        <p className="font-medium flex items-center gap-1 mt-1"><Calendar className="h-3.5 w-3.5 text-green-600" />{new Date(sub.startDate + 'T12:00:00').toLocaleDateString('pt-PT')}</p>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-xs text-muted-foreground font-semibold">Data de Início</p>
+                        <p className="font-medium flex items-center gap-1 mt-1"><Calendar className="h-3.5 w-3.5 text-primary" />{new Date(sub.startDate + 'T12:00:00').toLocaleDateString('pt-PT')}</p>
                       </div>
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-500 font-semibold">Data de Término</p>
-                        <p className="font-medium flex items-center gap-1 mt-1"><Calendar className="h-3.5 w-3.5 text-red-600" />{new Date(sub.endDate + 'T12:00:00').toLocaleDateString('pt-PT')}</p>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-xs text-muted-foreground font-semibold">Data de Término</p>
+                        <p className="font-medium flex items-center gap-1 mt-1"><Calendar className="h-3.5 w-3.5 text-destructive" />{new Date(sub.endDate + 'T12:00:00').toLocaleDateString('pt-PT')}</p>
                       </div>
                     </div>
 
@@ -712,12 +713,12 @@ const SettingsManager: React.FC = () => {
                                 {sub.documents.map(doc => (
                                   <TableRow key={doc.id}>
                                     <TableCell className="text-sm font-medium">{doc.description}</TableCell>
-                                    <TableCell className="text-sm text-center text-gray-500">{new Date(doc.date + 'T12:00:00').toLocaleDateString('pt-PT')}</TableCell>
+                                    <TableCell className="text-sm text-center text-muted-foreground">{new Date(doc.date + 'T12:00:00').toLocaleDateString('pt-PT')}</TableCell>
                                     <TableCell className="text-sm text-right font-semibold">
                                       {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(doc.value)}
                                     </TableCell>
                                     <TableCell className="text-center">
-                                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1 text-blue-600 border-blue-200 hover:bg-blue-50">
+                                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1 text-primary border-primary/20 hover:bg-primary/10">
                                         <Download className="h-3 w-3" /> PDF
                                       </Button>
                                     </TableCell>
@@ -754,40 +755,36 @@ const SettingsManager: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen bg-background">
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-clip-text text-foreground">
             Configurações
           </h1>
-          <p className="text-gray-600 mt-1">Gerencie as configurações do sistema</p>
+          <p className="text-muted-foreground mt-1">Gerencie as configurações do sistema</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar */}
-          <div className="lg:w-72">
-            <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm sticky top-6">
-              <CardContent className="p-4">
-                <nav className="space-y-1">
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${activeTab === tab.id
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
-                          : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span className="font-medium">{tab.label}</span>
-                      </button>
-                    );
-                  })}
-                </nav>
-              </CardContent>
-            </Card>
+          <div className="lg:w-64 flex-shrink-0">
+            <nav className="space-y-1">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${isActive
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                  >
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
           {/* Main Content */}

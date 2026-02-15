@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -201,10 +202,10 @@ const TransitManager: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100';
-      case 'in_transit': return 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100';
-      case 'pending': return 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100';
+      case 'delivered': return 'bg-emerald-500/10 text-emerald-600 border-emerald-200 hover:bg-emerald-500/20';
+      case 'in_transit': return 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20';
+      case 'pending': return 'bg-amber-500/10 text-amber-600 border-amber-200 hover:bg-amber-500/20';
+      default: return 'bg-muted text-muted-foreground border-border hover:bg-muted/80';
     }
   };
 
@@ -264,10 +265,10 @@ const TransitManager: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             {t('transit.title')}
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             {t('transit.description')}
           </p>
         </div>
@@ -276,12 +277,12 @@ const TransitManager: React.FC = () => {
           <Button
             variant="outline"
             onClick={() => setIsExportOpen(true)}
-            className="border-gray-300 hover:bg-gray-50"
+            className="border-border hover:bg-muted"
           >
             <Download className="h-4 w-4 mr-2" />
             {t('transit.export_csv')}
           </Button>
-          <Button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700 shadow-md">
+          <Button onClick={handleAddNew} className="bg-primary hover:bg-primary/90 shadow-md">
             <Plus className="h-4 w-4 mr-2" />
             {t('transit.create_transfer')}
           </Button>
@@ -377,53 +378,33 @@ const TransitManager: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">{t('transit.total')}</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
-            </div>
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Package className="h-6 w-6 text-gray-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title={t('transit.total')}
+          value={stats.total}
+          icon={Package}
+          variant="neutral"
+        />
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">{t('transit.pending')}</p>
-              <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
-            </div>
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <Clock className="h-6 w-6 text-amber-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title={t('transit.pending')}
+          value={stats.pending}
+          icon={Clock}
+          variant="warning"
+        />
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">{t('transit.in_transit')}</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.in_transit}</p>
-            </div>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Truck className="h-6 w-6 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title={t('transit.in_transit')}
+          value={stats.in_transit}
+          icon={Truck}
+          variant="default"
+        />
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">{t('transit.delivered')}</p>
-              <p className="text-2xl font-bold text-emerald-600">{stats.delivered}</p>
-            </div>
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-emerald-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title={t('transit.delivered')}
+          value={stats.delivered}
+          icon={CheckCircle}
+          variant="success"
+        />
       </div>
 
       {/* Movements Table */}
@@ -457,41 +438,41 @@ const TransitManager: React.FC = () => {
                   const isPending = movement.status === 'pending';
 
                   return (
-                    <TableRow key={movement.id} className="hover:bg-slate-50/50">
+                    <TableRow key={movement.id} className="hover:bg-muted/50">
                       {/* Photo Column */}
                       <TableCell className="text-center p-2">
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden mx-auto">
+                        <div className="w-10 h-10 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden mx-auto">
                           {product?.imageUrl ? (
                             <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <Package className="h-5 w-5 text-slate-400" />
+                            <Package className="h-5 w-5 text-muted-foreground/50" />
                           )}
                         </div>
                       </TableCell>
 
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
-                          <span className="text-sm text-gray-900">{product?.name}</span>
-                          <span className="text-xs text-gray-500">SKU: {product?.sku}</span>
+                          <span className="text-sm text-foreground">{product?.name}</span>
+                          <span className="text-xs text-muted-foreground">SKU: {product?.sku}</span>
                         </div>
                       </TableCell>
 
                       <TableCell>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                          <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground/70" />
                           {fromStore?.name || t('transit.external')}
                         </div>
                       </TableCell>
 
                       <TableCell>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                          <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground/70" />
                           {toStore?.name || t('transit.external')}
                         </div>
                       </TableCell>
 
                       <TableCell>
-                        <Badge variant="outline" className="font-semibold bg-gray-50">
+                        <Badge variant="outline" className="font-semibold bg-muted/50">
                           {movement.quantity}
                         </Badge>
                       </TableCell>
@@ -512,7 +493,7 @@ const TransitManager: React.FC = () => {
                         </Badge>
                       </TableCell>
 
-                      <TableCell className="text-xs text-gray-500 whitespace-nowrap">
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatDate(movement.createdAt)}
                       </TableCell>
 
@@ -527,7 +508,7 @@ const TransitManager: React.FC = () => {
                               size="sm"
                               variant="outline"
                               onClick={() => updateMovementStatus(movement.id, getNextStatus(movement.status)!)}
-                              className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 border-blue-200 hover:border-blue-300"
+                              className="h-8 w-8 p-0 text-primary hover:bg-primary/10 border-primary/20 hover:border-primary/30"
                               title={getNextStatusLabel(movement.status) || ''}
                             >
                               {getStatusIcon(getNextStatus(movement.status)!)}
@@ -544,11 +525,11 @@ const TransitManager: React.FC = () => {
 
           {filteredMovements.length === 0 && (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Truck className="h-8 w-8 text-gray-300" />
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Truck className="h-8 w-8 text-muted-foreground/30" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">{t('transit.no_movements')}</h3>
-              <p className="text-gray-500 text-sm max-w-sm mx-auto">
+              <h3 className="text-lg font-medium text-foreground mb-1">{t('transit.no_movements')}</h3>
+              <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                 {t('inventory.noProductsFilters')}
               </p>
             </div>
@@ -654,14 +635,14 @@ const TransitManager: React.FC = () => {
           <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-600 hover:to-blue-700">
-                  <TableHead className="text-white font-semibold text-xs uppercase tracking-wider">
+                <TableRow className="bg-muted hover:bg-muted">
+                  <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider">
                     {t('transit.export_product')}
                   </TableHead>
-                  <TableHead className="text-white font-semibold text-xs uppercase tracking-wider text-center">
+                  <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider text-center">
                     {t('transit.export_moved')}
                   </TableHead>
-                  <TableHead className="text-white font-semibold text-xs uppercase tracking-wider text-right">
+                  <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider text-right">
                     {t('transit.export_balance')}
                   </TableHead>
                 </TableRow>
@@ -669,14 +650,14 @@ const TransitManager: React.FC = () => {
               <TableBody>
                 {exportData.length > 0 ? (
                   exportData.map((row, idx) => (
-                    <TableRow key={idx} className={idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100'}>
-                      <TableCell className="text-sm font-medium text-gray-800">
+                    <TableRow key={idx} className={idx % 2 === 0 ? 'bg-background hover:bg-muted/50' : 'bg-muted/30 hover:bg-muted/50'}>
+                      <TableCell className="text-sm font-medium text-foreground">
                         {row.name}
                       </TableCell>
-                      <TableCell className={`text-sm font-semibold text-center ${row.moved < 0 ? 'text-red-500' : row.moved > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                      <TableCell className={`text-sm font-semibold text-center ${row.moved < 0 ? 'text-destructive' : row.moved > 0 ? 'text-emerald-600' : 'text-muted-foreground'}`}>
                         {row.moved}
                       </TableCell>
-                      <TableCell className="text-sm font-bold text-right text-gray-900">
+                      <TableCell className="text-sm font-bold text-right text-foreground">
                         {row.balance}
                       </TableCell>
                     </TableRow>
@@ -698,7 +679,7 @@ const TransitManager: React.FC = () => {
             <Button
               onClick={handleDownloadCSV}
               disabled={exportData.length === 0}
-              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-40"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm disabled:opacity-40"
             >
               <Download className="h-4 w-4 mr-2" />
               {t('transit.export_download')}

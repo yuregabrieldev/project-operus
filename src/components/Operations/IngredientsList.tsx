@@ -25,9 +25,9 @@ const IngredientsList: React.FC<IngredientsListProps> = ({
 
   const getStockStatus = (ingredient: any) => {
     if (ingredient.availableStock >= ingredient.actualQuantity) {
-      return { status: 'ok', color: 'text-green-600', bg: 'bg-green-50' };
+      return { status: 'ok', color: 'text-emerald-600', bg: 'bg-emerald-50/50 border-emerald-200' };
     } else {
-      return { status: 'insufficient', color: 'text-red-600', bg: 'bg-red-50' };
+      return { status: 'insufficient', color: 'text-destructive', bg: 'bg-destructive/10 border-destructive/20' };
     }
   };
 
@@ -50,11 +50,11 @@ const IngredientsList: React.FC<IngredientsListProps> = ({
                 <div className="flex-1">
                   <h4 className="font-medium">{product?.name || 'Produto não encontrado'}</h4>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-muted-foreground">
                       Estoque: {ingredient.availableStock} {ingredient.unit}
                     </span>
                     {stockStatus.status === 'insufficient' && (
-                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
                     )}
                   </div>
                 </div>
@@ -68,7 +68,7 @@ const IngredientsList: React.FC<IngredientsListProps> = ({
                     min="0"
                     step="0.01"
                   />
-                  <span className="text-sm text-gray-500">{ingredient.unit}</span>
+                  <span className="text-sm text-muted-foreground">{ingredient.unit}</span>
                 </div>
               </div>
             );

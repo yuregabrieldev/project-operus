@@ -35,11 +35,11 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
 }) => {
   const getStatusColor = () => {
     switch (status) {
-      case 'not_started': return 'bg-blue-100 text-blue-800';
-      case 'in_progress': return 'bg-yellow-100 text-yellow-800';
-      case 'paused': return 'bg-orange-100 text-orange-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'not_started': return 'bg-muted text-muted-foreground border-border';
+      case 'in_progress': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+      case 'paused': return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
+      case 'completed': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -77,7 +77,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
     <Card className="transition-all duration-200 hover:shadow-md">
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
-          <h3 className="font-semibold text-lg">{name}</h3>
+          <h3 className="font-semibold text-lg text-foreground">{name}</h3>
           <Badge className={getStatusColor()}>
             {getStatusText()}
           </Badge>
@@ -109,7 +109,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
           {completedAt && variant === 'history' && (
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <div className="flex items-center">
-                <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
+                <CheckCircle className="h-4 w-4 mr-1 text-emerald-600" />
                 <span>Completo em {new Date(completedAt).toLocaleDateString('pt-BR')} {new Date(completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               {duration && (
@@ -119,7 +119,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
           )}
 
           {variant === 'history' && (
-            <div className="text-sm font-medium text-green-600">
+            <div className="text-sm font-medium text-emerald-600">
               {progress.completed}/{progress.total} itens
             </div>
           )}

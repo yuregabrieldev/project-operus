@@ -13,7 +13,7 @@ import RecipeForm from './RecipeForm';
 
 const ProductionManager: React.FC = () => {
   const { t } = useLanguage();
-  const { 
+  const {
     recipes,
     productionRecords,
     products,
@@ -40,7 +40,7 @@ const ProductionManager: React.FC = () => {
   // Estatísticas de produção
   const productionStats = useMemo(() => {
     const today = new Date();
-    const todayRecords = productionRecords.filter(record => 
+    const todayRecords = productionRecords.filter(record =>
       record.createdAt.toDateString() === today.toDateString()
     );
 
@@ -61,7 +61,7 @@ const ProductionManager: React.FC = () => {
       });
       return;
     }
-    
+
     setSelectedRecipe(recipe);
     setShowProductionForm(true);
   };
@@ -74,14 +74,14 @@ const ProductionManager: React.FC = () => {
           <p className="text-gray-600">Controle de insumos → produtos finais + sobras</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={() => setShowHistory(!showHistory)} 
+          <Button
+            onClick={() => setShowHistory(!showHistory)}
             variant="outline"
           >
             <History className="h-4 w-4 mr-2" />
             Histórico
           </Button>
-          <Button 
+          <Button
             onClick={() => setShowRecipeForm(true)}
             variant="outline"
           >
@@ -156,10 +156,10 @@ const ProductionManager: React.FC = () => {
               {recipes.filter(r => r.isActive).map((recipe) => {
                 const finalProduct = getProductById(recipe.finalProductId);
                 const canProduceRecipe = canProduce(recipe);
-                
+
                 return (
-                  <div 
-                    key={recipe.id} 
+                  <div
+                    key={recipe.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                   >
                     <div className="flex-1">
@@ -219,7 +219,7 @@ const ProductionManager: React.FC = () => {
                   <TableBody>
                     {productionRecords.slice(0, 10).map((record) => {
                       const recipe = recipes.find(r => r.id === record.recipeId);
-                      
+
                       return (
                         <TableRow key={record.id}>
                           <TableCell>
@@ -260,12 +260,12 @@ const ProductionManager: React.FC = () => {
 
       {/* Diálogo de Produção */}
       <Dialog open={showProductionForm} onOpenChange={setShowProductionForm}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Iniciar Produção - {selectedRecipe?.name}</DialogTitle>
           </DialogHeader>
           {selectedRecipe && (
-            <ProductionForm 
+            <ProductionForm
               recipe={selectedRecipe}
               onClose={() => setShowProductionForm(false)}
             />
@@ -275,11 +275,11 @@ const ProductionManager: React.FC = () => {
 
       {/* Diálogo de Nova Receita */}
       <Dialog open={showRecipeForm} onOpenChange={setShowRecipeForm}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nova Receita</DialogTitle>
           </DialogHeader>
-          <RecipeForm 
+          <RecipeForm
             onClose={() => setShowRecipeForm(false)}
           />
         </DialogContent>

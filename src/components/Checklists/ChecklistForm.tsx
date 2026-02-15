@@ -42,7 +42,7 @@ const DEFAULT_TASKS = {
 export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose }) => {
   const { t } = useLanguage();
   const { stores, addChecklist, updateChecklist } = useData();
-  
+
   const [formData, setFormData] = useState({
     storeId: '',
     type: 'opening' as 'opening' | 'closing' | 'quality',
@@ -83,7 +83,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const checklistData = {
       storeId: formData.storeId,
       type: formData.type,
@@ -107,7 +107,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
         description: t('checklists.checklist_created_successfully'),
       });
     }
-    
+
     onClose();
   };
 
@@ -126,7 +126,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
   const handleTaskToggle = (taskId: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      tasks: prev.tasks.map(task => 
+      tasks: prev.tasks.map(task =>
         task.id === taskId ? { ...task, isCompleted: checked } : task
       )
     }));
@@ -135,7 +135,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
   const handleTaskNameChange = (taskId: string, newName: string) => {
     setFormData(prev => ({
       ...prev,
-      tasks: prev.tasks.map(task => 
+      tasks: prev.tasks.map(task =>
         task.id === taskId ? { ...task, taskName: newName } : task
       )
     }));
@@ -167,10 +167,10 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'opening': return 'bg-green-100 text-green-800';
-      case 'closing': return 'bg-red-100 text-red-800';
-      case 'quality': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'opening': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      case 'closing': return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'quality': return 'bg-primary/10 text-primary border-primary/20';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -188,7 +188,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
                 <span>{t('checklists.completion')}: {getCompletionRate()}%</span>
               </div>
               {checklist.completedAt && (
-                <Badge className="bg-green-100 text-green-800">
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                   {t('checklists.completed')}
                 </Badge>
               )}
@@ -196,7 +196,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
           </CardHeader>
           {checklist.completedAt && (
             <CardContent className="pt-0">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 <p><strong>{t('checklists.completed_at')}:</strong> {new Date(checklist.completedAt).toLocaleString('pt-BR')}</p>
                 {checklist.completedBy && (
                   <p><strong>{t('checklists.completed_by')}:</strong> {checklist.completedBy}</p>
@@ -210,13 +210,13 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
       {/* Basic Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('common.store')}
           </label>
           <select
             value={formData.storeId}
             onChange={(e) => handleChange('storeId', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
             required
             disabled={!!(checklist && checklist.id)}
           >
@@ -230,13 +230,13 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             {t('common.type')}
           </label>
           <select
             value={formData.type}
             onChange={(e) => handleChange('type', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
             disabled={!!(checklist && checklist.id)}
           >
             <option value="opening">{t('checklists.opening')}</option>
@@ -260,7 +260,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
         </CardHeader>
         <CardContent className="space-y-3">
           {formData.tasks.map((task, index) => (
-            <div key={task.id} className="flex items-center gap-3 p-3 border rounded-lg">
+            <div key={task.id} className="flex items-center gap-3 p-3 border border-border rounded-lg bg-card">
               <Checkbox
                 checked={task.isCompleted}
                 onCheckedChange={(checked) => handleTaskToggle(task.id!, !!checked)}
@@ -270,9 +270,8 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
                 type="text"
                 value={task.taskName}
                 onChange={(e) => handleTaskNameChange(task.id!, e.target.value)}
-                className={`flex-1 px-2 py-1 border-0 focus:outline-none ${
-                  task.isCompleted ? 'line-through text-gray-500' : ''
-                }`}
+                className={`flex-1 px-2 py-1 border-0 bg-transparent focus:outline-none text-foreground ${task.isCompleted ? 'line-through text-muted-foreground' : ''
+                  }`}
                 placeholder={t('checklists.task_name')}
                 required
                 disabled={!!(checklist?.completedAt)}
@@ -281,18 +280,18 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => removeTask(task.id!)}
-                  className="text-red-600 hover:bg-red-50"
+                  className="text-destructive hover:bg-destructive/10"
                 >
                   ×
                 </Button>
               )}
             </div>
           ))}
-          
+
           {formData.tasks.length === 0 && (
-            <div className="text-center py-4 text-gray-500">
+            <div className="text-center py-4 text-muted-foreground">
               {t('checklists.no_tasks')}
             </div>
           )}
@@ -307,13 +306,12 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
               <span className="text-sm font-medium">{t('checklists.progress')}</span>
               <span className="text-sm font-bold">{getCompletionRate()}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
-                className={`h-3 rounded-full transition-all duration-300 ${
-                  getCompletionRate() === 100 ? 'bg-green-500' :
-                  getCompletionRate() >= 75 ? 'bg-blue-500' :
-                  getCompletionRate() >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                }`}
+            <div className="w-full bg-muted rounded-full h-3">
+              <div
+                className={`h-3 rounded-full transition-all duration-300 ${getCompletionRate() === 100 ? 'bg-emerald-500' :
+                  getCompletionRate() >= 75 ? 'bg-primary' :
+                    getCompletionRate() >= 50 ? 'bg-amber-500' : 'bg-destructive'
+                  }`}
                 style={{ width: `${getCompletionRate()}%` }}
               />
             </div>
@@ -326,7 +324,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({ checklist, onClose
           {checklist && checklist.id ? t('common.close') : t('common.cancel')}
         </Button>
         {(!checklist?.completedAt) && (
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+          <Button type="submit">
             {checklist && checklist.id ? t('common.update') : t('common.create')}
           </Button>
         )}

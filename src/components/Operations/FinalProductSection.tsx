@@ -27,7 +27,7 @@ const FinalProductSection: React.FC<FinalProductSectionProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <h4 className="font-medium">{getProductById(recipe.finalProductId)?.name}</h4>
-            <p className="text-sm text-gray-500">Rendimento esperado: {recipe.expectedYield} {recipe.yieldUnit}</p>
+            <p className="text-sm text-muted-foreground">Rendimento esperado: {recipe.expectedYield} {recipe.yieldUnit}</p>
           </div>
           <div className="flex items-center gap-2">
             <Label>Rendimento real:</Label>
@@ -39,7 +39,7 @@ const FinalProductSection: React.FC<FinalProductSectionProps> = ({
               min="0"
               step="0.01"
             />
-            <span className="text-sm text-gray-500">{recipe.yieldUnit}</span>
+            <span className="text-sm text-muted-foreground">{recipe.yieldUnit}</span>
           </div>
         </div>
       </CardContent>

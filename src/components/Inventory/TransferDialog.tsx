@@ -92,11 +92,11 @@ const TransferDialog: React.FC<TransferDialogProps> = ({
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
             {/* Dialog */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-6">
                     {/* Title */}
                     <div className="text-center mb-5">
-                        <p className="text-base font-medium text-gray-900">
+                        <p className="text-lg font-medium text-gray-900">
                             {t('transferDialog.transfer')} <span className="font-bold">{product.name}</span>
                         </p>
                         <p className="text-sm text-gray-500 mt-0.5">

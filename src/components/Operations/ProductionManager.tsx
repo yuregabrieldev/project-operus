@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -167,44 +168,15 @@ const ProductionManager: React.FC = () => {
     setShowExportDialog(false);
   };
 
-  const stats = [
-    {
-      label: t('production.totalRecipes'),
-      value: productionStats.totalRecipes,
-      icon: Factory,
-      color: 'text-blue-600',
-      bgIcon: 'text-blue-400'
-    },
-    {
-      label: t('production.todayProductions'),
-      value: productionStats.todayProductions,
-      icon: CheckCircle,
-      color: 'text-emerald-600',
-      bgIcon: 'text-emerald-400'
-    },
-    {
-      label: t('production.available'),
-      value: productionStats.availableRecipes,
-      icon: Play,
-      color: 'text-blue-600',
-      bgIcon: 'text-blue-400'
-    },
-    {
-      label: t('production.blocked'),
-      value: productionStats.blockedRecipes,
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      bgIcon: 'text-red-400'
-    }
-  ];
+
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{t('production.title')}</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{t('production.subtitle')}</p>
+          <h1 className="text-3xl font-bold text-foreground">{t('production.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('production.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -228,7 +200,7 @@ const ProductionManager: React.FC = () => {
           <Button
             onClick={() => setShowRecipeForm(true)}
             size="sm"
-            className="rounded-xl bg-blue-600 hover:bg-blue-700"
+            className="rounded-xl"
           >
             <Plus className="h-4 w-4 mr-1.5" />
             {t('production.newRecipe')}
@@ -238,27 +210,38 @@ const ProductionManager: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {stats.map((stat, index) => (
-          <Card key={index} className="border border-gray-100 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
-                  <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
-                </div>
-                <stat.icon className={`h-8 w-8 ${stat.bgIcon}`} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <StatsCard
+          title={t('production.totalRecipes')}
+          value={productionStats.totalRecipes}
+          icon={Factory}
+          variant="default"
+        />
+        <StatsCard
+          title={t('production.todayProductions')}
+          value={productionStats.todayProductions}
+          icon={CheckCircle}
+          variant="success"
+        />
+        <StatsCard
+          title={t('production.available')}
+          value={productionStats.availableRecipes}
+          icon={Play}
+          variant="default"
+        />
+        <StatsCard
+          title={t('production.blocked')}
+          value={productionStats.blockedRecipes}
+          icon={AlertTriangle}
+          variant="destructive"
+        />
       </div>
 
       {/* Available Recipes */}
-      <Card className="border border-gray-100 shadow-sm">
+      <Card className="border-border shadow-sm">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Factory className="h-5 w-5 text-gray-600" />
-            <h3 className="font-semibold text-gray-900">{t('production.availableRecipes')}</h3>
+            <Factory className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">{t('production.availableRecipes')}</h3>
           </div>
           <div className="space-y-3">
             {recipes.filter((r: any) => r.isActive).map((recipe: any) => {
@@ -268,23 +251,24 @@ const ProductionManager: React.FC = () => {
               return (
                 <div
                   key={recipe.id}
-                  className="flex items-center justify-between p-3.5 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between p-3.5 border border-border rounded-xl hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">{recipe.name}</h4>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <h4 className="font-semibold text-foreground">{recipe.name}</h4>
+                    <p className="text-sm text-muted-foreground mt-0.5">
                       {t('production.product')}: {finalProduct?.name} • {t('production.yield')}: {recipe.expectedYield}{recipe.yieldUnit || 'ml'}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge
+                        variant="outline"
                         className={canProduceRecipe
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50'
-                          : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-50'
+                          : 'bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/10'
                         }
                       >
                         {canProduceRecipe ? t('production.available') : t('production.insufficientStock')}
                       </Badge>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {recipe.ingredients.length} {t('production.ingredients')}
                       </span>
                     </div>
@@ -294,7 +278,7 @@ const ProductionManager: React.FC = () => {
                     disabled={!canProduceRecipe}
                     size="sm"
                     className={`rounded-xl ${canProduceRecipe
-                      ? 'bg-gray-900 hover:bg-gray-800 text-white'
+                      ? ''
                       : 'opacity-50 cursor-not-allowed'
                       }`}
                   >
@@ -307,8 +291,8 @@ const ProductionManager: React.FC = () => {
 
             {recipes.filter((r: any) => r.isActive).length === 0 && (
               <div className="text-center py-12">
-                <Factory className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">{t('production.noRecipes')}</p>
+                <Factory className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">{t('production.noRecipes')}</p>
                 <Button
                   onClick={() => setShowRecipeForm(true)}
                   className="mt-3"
@@ -325,20 +309,20 @@ const ProductionManager: React.FC = () => {
 
       {/* Production History */}
       {showHistory && (
-        <Card className="border border-gray-100 shadow-sm">
+        <Card className="border-border shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
-              <History className="h-5 w-5 text-gray-600" />
-              <h3 className="font-semibold text-gray-900">{t('production.historyTitle')}</h3>
+              <History className="h-5 w-5 text-muted-foreground" />
+              <h3 className="font-semibold text-foreground">{t('production.historyTitle')}</h3>
             </div>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="font-semibold">{t('production.recipe')}</TableHead>
-                    <TableHead className="font-semibold">{t('production.yield')}</TableHead>
-                    <TableHead className="font-semibold">{t('production.date')}</TableHead>
-                    <TableHead className="font-semibold">{t('production.observations')}</TableHead>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="font-semibold text-foreground">{t('production.recipe')}</TableHead>
+                    <TableHead className="font-semibold text-foreground">{t('production.yield')}</TableHead>
+                    <TableHead className="font-semibold text-foreground">{t('production.date')}</TableHead>
+                    <TableHead className="font-semibold text-foreground">{t('production.observations')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -346,17 +330,17 @@ const ProductionManager: React.FC = () => {
                     const product = getProductById(record.productId);
 
                     return (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium">{record.notes?.replace('Produção: ', '') || '-'}</TableCell>
+                      <TableRow key={record.id} className="hover:bg-muted/30 border-border">
+                        <TableCell className="font-medium text-foreground">{record.notes?.replace('Produção: ', '') || '-'}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                             {record.quantity}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-gray-600">
+                        <TableCell className="text-muted-foreground">
                           {record.createdAt.toLocaleDateString('pt-BR')}
                         </TableCell>
-                        <TableCell className="text-sm text-gray-500">
+                        <TableCell className="text-sm text-muted-foreground">
                           {product?.name}
                         </TableCell>
                       </TableRow>
@@ -367,8 +351,8 @@ const ProductionManager: React.FC = () => {
             </div>
             {productionHistory.length === 0 && (
               <div className="text-center py-8">
-                <History className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">{t('production.noHistory')}</p>
+                <History className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">{t('production.noHistory')}</p>
               </div>
             )}
           </CardContent>
@@ -424,9 +408,9 @@ const ProductionManager: React.FC = () => {
             </div>
 
             {/* Preview count */}
-            <div className="bg-gray-50 rounded-xl p-3 text-center">
-              <p className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-900">{filteredExportHistory.length}</span> registros encontrados
+            <div className="bg-muted rounded-xl p-3 text-center">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{filteredExportHistory.length}</span> registros encontrados
               </p>
             </div>
 
@@ -463,7 +447,7 @@ const ProductionManager: React.FC = () => {
             {/* Download Button */}
             <Button
               onClick={handleExportCSV}
-              className="w-full rounded-xl bg-blue-600 hover:bg-blue-700"
+              className="w-full rounded-xl"
               disabled={filteredExportHistory.length === 0}
             >
               <Download className="h-4 w-4 mr-2" />

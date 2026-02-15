@@ -16,7 +16,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import {
   Search, Plus, Edit, Truck, ShoppingCart, Package,
-  LayoutList, LayoutGrid, FileText, Download, Calendar, Filter
+  FileText, Download, Calendar, Filter
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import ProductForm from './ProductForm';
@@ -160,12 +160,12 @@ const InventoryManager: React.FC = () => {
 
   const getStockDotClass = (filter: StockFilter, active: boolean) => {
     const colors: Record<StockFilter, string> = {
-      all: 'bg-gray-400',
+      all: 'bg-muted-foreground/30',
       normal: 'bg-emerald-500',
       low: 'bg-amber-500',
-      critical: 'bg-red-500',
+      critical: 'bg-destructive',
     };
-    return `w-5 h-5 rounded-full cursor-pointer transition-all ${colors[filter]} ${active ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'opacity-60 hover:opacity-100'}`;
+    return `w-5 h-5 rounded-full cursor-pointer transition-all ${colors[filter]} ${active ? 'ring-2 ring-offset-2 ring-muted-foreground scale-110' : 'opacity-60 hover:opacity-100'}`;
   };
 
   // Report data
@@ -215,7 +215,7 @@ const InventoryManager: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-gray-500">Loja</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">Loja</Label>
               <Select value={reportStoreFilter} onValueChange={setReportStoreFilter}>
                 <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -225,7 +225,7 @@ const InventoryManager: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-gray-500">Categoria</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">Categoria</Label>
               <Select value={reportCategoryFilter} onValueChange={setReportCategoryFilter}>
                 <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -235,7 +235,7 @@ const InventoryManager: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-gray-500">Fornecedor</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">Fornecedor</Label>
               <Select value={reportSupplierFilter} onValueChange={setReportSupplierFilter}>
                 <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -245,7 +245,7 @@ const InventoryManager: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-gray-500">Data</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">Data</Label>
               <Input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="w-[160px] h-9" />
             </div>
             <Button variant="outline" size="sm" onClick={exportReportCSV} className="ml-auto gap-2">
@@ -260,39 +260,39 @@ const InventoryManager: React.FC = () => {
         <CardContent className="p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-gray-50/80">
-                <th className="text-left p-3 font-semibold text-gray-600 w-10"></th>
-                <th className="text-left p-3 font-semibold text-gray-600">Produto</th>
-                <th className="text-left p-3 font-semibold text-gray-600">SKU</th>
-                <th className="text-left p-3 font-semibold text-gray-600">Loja</th>
-                <th className="text-left p-3 font-semibold text-gray-600">Categoria</th>
-                <th className="text-left p-3 font-semibold text-gray-600">Fornecedor</th>
-                <th className="text-right p-3 font-semibold text-gray-600">Qtd</th>
-                <th className="text-center p-3 font-semibold text-gray-600">Unidade</th>
+              <tr className="border-b bg-muted/50">
+                <th className="text-left p-3 font-semibold text-muted-foreground w-10"></th>
+                <th className="text-left p-3 font-semibold text-muted-foreground">Produto</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground">SKU</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground">Loja</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground">Categoria</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground">Fornecedor</th>
+                <th className="text-right p-3 font-semibold text-muted-foreground">Qtd</th>
+                <th className="text-center p-3 font-semibold text-muted-foreground">Unidade</th>
               </tr>
             </thead>
             <tbody>
               {reportProducts.length === 0 ? (
-                <tr><td colSpan={8} className="p-12 text-center text-gray-500">
-                  <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <tr><td colSpan={8} className="p-12 text-center text-muted-foreground">
+                  <Package className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
                   <p>Nenhum produto encontrado com os filtros aplicados</p>
                 </td></tr>
               ) : (
                 reportProducts.map(rp => (
                   rp.storeItems.map((si, idx) => (
-                    <tr key={`${rp.product.id}-${si.store.id}`} className="border-b hover:bg-gray-50/50">
+                    <tr key={`${rp.product.id}-${si.store.id}`} className="border-b hover:bg-muted/50">
                       <td className="p-3">
-                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">
-                          <Package className="h-4 w-4 text-gray-400" />
+                        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
+                          <Package className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </td>
                       <td className="p-3 font-medium">{rp.product.name}</td>
-                      <td className="p-3 text-gray-500">{rp.product.sku}</td>
+                      <td className="p-3 text-muted-foreground">{rp.product.sku}</td>
                       <td className="p-3">{si.store.name}</td>
                       <td className="p-3">{rp.category?.name || '-'}</td>
                       <td className="p-3">{rp.supplier?.name || '-'}</td>
                       <td className="p-3 text-right font-semibold">{si.item.currentQuantity}</td>
-                      <td className="p-3 text-center text-gray-500">{rp.product.unit || 'un'}</td>
+                      <td className="p-3 text-center text-muted-foreground">{rp.product.unit || 'un'}</td>
                     </tr>
                   ))
                 ))
@@ -306,33 +306,29 @@ const InventoryManager: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">{t('inventory.title')}</h1>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-foreground">{t('inventory.title')}</h1>
+          {activeTab === 'estoque' && (
+            <Button onClick={() => setShowProductForm(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              {t('inventory.addProduct')}
+            </Button>
+          )}
+        </div>
+
         <div className="flex items-center gap-3">
           {/* Tab Toggle */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
             <button onClick={() => setActiveTab('estoque')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${activeTab === 'estoque' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 border'}`}>
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md font-medium text-sm transition-all ${activeTab === 'estoque' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
               <Package className="h-4 w-4" /> Estoque
             </button>
             <button onClick={() => setActiveTab('relatorio')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${activeTab === 'relatorio' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 border'}`}>
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md font-medium text-sm transition-all ${activeTab === 'relatorio' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
               <FileText className="h-4 w-4" /> Relatório
             </button>
           </div>
-          {activeTab === 'estoque' && (
-            <>
-              {/* View Toggle */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-                <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" className={`h-8 px-3 ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`} onClick={() => setViewMode('list')}><LayoutList className="h-4 w-4" /></Button>
-                <Button variant={viewMode === 'card' ? 'default' : 'ghost'} size="sm" className={`h-8 px-3 ${viewMode === 'card' ? 'bg-white shadow-sm' : ''}`} onClick={() => setViewMode('card')}><LayoutGrid className="h-4 w-4" /></Button>
-              </div>
-              <Button onClick={() => setShowProductForm(true)} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                {t('inventory.addProduct')}
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
@@ -405,7 +401,7 @@ const InventoryManager: React.FC = () => {
 
                 {/* Row 3: Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder={t('inventory.search')}
                     value={searchTerm}
@@ -432,7 +428,7 @@ const InventoryManager: React.FC = () => {
             /* List View - Product-Centric */
             Object.entries(groupedByCategory).map(([categoryName, groups]) => (
               <div key={categoryName} className="space-y-3">
-                <h2 className="text-lg font-bold text-gray-700 uppercase tracking-wide text-center">
+                <h2 className="text-lg font-bold text-muted-foreground uppercase tracking-wide text-center">
                   {categoryName === 'Sem Categoria' ? t('inventory.noCategory') : categoryName}
                 </h2>
                 <div className="space-y-2">
@@ -443,19 +439,19 @@ const InventoryManager: React.FC = () => {
                           {/* Product Info (left side) */}
                           <div className="flex items-center gap-3 lg:w-48 flex-shrink-0">
                             {/* Image/Placeholder */}
-                            <div className="relative w-16 h-16 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden border border-slate-200">
+                            <div className="relative w-16 h-16 rounded-lg bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center flex-shrink-0 overflow-hidden border border-border">
                               {group.product.imageUrl ? (
                                 <img src={group.product.imageUrl} alt={group.product.name} className="w-full h-full object-cover" />
                               ) : (
-                                <Package className="h-7 w-7 text-slate-400" />
+                                <Package className="h-7 w-7 text-muted-foreground/50" />
                               )}
                               <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center py-0.5 font-semibold">
                                 {t('inventory.total')}: {group.totalQuantity}
                               </div>
                             </div>
                             <div className="min-w-0">
-                              <h3 className="font-semibold text-sm text-gray-900 leading-tight">{group.product.name}</h3>
-                              <p className="text-xs text-gray-500">{group.product.sku}</p>
+                              <h3 className="font-semibold text-sm text-foreground leading-tight">{group.product.name}</h3>
+                              <p className="text-xs text-muted-foreground">{group.product.sku}</p>
                             </div>
                           </div>
 
@@ -466,7 +462,7 @@ const InventoryManager: React.FC = () => {
                               const criticalThreshold = item.alertCritical ?? Math.floor(item.minQuantity * 0.5);
                               const isCritical = item.currentQuantity <= criticalThreshold;
                               const isLow = item.currentQuantity <= warningThreshold;
-                              const circleColor = isCritical ? 'bg-red-500' : isLow ? 'bg-amber-500' : 'bg-emerald-500';
+                              const circleColor = isCritical ? 'bg-destructive' : isLow ? 'bg-amber-500' : 'bg-emerald-500';
                               return (
                                 <div key={store.id} className="flex flex-col items-center">
                                   <div
@@ -475,7 +471,7 @@ const InventoryManager: React.FC = () => {
                                   >
                                     {item.currentQuantity}
                                   </div>
-                                  <span className="text-[10px] text-gray-500 mt-1 max-w-[60px] text-center truncate">{store.name}</span>
+                                  <span className="text-[10px] text-muted-foreground mt-1 max-w-[60px] text-center truncate">{store.name}</span>
                                 </div>
                               );
                             })}
@@ -484,13 +480,13 @@ const InventoryManager: React.FC = () => {
                           {/* Badges: Unit + Supplier */}
                           <div className="flex items-center gap-2 flex-wrap lg:w-auto flex-shrink-0">
                             {group.product.unit && (
-                              <Badge variant="secondary" className="text-xs gap-1 bg-slate-100 text-slate-600">
+                              <Badge variant="secondary" className="text-xs gap-1">
                                 <Package className="h-3 w-3" />
                                 1 {group.product.unit}
                               </Badge>
                             )}
                             {group.supplier && (
-                              <Badge variant="secondary" className="text-xs gap-1 bg-orange-50 text-orange-700 border-orange-200">
+                              <Badge variant="secondary" className="text-xs gap-1">
                                 <ShoppingCart className="h-3 w-3" />
                                 {group.supplier.name}
                               </Badge>
@@ -538,8 +534,8 @@ const InventoryManager: React.FC = () => {
           {filteredGroups.length === 0 && activeTab === 'estoque' && (
             <Card>
               <CardContent className="p-12 text-center">
-                <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">{t('inventory.noProductsFilters')}</p>
+                <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground">{t('inventory.noProductsFilters')}</p>
               </CardContent>
             </Card>
           )}
@@ -571,7 +567,7 @@ const InventoryManager: React.FC = () => {
 
       {/* Transit Detail Dialog */}
       <Dialog open={showTransitDetail} onOpenChange={setShowTransitDetail}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {t('transit.view_transfer')}
