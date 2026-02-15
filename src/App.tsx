@@ -49,10 +49,18 @@ const MainApp = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
 
-  // Smooth scroll to top on tab change
+  // Smooth scroll to top on tab change with View Transitions
   const handleTabChange = useCallback((tab: string) => {
-    setActiveTab(tab);
-    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!document.startViewTransition) {
+      setActiveTab(tab);
+      mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    document.startViewTransition(() => {
+      setActiveTab(tab);
+      mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }, []);
 
   console.log('🚀 MainApp render - isAuthenticated:', isAuthenticated, 'needsBrandSelection:', needsBrandSelection, 'selectedBrand:', selectedBrand?.name);

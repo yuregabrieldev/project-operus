@@ -102,6 +102,13 @@
   }
 }
 
+@layer utilities {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+  }
+}
+
 @keyframes heartbeat {
   0% { transform: scale(1); }
   14% { transform: scale(1.08); }
