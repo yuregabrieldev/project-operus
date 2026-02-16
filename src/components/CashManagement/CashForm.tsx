@@ -220,9 +220,9 @@ const CashForm: React.FC<CashFormProps> = ({
 
                                 {/* Cartão - dropdown brand */}
                                 <div>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between mb-2">
                                         <Label className="text-xs flex items-center gap-1"><CreditCard className="h-3 w-3" /> Cartão</Label>
-                                        <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => setCartaoItems(prev => [...prev, { brand: '', value: 0 }])}>+ Adicionar</Button>
+                                        <span className="text-xs font-medium bg-muted px-2 py-1 rounded border">Total: {fmt(cartaoTot)}</span>
                                     </div>
                                     {cartaoItems.map((item, idx) => (
                                         <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 mt-2 items-end">
@@ -243,14 +243,16 @@ const CashForm: React.FC<CashFormProps> = ({
                                             <Button size="sm" variant="ghost" className="text-destructive h-10 px-2" onClick={() => setCartaoItems(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>
                                         </div>
                                     ))}
-                                    {cartaoItems.length > 0 && <p className="text-xs text-right mt-1 font-semibold">Total: {fmt(cartaoTot)}</p>}
+                                    <Button variant="outline" className="w-full mt-2" onClick={() => setCartaoItems(prev => [...prev, { brand: '', value: 0 }])}>
+                                        <Plus className="h-4 w-4 mr-2" /> Adicionar
+                                    </Button>
                                 </div>
 
                                 {/* Delivery - dropdown app */}
                                 <div>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between mb-2">
                                         <Label className="text-xs flex items-center gap-1"><Truck className="h-3 w-3" /> Delivery</Label>
-                                        <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => setDeliveryItems(prev => [...prev, { app: '', value: 0 }])}>+ Adicionar</Button>
+                                        <span className="text-xs font-medium bg-muted px-2 py-1 rounded border">Total: {fmt(deliveryTot)}</span>
                                     </div>
                                     {deliveryItems.map((item, idx) => (
                                         <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 mt-2 items-end">
@@ -271,7 +273,9 @@ const CashForm: React.FC<CashFormProps> = ({
                                             <Button size="sm" variant="ghost" className="text-destructive h-10 px-2" onClick={() => setDeliveryItems(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>
                                         </div>
                                     ))}
-                                    {deliveryItems.length > 0 && <p className="text-xs text-right mt-1 font-semibold">Total: {fmt(deliveryTot)}</p>}
+                                    <Button variant="outline" className="w-full mt-2" onClick={() => setDeliveryItems(prev => [...prev, { app: '', value: 0 }])}>
+                                        <Plus className="h-4 w-4 mr-2" /> Adicionar
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
@@ -289,7 +293,9 @@ const CashForm: React.FC<CashFormProps> = ({
                                             <Button size="icon" variant="ghost" className="text-destructive h-10 w-10" onClick={() => setExtras(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4" /></Button>
                                         </div>
                                     ))}
-                                    <Button size="sm" variant="outline" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'entrada' }])}><Plus className="h-3 w-3 mr-1" /> Adicionar Entrada</Button>
+                                    <Button variant="outline" className="w-full mt-2" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'entrada' }])}>
+                                        <Plus className="h-4 w-4 mr-2" /> Adicionar
+                                    </Button>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-xs font-semibold text-destructive">Saídas (R$)</Label>
@@ -300,7 +306,9 @@ const CashForm: React.FC<CashFormProps> = ({
                                             <Button size="icon" variant="ghost" className="text-destructive h-10 w-10" onClick={() => setExtras(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4" /></Button>
                                         </div>
                                     ))}
-                                    <Button size="sm" variant="outline" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'saida' }])}><Plus className="h-3 w-3 mr-1" /> Adicionar Saída</Button>
+                                    <Button variant="outline" className="w-full mt-2" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'saida' }])}>
+                                        <Plus className="h-4 w-4 mr-2" /> Adicionar
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>

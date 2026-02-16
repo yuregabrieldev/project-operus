@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  LayoutDashboard, Package, Settings, DollarSign, FileText,
+  LayoutDashboard, Package, Settings, Wallet, FileText,
   ClipboardList, Truck, ShoppingCart,
   Factory, Store, Users, ChevronLeft, ChevronRight, ArrowLeftRight, Shield, Trash2,
   Building2, CreditCard, Code2
@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, activeTab, onT
     { id: 'operations', label: t('sidebar.operations'), icon: ArrowLeftRight },
     { id: 'transit', label: t('sidebar.transit'), icon: Truck },
     { id: 'purchases', label: t('sidebar.purchases'), icon: ShoppingCart },
-    { id: 'cashbox', label: t('sidebar.cashbox'), icon: DollarSign },
+    { id: 'cashbox', label: t('sidebar.cashbox'), icon: Wallet },
     { id: 'invoices', label: t('sidebar.invoices'), icon: FileText },
     { id: 'licenses', label: 'Licenças', icon: Shield },
     { id: 'waste', label: 'Desperdício', icon: Trash2 },

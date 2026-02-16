@@ -23,16 +23,16 @@ const statsCardVariants = cva(
 )
 
 const iconVariants = cva(
-    "flex h-12 w-12 items-center justify-center rounded-full opacity-80 backdrop-blur-sm",
+    "flex items-center justify-center opacity-20",
     {
         variants: {
             variant: {
-                default: "bg-blue-100 text-blue-600",
-                success: "bg-emerald-100 text-emerald-600",
-                warning: "bg-amber-100 text-amber-600",
-                destructive: "bg-rose-100 text-rose-600",
-                neutral: "bg-gray-100 text-gray-600",
-                purple: "bg-purple-100 text-purple-600",
+                default: "text-blue-500",
+                success: "text-emerald-500",
+                warning: "text-amber-500",
+                destructive: "text-rose-500",
+                neutral: "text-gray-500",
+                purple: "text-purple-500",
             },
         },
         defaultVariants: {
@@ -65,7 +65,7 @@ function StatsCard({
 }: StatsCardProps) {
     return (
         <div className={cn(statsCardVariants({ variant }), className)} {...props}>
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
                 <div className="space-y-1">
                     <p className={cn(
                         "text-sm font-medium",
@@ -79,17 +79,34 @@ function StatsCard({
                         {title}
                     </p>
                     <div className="flex items-baseline gap-2">
-                        <h3 className={cn("text-3xl font-bold tracking-tight", valueClassName)}>{value}</h3>
+                        <h3 className={cn(
+                            "text-3xl font-bold tracking-tight",
+                            variant === 'default' && "text-blue-600",
+                            variant === 'success' && "text-emerald-600",
+                            variant === 'warning' && "text-amber-600",
+                            variant === 'destructive' && "text-rose-600",
+                            variant === 'neutral' && "text-gray-600",
+                            variant === 'purple' && "text-purple-600",
+                            valueClassName
+                        )}>{value}</h3>
                     </div>
                     {subtitle && (
-                        <p className="text-sm opacity-80 font-medium mt-1">{subtitle}</p>
+                        <p className={cn(
+                            "text-xs font-medium mt-1",
+                            variant === 'default' && "text-blue-400",
+                            variant === 'success' && "text-emerald-400",
+                            variant === 'warning' && "text-amber-400",
+                            variant === 'destructive' && "text-rose-400",
+                            variant === 'neutral' && "text-gray-400",
+                            variant === 'purple' && "text-purple-400",
+                        )}>{subtitle}</p>
                     )}
                     {description && (
                         <p className="text-xs text-muted-foreground mt-2">{description}</p>
                     )}
                 </div>
                 <div className={cn(iconVariants({ variant }))}>
-                    <Icon className="h-6 w-6" />
+                    <Icon className="h-[38px] w-[38px]" />
                 </div>
             </div>
         </div>

@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCard } from '@/components/ui/stats-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Target } from 'lucide-react';
 import { FinanceChart } from './FinanceChart';
 
 interface FinanceData {
@@ -127,7 +127,7 @@ const FinanceSummary: React.FC = () => {
           title={t('finance.revenue')}
           value={formatCurrency(financeData.receitas)}
           subtitle={t('finance.comparePeriod')}
-          icon={DollarSign}
+          icon={Wallet}
           variant="success"
           description={`+12% ${t('finance.comparePeriod')}`}
         />

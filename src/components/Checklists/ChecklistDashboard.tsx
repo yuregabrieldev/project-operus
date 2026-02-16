@@ -4,7 +4,7 @@ import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckSquare, Clock, History, Settings, Plus } from 'lucide-react';
+import { CheckCircle, Clock, History, Settings, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChecklist } from '@/contexts/ChecklistContext';
@@ -96,7 +96,7 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
         <StatsCard
           title="Em Progresso"
           value={incompleteTasks.length}
-          icon={CheckSquare}
+          icon={CheckCircle}
           variant="warning"
         />
 
@@ -150,7 +150,7 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground text-base">
-              <CheckSquare className="h-5 w-5 text-primary" />
+              <CheckCircle className="h-5 w-5 text-primary" />
               Disponíveis
               <Badge variant="secondary" className="ml-auto">{notStartedTasks.length}</Badge>
             </CardTitle>
@@ -172,7 +172,7 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
         <Card className="border-dashed">
           <CardContent className="p-12 text-center">
             <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckSquare className="h-6 w-6 text-muted-foreground" />
+              <CheckCircle className="h-6 w-6 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-medium text-foreground mb-2">Tudo em dia!</h3>
             <p className="text-muted-foreground max-w-sm mx-auto">

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
-import { Package, AlertTriangle, FileText, Wallet, TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
+import { Package, AlertTriangle, FileText, Wallet, TrendingUp, TrendingDown, DollarSign, BarChart3, CheckCircle, Truck, Clock } from 'lucide-react';
 import FinanceSummary from './FinanceSummary';
 import { StatsCard } from '@/components/ui/stats-card';
 
@@ -55,6 +55,19 @@ const Dashboard: React.FC = () => {
       case 'out': return t('dashboard.exit');
       case 'transfer': return t('dashboard.transfer');
       default: return type;
+    }
+  };
+
+  const getMovementStatus = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return { label: t('transit.delivered') || 'Entregue', variant: 'success' as const };
+      case 'in_transit':
+        return { label: t('transit.in_transit') || 'Em Trânsito', variant: 'info' as const };
+      case 'pending':
+        return { label: t('transit.pending') || 'Pendente', variant: 'warning' as const };
+      default:
+        return { label: status, variant: 'secondary' as const };
     }
   };
 
@@ -132,26 +145,32 @@ const Dashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentMovements.map((movement) => (
-                    <div key={movement.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${movement.type === 'in' ? 'bg-green-500' :
-                          movement.type === 'out' ? 'bg-destructive' : 'bg-primary'
-                          }`} />
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            {getMovementLabel(movement.type)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {t('dashboard.qty')}: {movement.quantity}
-                          </p>
+                  {recentMovements.map((movement) => {
+                    const statusInfo = getMovementStatus(movement.status);
+                    return (
+                      <div key={movement.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${movement.type === 'in' ? 'bg-green-500' :
+                            movement.type === 'out' ? 'bg-destructive' : 'bg-primary'
+                            }`} />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              {getMovementLabel(movement.type)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {t('dashboard.qty')}: {movement.quantity}
+                            </p>
+                          </div>
                         </div>
+                        <Badge variant={statusInfo.variant} className="gap-1.5 pl-1.5 pr-2.5">
+                          {movement.status === 'delivered' && <CheckCircle className="h-3.5 w-3.5" />}
+                          {movement.status === 'in_transit' && <Truck className="h-3.5 w-3.5" />}
+                          {movement.status === 'pending' && <Clock className="h-3.5 w-3.5" />}
+                          {statusInfo.label}
+                        </Badge>
                       </div>
-                      <Badge variant={movement.status === 'delivered' ? 'default' : 'secondary'}>
-                        {movement.status}
-                      </Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -174,7 +193,10 @@ const Dashboard: React.FC = () => {
                           {t('common.product')}: {item.productId} - {t('dashboard.qty')}: {item.currentQuantity}
                         </p>
                       </div>
-                      <Badge variant="destructive">{t('dashboard.critical')}</Badge>
+                      <Badge variant="destructive" className="gap-1.5 pl-1.5 pr-2.5 animate-heartbeat">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        {t('dashboard.critical')}
+                      </Badge>
                     </div>
                   ))}
 
@@ -186,7 +208,10 @@ const Dashboard: React.FC = () => {
                           {invoice.invoiceNumber} - R$ {invoice.amount.toFixed(2)}
                         </p>
                       </div>
-                      <Badge variant="secondary">{t('dashboard.overdue')}</Badge>
+                      <Badge variant="warning" className="gap-1.5 pl-1.5 pr-2.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        {t('dashboard.overdue')}
+                      </Badge>
                     </div>
                   ))}
                 </div>

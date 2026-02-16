@@ -200,12 +200,12 @@ const TransitManager: React.FC = () => {
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" => {
     switch (status) {
-      case 'delivered': return 'bg-emerald-500/10 text-emerald-600 border-emerald-200 hover:bg-emerald-500/20';
-      case 'in_transit': return 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20';
-      case 'pending': return 'bg-amber-500/10 text-amber-600 border-amber-200 hover:bg-amber-500/20';
-      default: return 'bg-muted text-muted-foreground border-border hover:bg-muted/80';
+      case 'delivered': return 'success';
+      case 'in_transit': return 'info';
+      case 'pending': return 'warning';
+      default: return 'secondary';
     }
   };
 
@@ -382,7 +382,7 @@ const TransitManager: React.FC = () => {
           title={t('transit.total')}
           value={stats.total}
           icon={Package}
-          variant="neutral"
+          variant="purple"
         />
 
         <StatsCard
@@ -478,7 +478,7 @@ const TransitManager: React.FC = () => {
                       </TableCell>
 
                       <TableCell>
-                        <Badge className={`${getStatusColor(movement.status)} transition-all duration-300`}>
+                        <Badge variant={getStatusVariant(movement.status)} className="transition-all duration-300">
                           <div className="flex items-center gap-1.5">
                             {/* Heartbeat Effect for Pending */}
                             {isPending && (

@@ -18,7 +18,7 @@ import {
   MoreHorizontal,
   Calendar,
   Store,
-  CheckSquare
+  CheckCircle
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
@@ -221,8 +221,8 @@ const ChecklistAdminView: React.FC = () => {
         <StatsCard
           title="Total"
           value={templates.length}
-          icon={CheckSquare}
-          variant="neutral"
+          icon={CheckCircle}
+          variant="purple"
           valueClassName="text-2xl"
         />
 
@@ -370,7 +370,7 @@ const ChecklistAdminView: React.FC = () => {
 
           {filteredTemplates.length === 0 && (
             <div className="text-center py-8">
-              <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhum template encontrado</h3>
               <p className="text-muted-foreground mb-4">
                 {searchTerm ? 'Tente ajustar sua busca' : 'Crie seu primeiro template de checklist'}

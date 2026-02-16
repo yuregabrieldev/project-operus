@@ -11,8 +11,9 @@ import {
   DollarSign, Plus, Eye, Edit, Paperclip, MessageSquare, Calendar,
   CheckCircle, Clock, CreditCard, Truck, Banknote, TrendingUp,
   Settings, FileText, BarChart3, Trash2, ChevronDown, ChevronUp,
-  Download, ArrowRight, History
+  Download, ArrowRight, History, Wallet
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useBrand } from '@/contexts/BrandContext';
@@ -53,6 +54,12 @@ const CashManager: React.FC = () => {
   const [depositFormValue, setDepositFormValue] = useState(0);
   const [depositFormDate, setDepositFormDate] = useState(new Date().toISOString().split('T')[0]);
   const [depositFormComment, setDepositFormComment] = useState('');
+
+  // Settings Add Dialog State
+  const [showAddBrandDialog, setShowAddBrandDialog] = useState(false);
+  const [showAddAppDialog, setShowAddAppDialog] = useState(false);
+  const [newBrandName, setNewBrandName] = useState('');
+  const [newAppName, setNewAppName] = useState('');
 
   // View entry
   const [viewingEntry, setViewingEntry] = useState<CashEntry | null>(null);
@@ -103,7 +110,7 @@ const CashManager: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'caixa', label: 'Caixa', icon: DollarSign },
+    { id: 'caixa', label: 'Caixa', icon: Wallet },
     { id: 'deposito', label: 'Depósito', icon: Banknote },
     { id: 'resumo', label: 'Resumo', icon: BarChart3 },
     { id: 'definicoes', label: 'Definições', icon: Settings },
@@ -154,7 +161,7 @@ const CashManager: React.FC = () => {
       {filteredEntries.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
-            <DollarSign className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
+            <Wallet className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
             <p className="text-muted-foreground text-lg">Nenhum fechamento encontrado</p>
             <p className="text-muted-foreground/60 text-sm mt-1">Clique em "Adicionar" para abrir o caixa</p>
           </CardContent>
@@ -524,6 +531,43 @@ const CashManager: React.FC = () => {
           ))}
         </div>
 
+        {/* Chart */}
+        <Card className="shadow-sm border-0">
+          <CardHeader><CardTitle className="text-base">Evolução de Faturação</CardTitle></CardHeader>
+          <CardContent className="h-[300px] w-full pt-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={resumoEntries.reduce((acc: any[], entry) => {
+                const d = new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                const existing = acc.find(x => x.date === d);
+                if (existing) existing.total += entry.closingTotal;
+                else acc.push({ date: d, total: entry.closingTotal });
+                return acc;
+              }, []).sort((a: any, b: any) => {
+                const [da, ma] = a.date.split('/');
+                const [db, mb] = b.date.split('/');
+                return new Date(2024, parseInt(ma) - 1, parseInt(da)).getTime() - new Date(2024, parseInt(mb) - 1, parseInt(db)).getTime();
+              })}>
+                <defs>
+                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickMargin={10} />
+                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: any) => `€${value}`} width={60} />
+                <RechartsTooltip
+                  contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  itemStyle={{ color: '#2563EB', fontWeight: 'bold' }}
+                  formatter={(value: number) => [`€ ${value.toFixed(2)}`, 'Total']}
+                  labelStyle={{ color: '#64748b' }}
+                />
+                <Area type="monotone" dataKey="total" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         {/* Table */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -618,7 +662,10 @@ const CashManager: React.FC = () => {
 
       {/* Card Brands */}
       <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" /> Bandeiras de Cartão</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm flex items-center justify-between">
+          <div className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" /> Bandeiras de Cartão</div>
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setShowAddBrandDialog(true)}><Plus className="h-4 w-4" /></Button>
+        </CardTitle></CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {cardBrands.map(b => (
@@ -633,7 +680,10 @@ const CashManager: React.FC = () => {
 
       {/* Delivery Apps */}
       <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Truck className="h-4 w-4 text-orange-600" /> Plataformas de Delivery</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm flex items-center justify-between">
+          <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-orange-600" /> Plataformas de Delivery</div>
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setShowAddAppDialog(true)}><Plus className="h-4 w-4" /></Button>
+        </CardTitle></CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {deliveryApps.map(a => (
@@ -727,6 +777,48 @@ const CashManager: React.FC = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Add Brand Dialog */}
+      <Dialog open={showAddBrandDialog} onOpenChange={setShowAddBrandDialog}>
+        <DialogContent className="sm:max-w-[350px]">
+          <DialogHeader><DialogTitle>Nova Marca de Cartão</DialogTitle></DialogHeader>
+          <div><Label>Nome</Label><Input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="Ex: VISA, MASTERCARD" className="mt-1" /></div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddBrandDialog(false)}>Cancelar</Button>
+            <Button onClick={() => {
+              if (!newBrandName.trim()) return;
+              if (cardBrands.some(b => b.toUpperCase() === newBrandName.trim().toUpperCase())) {
+                toast({ title: 'Marca já existe', variant: 'destructive' }); return;
+              }
+              setCardBrands(prev => [...prev, newBrandName.trim().toUpperCase()]);
+              setShowAddBrandDialog(false);
+              setNewBrandName('');
+              toast({ title: 'Marca adicionada!' });
+            }}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add App Dialog */}
+      <Dialog open={showAddAppDialog} onOpenChange={setShowAddAppDialog}>
+        <DialogContent className="sm:max-w-[350px]">
+          <DialogHeader><DialogTitle>Nova App de Delivery</DialogTitle></DialogHeader>
+          <div><Label>Nome</Label><Input value={newAppName} onChange={e => setNewAppName(e.target.value)} placeholder="Ex: UBEREATS, GLOVO" className="mt-1" /></div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddAppDialog(false)}>Cancelar</Button>
+            <Button onClick={() => {
+              if (!newAppName.trim()) return;
+              if (deliveryApps.some(a => a.toUpperCase() === newAppName.trim().toUpperCase())) {
+                toast({ title: 'App já existe', variant: 'destructive' }); return;
+              }
+              setDeliveryApps(prev => [...prev, newAppName.trim().toUpperCase()]);
+              setShowAddAppDialog(false);
+              setNewAppName('');
+              toast({ title: 'App adicionada!' });
+            }}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
