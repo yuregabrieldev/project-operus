@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useBrand } from '@/contexts/BrandContext';
 import { StoreList } from './StoreList';
 import { StoreForm } from './StoreForm';
@@ -11,6 +12,7 @@ import { StoreEditForm } from './StoreEditForm';
 
 export const StoreManager: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { userBrands } = useBrand();
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
@@ -23,7 +25,7 @@ export const StoreManager: React.FC = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-muted-foreground">
-                Acesso negado. Esta seção é exclusiva para administradores.
+                {t('stores.accessDenied')}
               </p>
             </div>
           </CardContent>
@@ -44,15 +46,15 @@ export const StoreManager: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestão de Lojas</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('stores.title')}</h1>
           <p className="text-muted-foreground">
-            Gerencie todas as lojas do sistema
+            {t('stores.subtitle')}
           </p>
         </div>
 
         <Button onClick={() => setIsCreateFormOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Adicionar Loja
+          {t('stores.addStore')}
         </Button>
       </div>
 

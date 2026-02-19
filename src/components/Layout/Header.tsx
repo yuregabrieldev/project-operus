@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,11 +14,10 @@ import { toast } from '@/hooks/use-toast';
 import { StoreForm } from '../Store/StoreForm';
 import { cn } from '@/lib/utils';
 
-interface HeaderProps {
-  onTabChange?: (tab: string) => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
+const Header: React.FC = () => {
+  const navigate = useNavigate();
+  const { lang = 'pt' } = useParams<{ lang: string }>();
+  const location = useLocation();
   const { selectedBrand } = useBrand();
   const { user, logout } = useAuth();
   const { language, setLanguage } = useLanguage();
@@ -156,24 +156,28 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
 
             {showLangMenu && (
               <div className="absolute right-0 top-full mt-2 w-44 bg-popover rounded-xl shadow-xl border border-border py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                {(['pt', 'en', 'es'] as const).map((lang) => (
+                {(['pt', 'en', 'es'] as const).map((lang2) => (
                   <button
-                    key={lang}
+                    key={lang2}
                     onClick={() => {
-                      setLanguage(lang);
+                      const newLang = lang2;
+                      setLanguage(newLang);
+                      // Replace language prefix in current path
+                      const pathAfterLang = location.pathname.replace(/^\/[a-z]{2}/, '');
+                      navigate(`/${newLang}${pathAfterLang}`, { replace: true });
                       setShowLangMenu(false);
                       toast({
-                        title: languageLabels[lang],
-                        description: `Idioma alterado para ${languageLabels[lang]}.`,
+                        title: languageLabels[newLang],
+                        description: `Idioma alterado para ${languageLabels[newLang]}.`,
                       });
                     }}
                     className={cn(
                       "flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors",
-                      language === lang ? "text-primary font-medium bg-accent/50" : "text-popover-foreground"
+                      language === lang2 ? "text-primary font-medium bg-accent/50" : "text-popover-foreground"
                     )}
                   >
-                    <span className="text-base">{languageFlags[lang]}</span>
-                    <span>{languageLabels[lang]}</span>
+                    <span className="text-base">{languageFlags[lang2]}</span>
+                    <span>{languageLabels[lang2]}</span>
                   </button>
                 ))}
               </div>
@@ -286,7 +290,7 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     onClick={() => {
                       setShowUserMenu(false);
-                      onTabChange?.('profile');
+                      navigate(`/${lang}/perfil`);
                     }}
                   >
                     <User className="h-4 w-4 text-muted-foreground" />
@@ -296,7 +300,7 @@ const Header: React.FC<HeaderProps> = ({ onTabChange }) => {
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     onClick={() => {
                       setShowUserMenu(false);
-                      onTabChange?.('settings');
+                      navigate(`/${lang}/configuracoes`);
                     }}
                   >
                     <Settings className="h-4 w-4 text-muted-foreground" />

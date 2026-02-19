@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,9 +23,28 @@ const InvoiceManager: React.FC = () => {
     updateInvoice,
   } = useData();
 
+  const navigate = useNavigate();
+  const { lang = 'pt', invoiceId } = useParams<{ lang: string; invoiceId: string }>();
+
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [scrollToPayment, setScrollToPayment] = useState(false);
+
+  // Deep linking: sync URL :invoiceId with form state
+  useEffect(() => {
+    if (invoiceId) {
+      if (invoiceId === 'nova') {
+        setSelectedInvoice(null);
+        setIsFormOpen(true);
+      } else {
+        const found = invoices.find((inv: any) => inv.id === invoiceId || inv.invoiceNumber === invoiceId);
+        if (found) {
+          setSelectedInvoice(found);
+          setIsFormOpen(true);
+        }
+      }
+    }
+  }, [invoiceId, invoices]);
 
   // Filtros avançados
   const [searchTerm, setSearchTerm] = useState('');

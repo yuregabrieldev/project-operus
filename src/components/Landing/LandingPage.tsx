@@ -138,10 +138,8 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">O</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">Operus</span>
+              <img src="/operus-logo.png" alt="OPERUS" className="h-8 w-8 object-contain" />
+              <span className="text-xl font-bold text-gray-900">OPERUS</span>
             </div>
 
             {/* Desktop Navigation */}
@@ -482,13 +480,11 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">O</span>
-              </div>
-              <span className="text-xl font-bold text-white">Operus</span>
+              <img src="/operus-logo.png" alt="OPERUS" className="h-8 w-8 object-contain brightness-0 invert" />
+              <span className="text-xl font-bold text-white">OPERUS</span>
             </div>
             <p className="text-gray-400">
-              © 2024 Operus. Todos os direitos reservados.
+              © 2024 OPERUS. Todos os direitos reservados.
             </p>
           </div>
         </div>

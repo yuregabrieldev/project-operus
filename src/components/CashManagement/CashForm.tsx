@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { CashEntry, fmt } from './types';
 
@@ -40,8 +41,10 @@ const CashForm: React.FC<CashFormProps> = ({
     cashSettings, onSubmit, onCancel,
 }) => {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [formStep, setFormStep] = useState(initialStep);
     const [showNoMovDialog, setShowNoMovDialog] = useState(false);
+    const [showDiffAlertDialog, setShowDiffAlertDialog] = useState(false);
     const [showAddBrandDialog, setShowAddBrandDialog] = useState(false);
     const [showAddAppDialog, setShowAddAppDialog] = useState(false);
     const [newBrandName, setNewBrandName] = useState('');
@@ -84,14 +87,14 @@ const CashForm: React.FC<CashFormProps> = ({
     const totalEntradas = entradasTotal;
     const diferencaTotal = diferenca;
 
-    const storeName = (id: string) => allStores.find(s => s.id === id)?.name || 'Loja';
+    const storeName = (id: string) => allStores.find(s => s.id === id)?.name || t('cash.store');
 
     const handleOpenSubmit = () => {
-        if (!formStoreId) { toast({ title: 'Selecione uma loja', variant: 'destructive' }); return; }
+        if (!formStoreId) { toast({ title: t('cashForm.selectStoreError'), variant: 'destructive' }); return; }
         const existsToday = entries.find(e => e.date === today && e.storeId === formStoreId);
-        if (existsToday) { toast({ title: 'Já existe um caixa para esta loja hoje', variant: 'destructive' }); return; }
+        if (existsToday) { toast({ title: t('cashForm.alreadyOpenToday'), variant: 'destructive' }); return; }
         setFormStep('close');
-        toast({ title: 'Caixa aberto! Preencha o fechamento.' });
+        toast({ title: t('cashForm.cashOpenedFill') });
     };
 
     const handleNoMovement = () => {
@@ -102,7 +105,7 @@ const CashForm: React.FC<CashFormProps> = ({
             apuracaoNotas: 0, apuracaoMoedas: 0, apuracaoEspecieTotal: 0,
             cartaoItems: [], deliveryItems: [], extras: [],
             depositValue: 0, depositStatus: 'deposited',
-            attachments: [], comments: ['Sem movimentos'],
+            attachments: [], comments: [t('cashForm.noMovementsMark')],
             openedBy: user?.name || 'Usuário', closedBy: user?.name || 'Usuário',
             status: 'closed', noMovement: true,
         });
@@ -130,11 +133,11 @@ const CashForm: React.FC<CashFormProps> = ({
                 {/* Header */}
                 <div className="flex items-center gap-4">
                     <Button variant="outline" size="sm" onClick={onCancel} className="gap-2">
-                        <ArrowLeft className="h-4 w-4" /> Voltar
+                        <ArrowLeft className="h-4 w-4" /> {t('common.back')}
                     </Button>
                     <div>
                         <h1 className="text-2xl font-bold text-foreground">
-                            {formStep === 'open' ? 'Abertura de Caixa' : 'Fechamento de Caixa'}
+                            {formStep === 'open' ? t('cashForm.openTitle') : t('cashForm.closeTitle')}
                         </h1>
                         <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                             <Calendar className="h-3.5 w-3.5" /> {new Date().toLocaleDateString('pt-PT')}
@@ -146,12 +149,12 @@ const CashForm: React.FC<CashFormProps> = ({
                 {formStep === 'open' ? (
                     <div className="space-y-6">
                         <Card>
-                            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><DollarSign className="h-4 w-4" /> Dados de Abertura</CardTitle></CardHeader>
+                            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><DollarSign className="h-4 w-4" /> {t('cashForm.openingData')}</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <Label className="text-xs font-semibold">Loja *</Label>
+                                    <Label className="text-xs font-semibold">{t('cashForm.storeRequired')}</Label>
                                     <Select value={formStoreId} onValueChange={setFormStoreId}>
-                                        <SelectTrigger className="mt-1"><SelectValue placeholder="Selecionar Loja" /></SelectTrigger>
+                                        <SelectTrigger className="mt-1"><SelectValue placeholder={t('cashForm.selectStore')} /></SelectTrigger>
                                         <SelectContent>
                                             {allStores.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                                         </SelectContent>
@@ -159,15 +162,15 @@ const CashForm: React.FC<CashFormProps> = ({
                                 </div>
                                 <div className="grid grid-cols-3 gap-4">
                                     <div>
-                                        <Label className="text-xs">Fechamento Anterior</Label>
+                                        <Label className="text-xs">{t('cashForm.previousClose')}</Label>
                                         <div className="mt-1 h-10 flex items-center px-3 rounded-md border bg-muted text-sm">{fmt(formPreviousClose)}</div>
                                     </div>
                                     <div>
-                                        <Label className="text-xs">Valor de Abertura</Label>
+                                        <Label className="text-xs">{t('cashForm.openingValue')}</Label>
                                         <Input type="number" step="0.01" value={formOpeningValue} onChange={e => setFormOpeningValue(parseFloat(e.target.value) || 0)} className="mt-1" />
                                     </div>
                                     <div>
-                                        <Label className="text-xs">Diferença</Label>
+                                        <Label className="text-xs">{t('cashForm.difference')}</Label>
                                         <div className={`mt-1 h-10 flex items-center px-3 rounded-md border text-sm font-semibold ${openingDiff === 0 ? 'bg-muted text-muted-foreground' : openingDiff > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>
                                             {fmt(openingDiff)}
                                         </div>
@@ -176,29 +179,29 @@ const CashForm: React.FC<CashFormProps> = ({
                             </CardContent>
                         </Card>
                         <div className="flex gap-3 justify-end">
-                            <Button variant="outline" onClick={() => { if (!formStoreId) { toast({ title: 'Selecione uma loja', variant: 'destructive' }); return; } setShowNoMovDialog(true); }}>Sem Movimentos</Button>
-                            <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-                            <Button onClick={handleOpenSubmit} className="bg-primary hover:bg-primary/90"><ArrowUpCircle className="h-4 w-4 mr-2" /> Abrir Caixa</Button>
+                            <Button variant="outline" onClick={() => { if (!formStoreId) { toast({ title: t('cashForm.selectStoreError'), variant: 'destructive' }); return; } setShowNoMovDialog(true); }}>{t('cashForm.noMovements')}</Button>
+                            <Button variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
+                            <Button onClick={handleOpenSubmit} className="bg-primary hover:bg-primary/90"><ArrowUpCircle className="h-4 w-4 mr-2" /> {t('cashForm.openCash')}</Button>
                         </div>
                     </div>
                 ) : (
                     <div className="space-y-6">
                         {/* Sistema */}
                         <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm">Sistema</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-sm">{t('cashForm.system')}</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-3 gap-4">
-                                    <div><Label className="text-xs">Fech. Anterior</Label><div className="mt-1 h-10 flex items-center px-3 rounded-md border bg-muted text-sm">{fmt(formPreviousClose)}</div></div>
-                                    <div><Label className="text-xs">Abertura</Label><div className="mt-1 h-10 flex items-center px-3 rounded-md border bg-muted text-sm">{fmt(formOpeningValue)}</div></div>
-                                    <div><Label className="text-xs">Diferença</Label><div className={`mt-1 h-10 flex items-center px-3 rounded-md border text-sm font-semibold ${openingDiff === 0 ? 'bg-muted' : openingDiff > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-destructive/10 text-destructive'}`}>{fmt(openingDiff)}</div></div>
+                                    <div><Label className="text-xs">{t('cashForm.prevCloseShort')}</Label><div className="mt-1 h-10 flex items-center px-3 rounded-md border bg-muted text-sm">{fmt(formPreviousClose)}</div></div>
+                                    <div><Label className="text-xs">{t('cash.opening')}</Label><div className="mt-1 h-10 flex items-center px-3 rounded-md border bg-muted text-sm">{fmt(formOpeningValue)}</div></div>
+                                    <div><Label className="text-xs">{t('cashForm.difference')}</Label><div className={`mt-1 h-10 flex items-center px-3 rounded-md border text-sm font-semibold ${openingDiff === 0 ? 'bg-muted' : openingDiff > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-destructive/10 text-destructive'}`}>{fmt(openingDiff)}</div></div>
                                 </div>
                                 <div>
-                                    <Label className="text-xs font-semibold">Fechamento de Caixa</Label>
+                                    <Label className="text-xs font-semibold">{t('cashForm.closingLabel')}</Label>
                                     <div className="grid grid-cols-4 gap-3 mt-2">
-                                        <div><Label className="text-[10px] text-muted-foreground">Espécie</Label><Input type="number" step="0.01" value={closingEspecie || ''} onChange={e => setClosingEspecie(parseFloat(e.target.value) || 0)} /></div>
-                                        <div><Label className="text-[10px] text-muted-foreground">Cartão</Label><Input type="number" step="0.01" value={closingCartao || ''} onChange={e => setClosingCartao(parseFloat(e.target.value) || 0)} /></div>
-                                        <div><Label className="text-[10px] text-muted-foreground">Delivery</Label><Input type="number" step="0.01" value={closingDelivery || ''} onChange={e => setClosingDelivery(parseFloat(e.target.value) || 0)} /></div>
-                                        <div><Label className="text-[10px] text-muted-foreground">Total</Label><div className="h-10 flex items-center px-3 rounded-md border bg-primary/10 text-sm font-bold text-primary">{fmt(closingTotal)}</div></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.cash')}</Label><Input type="number" step="0.01" value={closingEspecie || ''} onChange={e => setClosingEspecie(parseFloat(e.target.value) || 0)} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.card')}</Label><Input type="number" step="0.01" value={closingCartao || ''} onChange={e => setClosingCartao(parseFloat(e.target.value) || 0)} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.delivery')}</Label><Input type="number" step="0.01" value={closingDelivery || ''} onChange={e => setClosingDelivery(parseFloat(e.target.value) || 0)} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('common.total')}</Label><div className="h-10 flex items-center px-3 rounded-md border bg-primary/10 text-sm font-bold text-primary">{fmt(closingTotal)}</div></div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -206,53 +209,53 @@ const CashForm: React.FC<CashFormProps> = ({
 
                         {/* Apuração */}
                         <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm">Apuração</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-sm">{t('cashForm.assessment')}</CardTitle></CardHeader>
                             <CardContent className="space-y-5">
                                 {/* Espécie */}
                                 <div>
-                                    <Label className="text-xs flex items-center gap-1"><Banknote className="h-3 w-3" /> Espécie</Label>
+                                    <Label className="text-xs flex items-center gap-1"><Banknote className="h-3 w-3" /> {t('cash.cash')}</Label>
                                     <div className="grid grid-cols-3 gap-3 mt-2">
-                                        <div><Label className="text-[10px] text-muted-foreground">Notas</Label><Input type="number" step="0.01" value={apuracaoNotas || ''} onChange={e => setApuracaoNotas(parseFloat(e.target.value) || 0)} /></div>
-                                        <div><Label className="text-[10px] text-muted-foreground">Moedas</Label><Input type="number" step="0.01" value={apuracaoMoedas || ''} onChange={e => setApuracaoMoedas(parseFloat(e.target.value) || 0)} /></div>
-                                        <div><Label className="text-[10px] text-muted-foreground">Total</Label><div className="h-10 flex items-center px-3 rounded-md border bg-muted text-sm font-semibold">{fmt(apuracaoEspecieTot)}</div></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cashForm.notes')}</Label><Input type="number" step="0.01" value={apuracaoNotas || ''} onChange={e => setApuracaoNotas(parseFloat(e.target.value) || 0)} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cashForm.coins')}</Label><Input type="number" step="0.01" value={apuracaoMoedas || ''} onChange={e => setApuracaoMoedas(parseFloat(e.target.value) || 0)} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('common.total')}</Label><div className="h-10 flex items-center px-3 rounded-md border bg-muted text-sm font-semibold">{fmt(apuracaoEspecieTot)}</div></div>
                                     </div>
                                 </div>
 
                                 {/* Cartão - dropdown brand */}
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <Label className="text-xs flex items-center gap-1"><CreditCard className="h-3 w-3" /> Cartão</Label>
-                                        <span className="text-xs font-medium bg-muted px-2 py-1 rounded border">Total: {fmt(cartaoTot)}</span>
+                                        <Label className="text-xs flex items-center gap-1"><CreditCard className="h-3 w-3" /> {t('cash.card')}</Label>
+                                        <span className="text-xs font-medium bg-muted px-2 py-1 rounded border">{t('common.total')}: {fmt(cartaoTot)}</span>
                                     </div>
                                     {cartaoItems.map((item, idx) => (
                                         <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 mt-2 items-end">
                                             <div>
                                                 <Select value={item.brand} onValueChange={v => { const n = [...cartaoItems]; n[idx] = { ...n[idx], brand: v }; setCartaoItems(n); }}>
-                                                    <SelectTrigger className="h-10"><SelectValue placeholder="Marca" /></SelectTrigger>
+                                                    <SelectTrigger className="h-10"><SelectValue placeholder={t('cashForm.brand')} /></SelectTrigger>
                                                     <SelectContent>
                                                         {cardBrands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
                                                         <div className="border-t mt-1 pt-1 px-2 pb-1">
                                                             <Button size="sm" variant="ghost" className="w-full text-xs text-primary h-7" onClick={(e) => { e.stopPropagation(); setNewBrandName(''); setShowAddBrandDialog(true); }}>
-                                                                <Plus className="h-3 w-3 mr-1" /> Nova Marca
+                                                                <Plus className="h-3 w-3 mr-1" /> {t('cashForm.newBrand')}
                                                             </Button>
                                                         </div>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            <Input type="number" step="0.01" placeholder="Valor" value={item.value || ''} onChange={e => { const n = [...cartaoItems]; n[idx] = { ...n[idx], value: parseFloat(e.target.value) || 0 }; setCartaoItems(n); }} />
+                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} value={item.value || ''} onChange={e => { const n = [...cartaoItems]; n[idx] = { ...n[idx], value: parseFloat(e.target.value) || 0 }; setCartaoItems(n); }} />
                                             <Button size="sm" variant="ghost" className="text-destructive h-10 px-2" onClick={() => setCartaoItems(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>
                                         </div>
                                     ))}
                                     <Button variant="outline" className="w-full mt-2" onClick={() => setCartaoItems(prev => [...prev, { brand: '', value: 0 }])}>
-                                        <Plus className="h-4 w-4 mr-2" /> Adicionar
+                                        <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
                                     </Button>
                                 </div>
 
                                 {/* Delivery - dropdown app */}
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <Label className="text-xs flex items-center gap-1"><Truck className="h-3 w-3" /> Delivery</Label>
-                                        <span className="text-xs font-medium bg-muted px-2 py-1 rounded border">Total: {fmt(deliveryTot)}</span>
+                                        <Label className="text-xs flex items-center gap-1"><Truck className="h-3 w-3" /> {t('cash.delivery')}</Label>
+                                        <span className="text-xs font-medium bg-muted px-2 py-1 rounded border">{t('common.total')}: {fmt(deliveryTot)}</span>
                                     </div>
                                     {deliveryItems.map((item, idx) => (
                                         <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 mt-2 items-end">
@@ -263,18 +266,18 @@ const CashForm: React.FC<CashFormProps> = ({
                                                         {deliveryApps.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                                                         <div className="border-t mt-1 pt-1 px-2 pb-1">
                                                             <Button size="sm" variant="ghost" className="w-full text-xs text-primary h-7" onClick={(e) => { e.stopPropagation(); setNewAppName(''); setShowAddAppDialog(true); }}>
-                                                                <Plus className="h-3 w-3 mr-1" /> Nova App
+                                                                <Plus className="h-3 w-3 mr-1" /> {t('cashForm.newApp')}
                                                             </Button>
                                                         </div>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            <Input type="number" step="0.01" placeholder="Valor" value={item.value || ''} onChange={e => { const n = [...deliveryItems]; n[idx] = { ...n[idx], value: parseFloat(e.target.value) || 0 }; setDeliveryItems(n); }} />
+                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} value={item.value || ''} onChange={e => { const n = [...deliveryItems]; n[idx] = { ...n[idx], value: parseFloat(e.target.value) || 0 }; setDeliveryItems(n); }} />
                                             <Button size="sm" variant="ghost" className="text-destructive h-10 px-2" onClick={() => setDeliveryItems(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>
                                         </div>
                                     ))}
                                     <Button variant="outline" className="w-full mt-2" onClick={() => setDeliveryItems(prev => [...prev, { app: '', value: 0 }])}>
-                                        <Plus className="h-4 w-4 mr-2" /> Adicionar
+                                        <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
                                     </Button>
                                 </div>
                             </CardContent>
@@ -282,32 +285,32 @@ const CashForm: React.FC<CashFormProps> = ({
 
                         {/* Entradas / Saídas */}
                         <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm">Entradas / Saídas</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-sm">{t('cashForm.extrasTitle')}</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label className="text-xs font-semibold text-emerald-600">Entradas (R$)</Label>
+                                    <Label className="text-xs font-semibold text-emerald-600">{t('cashForm.inflows')}</Label>
                                     {extras.map((item, idx) => item.type === 'entrada' && (
                                         <div key={idx} className="flex gap-2 mb-2">
-                                            <Input placeholder="Descrição" value={item.description} onChange={e => { const n = [...extras]; n[idx].description = e.target.value; setExtras(n); }} />
-                                            <Input type="number" step="0.01" placeholder="Valor" className="w-32" value={item.value || ''} onChange={e => { const n = [...extras]; n[idx].value = parseFloat(e.target.value) || 0; setExtras(n); }} />
+                                            <Input placeholder={t('cashForm.description')} value={item.description} onChange={e => { const n = [...extras]; n[idx].description = e.target.value; setExtras(n); }} />
+                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} className="w-32" value={item.value || ''} onChange={e => { const n = [...extras]; n[idx].value = parseFloat(e.target.value) || 0; setExtras(n); }} />
                                             <Button size="icon" variant="ghost" className="text-destructive h-10 w-10" onClick={() => setExtras(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4" /></Button>
                                         </div>
                                     ))}
                                     <Button variant="outline" className="w-full mt-2" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'entrada' }])}>
-                                        <Plus className="h-4 w-4 mr-2" /> Adicionar
+                                        <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
                                     </Button>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-xs font-semibold text-destructive">Saídas (R$)</Label>
+                                    <Label className="text-xs font-semibold text-destructive">{t('cashForm.outflowsLabel')}</Label>
                                     {extras.map((item, idx) => item.type === 'saida' && (
                                         <div key={idx} className="flex gap-2 mb-2">
-                                            <Input placeholder="Descrição" value={item.description} onChange={e => { const n = [...extras]; n[idx].description = e.target.value; setExtras(n); }} />
-                                            <Input type="number" step="0.01" placeholder="Valor" className="w-32" value={item.value || ''} onChange={e => { const n = [...extras]; n[idx].value = parseFloat(e.target.value) || 0; setExtras(n); }} />
+                                            <Input placeholder={t('cashForm.description')} value={item.description} onChange={e => { const n = [...extras]; n[idx].description = e.target.value; setExtras(n); }} />
+                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} className="w-32" value={item.value || ''} onChange={e => { const n = [...extras]; n[idx].value = parseFloat(e.target.value) || 0; setExtras(n); }} />
                                             <Button size="icon" variant="ghost" className="text-destructive h-10 w-10" onClick={() => setExtras(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4" /></Button>
                                         </div>
                                     ))}
                                     <Button variant="outline" className="w-full mt-2" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'saida' }])}>
-                                        <Plus className="h-4 w-4 mr-2" /> Adicionar
+                                        <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
                                     </Button>
                                 </div>
                             </CardContent>
@@ -315,10 +318,10 @@ const CashForm: React.FC<CashFormProps> = ({
 
                         {/* Anexos e Observações */}
                         <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm">Anexos e Observações</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-sm">{t('cashForm.attachmentsTitle')}</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <Label className="text-xs mb-2 block">Comprovantes / Fotos</Label>
+                                    <Label className="text-xs mb-2 block">{t('cashForm.receiptsPhotos')}</Label>
                                     <div className="flex flex-wrap gap-2">
                                         {attachments.map((file, i) => (
                                             <div key={i} className="relative group">
@@ -330,29 +333,29 @@ const CashForm: React.FC<CashFormProps> = ({
                                         ))}
                                         <label className="h-16 w-16 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
                                             <Upload className="h-5 w-5 text-muted-foreground" />
-                                            <span className="text-[9px] text-muted-foreground mt-1">Adicionar</span>
+                                            <span className="text-[9px] text-muted-foreground mt-1">{t('common.add')}</span>
                                             <input type="file" multiple className="hidden" onChange={e => { if (e.target.files) setAttachments(prev => [...prev, ...Array.from(e.target.files!)]); }} />
                                         </label>
                                     </div>
                                 </div>
                                 <div>
-                                    <Label className="text-xs">Observações Gerais</Label>
-                                    <Textarea value={obsGeral} onChange={e => setObsGeral(e.target.value)} placeholder="Ocorrências, justificativas de quebra, etc." className="mt-1 h-20" />
+                                    <Label className="text-xs">{t('cashForm.generalObs')}</Label>
+                                    <Textarea value={obsGeral} onChange={e => setObsGeral(e.target.value)} placeholder={t('cashForm.obsPlaceholder')} className="mt-1 h-20" />
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Resumo */}
                         <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm">Resumo do Fechamento</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-sm">{t('cashForm.summaryTitle')}</CardTitle></CardHeader>
                             <CardContent className="space-y-2 text-sm">
-                                <div className="flex justify-between p-2 bg-muted/50 rounded"><span>Total Apurado</span><span className="font-bold">{fmt(apuracaoTotalCalc)}</span></div>
-                                <div className="flex justify-between p-2 bg-muted/50 rounded"><span>Total Sistema</span><span className="font-bold">{fmt(closingTotal)}</span></div>
-                                <div className="flex justify-between p-2 bg-muted/50 rounded"><span>Despesas (Saídas)</span><span className="font-bold text-destructive">{fmt(totalSaidas)}</span></div>
-                                <div className="flex justify-between p-2 bg-muted/50 rounded"><span>Entradas Extras</span><span className="font-bold text-emerald-600">{fmt(totalEntradas)}</span></div>
+                                <div className="flex justify-between p-2 bg-muted/50 rounded"><span>{t('cashForm.totalAssessed')}</span><span className="font-bold">{fmt(apuracaoTotalCalc)}</span></div>
+                                <div className="flex justify-between p-2 bg-muted/50 rounded"><span>{t('cashForm.totalSystem')}</span><span className="font-bold">{fmt(closingTotal)}</span></div>
+                                <div className="flex justify-between p-2 bg-muted/50 rounded"><span>{t('cashForm.expenses')}</span><span className="font-bold text-destructive">{fmt(totalSaidas)}</span></div>
+                                <div className="flex justify-between p-2 bg-muted/50 rounded"><span>{t('cashForm.extraInflows')}</span><span className="font-bold text-emerald-600">{fmt(totalEntradas)}</span></div>
                                 <hr className="border-border my-2" />
                                 <div className="flex justify-between p-3 bg-muted rounded-lg border">
-                                    <span className="font-bold">Diferença (Quebra)</span>
+                                    <span className="font-bold">{t('cashForm.differenceBreach')}</span>
                                     <Badge variant={diferencaTotal === 0 ? 'outline' : diferencaTotal > 0 ? 'default' : 'destructive'} className="text-sm">
                                         {fmt(diferencaTotal)}
                                     </Badge>
@@ -361,8 +364,14 @@ const CashForm: React.FC<CashFormProps> = ({
                         </Card>
 
                         <div className="flex gap-3 justify-end pt-4">
-                            <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-                            <Button onClick={handleCloseSubmit} className="bg-primary hover:bg-primary/90 min-w-[150px]"><CheckCircle className="h-4 w-4 mr-2" /> Finalizar Caixa</Button>
+                            <Button variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
+                            <Button onClick={() => {
+                                if (diferencaTotal !== 0) {
+                                    setShowDiffAlertDialog(true);
+                                } else {
+                                    handleCloseSubmit();
+                                }
+                            }} className="bg-primary hover:bg-primary/90 min-w-[150px]"><CheckCircle className="h-4 w-4 mr-2" /> {t('cashForm.finalize')}</Button>
                         </div>
                     </div>
                 )}
@@ -372,12 +381,47 @@ const CashForm: React.FC<CashFormProps> = ({
             <Dialog open={showNoMovDialog} onOpenChange={setShowNoMovDialog}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-yellow-500" /> Sem Movimentos</DialogTitle>
-                        <DialogDescription>Deseja criar um registro sem movimentos para hoje?</DialogDescription>
+                        <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-yellow-500" /> {t('cashForm.noMovementTitle')}</DialogTitle>
+                        <DialogDescription>{t('cashForm.noMovementDesc')}</DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowNoMovDialog(false)}>Cancelar</Button>
-                        <Button onClick={handleNoMovement} className="bg-gradient-to-r from-yellow-600 to-orange-600">Confirmar</Button>
+                        <Button variant="outline" onClick={() => setShowNoMovDialog(false)}>{t('common.cancel')}</Button>
+                        <Button onClick={handleNoMovement} className="bg-gradient-to-r from-yellow-600 to-orange-600">{t('common.confirm')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Difference Alert Dialog */}
+            <Dialog open={showDiffAlertDialog} onOpenChange={setShowDiffAlertDialog}>
+                <DialogContent className="sm:max-w-[440px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-destructive" />
+                            {t('cashForm.diffAlertTitle')}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {t('cashForm.diffAlertDesc')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center justify-between p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                        <span className="font-medium text-foreground">{t('cashForm.differenceBreach')}</span>
+                        <Badge variant="destructive" className="text-base px-3 py-1">
+                            {fmt(diferencaTotal)}
+                        </Badge>
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setShowDiffAlertDialog(false)}>
+                            {t('cashForm.diffAlertReview')}
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                setShowDiffAlertDialog(false);
+                                handleCloseSubmit();
+                            }}
+                        >
+                            {t('cashForm.diffAlertConfirm')}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -385,19 +429,19 @@ const CashForm: React.FC<CashFormProps> = ({
             {/* Add Brand Dialog */}
             <Dialog open={showAddBrandDialog} onOpenChange={setShowAddBrandDialog}>
                 <DialogContent className="sm:max-w-[350px]">
-                    <DialogHeader><DialogTitle>Nova Marca de Cartão</DialogTitle></DialogHeader>
-                    <div><Label>Nome *</Label><Input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="Ex: VISA, MASTERCARD" className="mt-1" /></div>
+                    <DialogHeader><DialogTitle>{t('cash.newCardBrand')}</DialogTitle></DialogHeader>
+                    <div><Label>{t('common.name')} *</Label><Input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="Ex: VISA, MASTERCARD" className="mt-1" /></div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowAddBrandDialog(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setShowAddBrandDialog(false)}>{t('common.cancel')}</Button>
                         <Button onClick={() => {
                             if (!newBrandName.trim()) return;
                             if (cardBrands.some(b => b.toUpperCase() === newBrandName.trim().toUpperCase())) {
-                                toast({ title: 'Marca já existe', variant: 'destructive' }); return;
+                                toast({ title: t('cash.brandExists'), variant: 'destructive' }); return;
                             }
                             onAddBrand(newBrandName.trim().toUpperCase());
                             setShowAddBrandDialog(false);
-                            toast({ title: 'Marca adicionada!' });
-                        }}>Salvar</Button>
+                            toast({ title: t('cash.brandAdded') });
+                        }}>{t('common.save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -405,19 +449,19 @@ const CashForm: React.FC<CashFormProps> = ({
             {/* Add App Dialog */}
             <Dialog open={showAddAppDialog} onOpenChange={setShowAddAppDialog}>
                 <DialogContent className="sm:max-w-[350px]">
-                    <DialogHeader><DialogTitle>Nova App de Delivery</DialogTitle></DialogHeader>
-                    <div><Label>Nome *</Label><Input value={newAppName} onChange={e => setNewAppName(e.target.value)} placeholder="Ex: UBEREATS, GLOVO" className="mt-1" /></div>
+                    <DialogHeader><DialogTitle>{t('cash.newDeliveryApp')}</DialogTitle></DialogHeader>
+                    <div><Label>{t('common.name')} *</Label><Input value={newAppName} onChange={e => setNewAppName(e.target.value)} placeholder="Ex: UBEREATS, GLOVO" className="mt-1" /></div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowAddAppDialog(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setShowAddAppDialog(false)}>{t('common.cancel')}</Button>
                         <Button onClick={() => {
                             if (!newAppName.trim()) return;
                             if (deliveryApps.some(a => a.toUpperCase() === newAppName.trim().toUpperCase())) {
-                                toast({ title: 'App já existe', variant: 'destructive' }); return;
+                                toast({ title: t('cash.appExists'), variant: 'destructive' }); return;
                             }
                             onAddApp(newAppName.trim().toUpperCase());
                             setShowAddAppDialog(false);
-                            toast({ title: 'App adicionada!' });
-                        }}>Salvar</Button>
+                            toast({ title: t('cash.appAdded') });
+                        }}>{t('common.save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { UserList } from './UserList';
 import { UserForm } from './UserForm';
 import { UserEditForm } from './UserEditForm';
 
 export const UserManager: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
@@ -21,7 +23,7 @@ export const UserManager: React.FC = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-muted-foreground">
-                Acesso negado. Esta seção é exclusiva para administradores.
+                {t('users.accessDenied')}
               </p>
             </div>
           </CardContent>
@@ -42,23 +44,23 @@ export const UserManager: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestão de Usuários</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('users.title')}</h1>
           <p className="text-muted-foreground">
-            Gerencie usuários e suas permissões no sistema
+            {t('users.subtitle')}
           </p>
         </div>
-        
+
         <Button onClick={() => setIsCreateFormOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Adicionar Usuário
+          {t('users.addUser')}
         </Button>
       </div>
 
       <UserList onEditUser={handleEditUser} />
 
-      <UserForm 
-        isOpen={isCreateFormOpen} 
-        onClose={() => setIsCreateFormOpen(false)} 
+      <UserForm
+        isOpen={isCreateFormOpen}
+        onClose={() => setIsCreateFormOpen(false)}
       />
 
       {editingUser && (

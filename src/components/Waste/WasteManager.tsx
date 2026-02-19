@@ -83,7 +83,7 @@ const WasteManager: React.FC = () => {
     const productsByCategory = useMemo(() => {
         const grouped: Record<string, Product[]> = {};
         filteredProducts.forEach(p => {
-            const catName = getCategoryById(p.categoryId)?.name || 'Sem Categoria';
+            const catName = getCategoryById(p.categoryId)?.name || t('waste.noCategory');
             if (!grouped[catName]) grouped[catName] = [];
             grouped[catName].push(p);
         });
@@ -116,12 +116,12 @@ const WasteManager: React.FC = () => {
 
     const handleAddWaste = () => {
         if (!selectedProduct || !selectedVariant || !wasteReasonId) {
-            toast({ title: 'Preencha todos os campos', variant: 'destructive' });
+            toast({ title: t('waste.fillAllFields'), variant: 'destructive' });
             return;
         }
         const selectedReasonObj = wasteReasons.find(r => r.id === wasteReasonId);
         if (selectedReasonObj?.name === 'Outros' && !wasteComment.trim()) {
-            toast({ title: 'Comentário obrigatório para motivo "Outros"', variant: 'destructive' });
+            toast({ title: t('waste.commentRequired'), variant: 'destructive' });
             return;
         }
         addWasteRecord({
@@ -135,7 +135,7 @@ const WasteManager: React.FC = () => {
             comment: wasteComment.trim() || undefined,
             createdAt: new Date(),
         });
-        toast({ title: 'Desperdício registrado!' });
+        toast({ title: t('waste.wasteRecorded') });
         setWasteQuantity(1);
         setWasteReasonId('');
         setWasteComment('');
@@ -143,7 +143,7 @@ const WasteManager: React.FC = () => {
 
     const handleUndoWaste = (recordId: string) => {
         deleteWasteRecord(recordId);
-        toast({ title: 'Desperdício desfeito!' });
+        toast({ title: t('waste.wasteUndone') });
     };
 
     // ─── Report Tab Logic ───
@@ -162,7 +162,7 @@ const WasteManager: React.FC = () => {
     // XLSX Export (simple CSV with .xlsx extension + structured data)
     const exportXLSX = () => {
         const BOM = '\uFEFF';
-        const headers = ['Produto', 'SKU', 'Variante', 'Loja', 'Categoria', 'Usuário', 'Data', 'Horário', 'Quantidade', 'Motivo', 'Comentário'];
+        const headers = [t('waste.product'), t('waste.sku'), t('waste.variant'), t('waste.store'), t('waste.category'), t('waste.user'), t('waste.date'), 'Horário', t('waste.quantity'), t('waste.reason'), t('waste.comment')];
         const rows = filteredReportRecords.map(r => {
             const product = getProductById(r.productId);
             const variant = wasteVariants.find(v => v.id === r.variantId);
@@ -189,15 +189,15 @@ const WasteManager: React.FC = () => {
         const totalQty = filteredReportRecords.reduce((sum, r) => sum + r.quantity, 0);
         const summaryRows = [
             [],
-            ['RESUMO DO RELATÓRIO'],
-            ['Total de Registros', filteredReportRecords.length.toString()],
-            ['Quantidade Total', totalQty.toString()],
-            ['Período', `${reportStartDate || 'Início'} a ${reportEndDate || 'Fim'}`],
+            [t('waste.reportSummary')],
+            [t('waste.totalRecords'), filteredReportRecords.length.toString()],
+            [t('waste.totalQuantity'), totalQty.toString()],
+            [t('waste.period'), `${reportStartDate || t('waste.start')} a ${reportEndDate || t('waste.end')}`],
         ];
 
         const csvContent = BOM + [
-            ['RELATÓRIO DE DESPERDÍCIO - OPERUS'],
-            [`Gerado em: ${new Date().toLocaleString('pt-BR')}`],
+            [`${t('waste.reportTitle')}`],
+            [`${t('waste.generatedAt')} ${new Date().toLocaleString('pt-BR')}`],
             [],
             headers,
             ...rows,
@@ -211,7 +211,7 @@ const WasteManager: React.FC = () => {
         link.href = URL.createObjectURL(blob);
         link.download = `desperdicio_${new Date().toISOString().split('T')[0]}.xlsx`;
         link.click();
-        toast({ title: 'Relatório exportado com sucesso!' });
+        toast({ title: t('waste.exportSuccess') });
     };
 
     // ─── Settings Tab Logic ───
@@ -219,10 +219,10 @@ const WasteManager: React.FC = () => {
         if (!variantName.trim()) return;
         if (editingVariant) {
             updateWasteVariant(editingVariant.id, { name: variantName.trim() });
-            toast({ title: 'Variante atualizada!' });
+            toast({ title: t('waste.variantUpdated') });
         } else {
             addWasteVariant({ name: variantName.trim(), productIds: [] });
-            toast({ title: 'Variante criada!' });
+            toast({ title: t('waste.variantCreated') });
         }
         setVariantName('');
         setEditingVariant(null);
@@ -232,7 +232,7 @@ const WasteManager: React.FC = () => {
     const handleConfirmDeleteVariant = () => {
         if (deletingVariantId) {
             deleteWasteVariant(deletingVariantId);
-            toast({ title: 'Variante excluída!', description: 'Todos os produtos foram desatribuídos.', variant: 'destructive' });
+            toast({ title: t('waste.variantDeleted'), description: t('waste.variantDeletedDesc'), variant: 'destructive' });
         }
         setDeletingVariantId(null);
         setShowDeleteConfirm(false);
@@ -249,7 +249,7 @@ const WasteManager: React.FC = () => {
     const handleSaveAssignment = () => {
         if (assigningVariant) {
             updateWasteVariant(assigningVariant.id, { productIds: assignSelectedProducts });
-            toast({ title: 'Produtos atribuídos com sucesso!' });
+            toast({ title: t('waste.productsAssigned') });
         }
         setShowAssignDialog(false);
         setAssigningVariant(null);
@@ -272,7 +272,7 @@ const WasteManager: React.FC = () => {
     const assignProductsByCategory = useMemo(() => {
         const grouped: Record<string, Product[]> = {};
         assignFilteredProducts.forEach(p => {
-            const catName = getCategoryById(p.categoryId)?.name || 'Sem Categoria';
+            const catName = getCategoryById(p.categoryId)?.name || t('waste.noCategory');
             if (!grouped[catName]) grouped[catName] = [];
             grouped[catName].push(p);
         });
@@ -283,10 +283,10 @@ const WasteManager: React.FC = () => {
         if (!reasonName.trim()) return;
         if (editingReason) {
             updateWasteReason(editingReason.id, { name: reasonName.trim() });
-            toast({ title: 'Motivo atualizado!' });
+            toast({ title: t('waste.reasonUpdated') });
         } else {
             addWasteReason({ name: reasonName.trim() });
-            toast({ title: 'Motivo criado!' });
+            toast({ title: t('waste.reasonCreated') });
         }
         setReasonName('');
         setEditingReason(null);
@@ -296,7 +296,7 @@ const WasteManager: React.FC = () => {
     const handleConfirmDeleteReason = () => {
         if (deletingReasonId) {
             deleteWasteReason(deletingReasonId);
-            toast({ title: 'Motivo excluído!', variant: 'destructive' });
+            toast({ title: t('waste.reasonDeleted'), variant: 'destructive' });
         }
         setDeletingReasonId(null);
         setShowDeleteReasonConfirm(false);
@@ -318,7 +318,7 @@ const WasteManager: React.FC = () => {
                 <div className="min-h-screen bg-background p-6">
                     <Button variant="ghost" onClick={() => setSelectedProduct(null)} className="mb-4 text-muted-foreground hover:text-foreground">
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Voltar
+                        {t('waste.back')}
                     </Button>
                     <Card className="max-w-lg mx-auto border-border shadow-sm">
                         <CardHeader className="text-center bg-muted/30 pb-6 border-b border-border">
@@ -331,7 +331,7 @@ const WasteManager: React.FC = () => {
                             )}
                         </CardHeader>
                         <CardContent className="pt-6">
-                            <p className="text-sm text-muted-foreground mb-4 text-center font-medium">Selecione a variante</p>
+                            <p className="text-sm text-muted-foreground mb-4 text-center font-medium">{t('waste.selectVariant')}</p>
                             {variants.length > 0 ? (
                                 <div className="space-y-2">
                                     {variants.map(v => (
@@ -347,8 +347,8 @@ const WasteManager: React.FC = () => {
                             ) : (
                                 <div className="text-center py-8">
                                     <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                                    <p className="text-muted-foreground">Nenhuma variante atribuída a este produto</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Vá para Definições para atribuir variantes</p>
+                                    <p className="text-muted-foreground">{t('waste.noVariantsAssigned')}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">{t('waste.goToSettings')}</p>
                                 </div>
                             )}
                         </CardContent>
@@ -401,10 +401,10 @@ const WasteManager: React.FC = () => {
 
                         {/* Reason */}
                         <div className="mb-4">
-                            <Label className="font-bold text-foreground">Motivo:</Label>
+                            <Label className="font-bold text-foreground">{t('waste.reason')}</Label>
                             <Select value={wasteReasonId} onValueChange={setWasteReasonId}>
                                 <SelectTrigger className="mt-1 border border-input rounded-xl h-12">
-                                    <SelectValue placeholder="Selecione o motivo" />
+                                    <SelectValue placeholder={t('waste.selectReason')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {wasteReasons.map(r => (
@@ -417,11 +417,11 @@ const WasteManager: React.FC = () => {
                         {/* Comment (required for "Outros") */}
                         {selectedReasonObj?.name === 'Outros' && (
                             <div className="mb-4">
-                                <Label className="font-bold text-foreground">Comentario:</Label>
+                                <Label className="font-bold text-foreground">{t('waste.comment')}</Label>
                                 <Textarea
                                     value={wasteComment}
                                     onChange={(e) => setWasteComment(e.target.value)}
-                                    placeholder="Defina um outro motivo."
+                                    placeholder={t('waste.commentPlaceholder')}
                                     className="mt-1 border border-input rounded-xl min-h-[80px]"
                                 />
                             </div>
@@ -432,7 +432,7 @@ const WasteManager: React.FC = () => {
                             onClick={handleAddWaste}
                             className="w-full h-14 rounded-full text-lg font-semibold mt-2 shadow-sm"
                         >
-                            Adicionar ao Desperdício
+                            {t('waste.addToWaste')}
                         </Button>
 
                         {/* Product history */}
@@ -452,7 +452,7 @@ const WasteManager: React.FC = () => {
                                                             {formatDateTime(record.createdAt)} ({record.userName})
                                                         </p>
                                                         <p className="text-sm text-muted-foreground">
-                                                            Adicionou {record.quantity} ({selectedProduct.name}{variant ? ` - ${variant.name}` : ''}) ao desperdício.
+                                                            {t('waste.addedWaste')} {record.quantity} ({selectedProduct.name}{variant ? ` - ${variant.name}` : ''}) {t('waste.toWaste')}
                                                         </p>
                                                     </div>
                                                     {canUndoRecord(record) && (
@@ -475,12 +475,12 @@ const WasteManager: React.FC = () => {
                                             onClick={() => setShowHistory(!showHistory)}
                                             className="text-sm text-primary font-semibold mt-2 hover:underline"
                                         >
-                                            {showHistory ? '— Esconder histórico' : `+ Ver mais (${productHistory.length - 3})`}
+                                            {showHistory ? t('waste.hideHistory') : `${t('waste.showMore')} (${productHistory.length - 3})`}
                                         </button>
                                     )}
                                 </>
                             ) : (
-                                <p className="text-sm text-muted-foreground text-center">Nenhum histórico de desperdício</p>
+                                <p className="text-sm text-muted-foreground text-center">{t('waste.noWasteHistory')}</p>
                             )}
                         </div>
                     </CardContent>
@@ -502,7 +502,7 @@ const WasteManager: React.FC = () => {
                             <div className="flex-1 min-w-[200px] relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                                 <Input
-                                    placeholder="Buscar produto..."
+                                    placeholder={t('waste.searchProduct')}
                                     value={wasteSearch}
                                     onChange={(e) => setWasteSearch(e.target.value)}
                                     className="pl-10 h-10"
@@ -510,10 +510,10 @@ const WasteManager: React.FC = () => {
                             </div>
                             <Select value={wasteStoreFilter || '__all__'} onValueChange={(v) => setWasteStoreFilter(v === '__all__' ? '' : v)}>
                                 <SelectTrigger className="w-[180px] h-10">
-                                    <SelectValue placeholder="Todas as Lojas" />
+                                    <SelectValue placeholder={t('waste.allStores')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="__all__">Todas as Lojas</SelectItem>
+                                    <SelectItem value="__all__">{t('waste.allStores')}</SelectItem>
                                     {stores.map(s => (
                                         <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                     ))}
@@ -521,10 +521,10 @@ const WasteManager: React.FC = () => {
                             </Select>
                             <Select value={wasteCategoryFilter || '__all__'} onValueChange={(v) => setWasteCategoryFilter(v === '__all__' ? '' : v)}>
                                 <SelectTrigger className="w-[180px] h-10">
-                                    <SelectValue placeholder="Todas as Categorias" />
+                                    <SelectValue placeholder={t('waste.allCategories')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="__all__">Todas as Categorias</SelectItem>
+                                    <SelectItem value="__all__">{t('waste.allCategories')}</SelectItem>
                                     {categories.map(c => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                     ))}
@@ -538,7 +538,7 @@ const WasteManager: React.FC = () => {
                 <div className="flex justify-end">
                     <Button variant="outline" onClick={() => setShowTodayHistory(!showTodayHistory)}>
                         <Clock className="h-4 w-4 mr-2" />
-                        {showTodayHistory ? 'Esconder histórico de hoje' : `Histórico de hoje (${todayRecords.length})`}
+                        {showTodayHistory ? t('waste.hideTodayHistory') : `${t('waste.todayHistory')} (${todayRecords.length})`}
                     </Button>
                 </div>
 
@@ -548,7 +548,7 @@ const WasteManager: React.FC = () => {
                         <CardHeader className="pb-2 bg-muted/30 border-b border-border">
                             <CardTitle className="text-base flex items-center gap-2">
                                 <Clock className="h-5 w-5 text-primary" />
-                                Desperdiçados Hoje
+                                {t('waste.wastedToday')}
                                 <Badge variant="outline" className="bg-background">
                                     {todayRecords.length}
                                 </Badge>
@@ -630,7 +630,7 @@ const WasteManager: React.FC = () => {
                     Object.keys(productsByCategory).length === 0 && (
                         <div className="text-center py-16">
                             <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                            <p className="text-muted-foreground text-lg">Nenhum produto encontrado</p>
+                            <p className="text-muted-foreground text-lg">{t('waste.noProductFound')}</p>
                         </div>
                     )
                 }
@@ -646,27 +646,27 @@ const WasteManager: React.FC = () => {
                 <CardHeader className="bg-muted/30 border-b border-border pb-4">
                     <CardTitle className="flex items-center gap-2 text-base text-foreground">
                         <Filter className="h-5 w-5 text-primary" />
-                        Filtros do Relatório
+                        {t('waste.reportFilters')}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="space-y-2">
-                            <Label className="text-sm font-semibold">Data Início</Label>
+                            <Label className="text-sm font-semibold">{t('waste.startDate')}</Label>
                             <Input type="date" value={reportStartDate} onChange={(e) => setReportStartDate(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-sm font-semibold">Data Fim</Label>
+                            <Label className="text-sm font-semibold">{t('waste.endDate')}</Label>
                             <Input type="date" value={reportEndDate} onChange={(e) => setReportEndDate(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-sm font-semibold">Loja</Label>
+                            <Label className="text-sm font-semibold">{t('waste.store')}</Label>
                             <Select value={reportStoreFilter || '__all__'} onValueChange={(v) => setReportStoreFilter(v === '__all__' ? '' : v)}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="__all__">Todas as Lojas</SelectItem>
+                                    <SelectItem value="__all__">{t('waste.allStores')}</SelectItem>
                                     {stores.map(s => (
                                         <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                     ))}
@@ -674,13 +674,13 @@ const WasteManager: React.FC = () => {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-sm font-semibold">Categoria</Label>
+                            <Label className="text-sm font-semibold">{t('waste.category')}</Label>
                             <Select value={reportCategoryFilter || '__all__'} onValueChange={(v) => setReportCategoryFilter(v === '__all__' ? '' : v)}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="__all__">Todas as Categorias</SelectItem>
+                                    <SelectItem value="__all__">{t('waste.allCategories')}</SelectItem>
                                     {categories.map(c => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                     ))}
@@ -697,14 +697,14 @@ const WasteManager: React.FC = () => {
                     <CardTitle className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <FileSpreadsheet className="h-6 w-6 text-primary" />
-                            <span className="text-lg text-foreground">Relatório de Desperdício</span>
+                            <span className="text-lg text-foreground">{t('waste.wasteReport')}</span>
                             <Badge variant="outline" className="bg-background">
-                                {filteredReportRecords.length} registros
+                                {filteredReportRecords.length} {t('waste.records')}
                             </Badge>
                         </div>
                         <Button size="sm" variant="outline" className="gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary" onClick={exportXLSX}>
                             <Download className="h-4 w-4" />
-                            Exportar XLSX
+                            {t('waste.exportXLSX')}
                         </Button>
                     </CardTitle>
                 </CardHeader>
@@ -713,13 +713,13 @@ const WasteManager: React.FC = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                    <TableHead className="font-semibold text-foreground">Produto</TableHead>
-                                    <TableHead className="font-semibold text-foreground">SKU</TableHead>
-                                    <TableHead className="font-semibold text-foreground">Variante</TableHead>
-                                    <TableHead className="font-semibold text-foreground">Usuário</TableHead>
-                                    <TableHead className="font-semibold text-foreground">Data / Horário</TableHead>
-                                    <TableHead className="font-semibold text-center text-foreground">Quantidade</TableHead>
-                                    <TableHead className="font-semibold text-foreground">Motivo</TableHead>
+                                    <TableHead className="font-semibold text-foreground">{t('waste.product')}</TableHead>
+                                    <TableHead className="font-semibold text-foreground">{t('waste.sku')}</TableHead>
+                                    <TableHead className="font-semibold text-foreground">{t('waste.variant')}</TableHead>
+                                    <TableHead className="font-semibold text-foreground">{t('waste.user')}</TableHead>
+                                    <TableHead className="font-semibold text-foreground">{t('waste.dateTime')}</TableHead>
+                                    <TableHead className="font-semibold text-center text-foreground">{t('waste.quantity')}</TableHead>
+                                    <TableHead className="font-semibold text-foreground">{t('waste.reason')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -748,7 +748,7 @@ const WasteManager: React.FC = () => {
                     {filteredReportRecords.length === 0 && (
                         <div className="text-center py-12">
                             <FileSpreadsheet className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-                            <p className="text-muted-foreground text-lg">Nenhum registro de desperdício encontrado</p>
+                            <p className="text-muted-foreground text-lg">{t('waste.noWasteRecords')}</p>
                         </div>
                     )}
                 </CardContent>
@@ -765,14 +765,14 @@ const WasteManager: React.FC = () => {
                     <CardTitle className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <Settings className="h-6 w-6 text-primary" />
-                            <span className="text-foreground">Variantes</span>
+                            <span className="text-foreground">{t('waste.variants')}</span>
                             <Badge variant="outline" className="bg-background">
                                 {wasteVariants.length}
                             </Badge>
                         </div>
                         <Button size="sm" onClick={() => { setEditingVariant(null); setVariantName(''); setShowVariantDialog(true); }}>
                             <Plus className="h-4 w-4 mr-2" />
-                            Nova Variante
+                            {t('waste.newVariant')}
                         </Button>
                     </CardTitle>
                 </CardHeader>
@@ -780,9 +780,9 @@ const WasteManager: React.FC = () => {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                <TableHead className="font-semibold text-foreground">Nome</TableHead>
-                                <TableHead className="font-semibold text-center text-foreground">Produtos Atribuídos</TableHead>
-                                <TableHead className="font-semibold text-right text-foreground">Ações</TableHead>
+                                <TableHead className="font-semibold text-foreground">{t('waste.name')}</TableHead>
+                                <TableHead className="font-semibold text-center text-foreground">{t('waste.assignedProducts')}</TableHead>
+                                <TableHead className="font-semibold text-right text-foreground">{t('waste.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -791,22 +791,22 @@ const WasteManager: React.FC = () => {
                                     <TableCell className="font-medium text-foreground">{variant.name}</TableCell>
                                     <TableCell className="text-center">
                                         <Badge variant="outline" className="bg-background">
-                                            {variant.productIds.length} produtos
+                                            {variant.productIds.length} {t('waste.products')}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex gap-1 justify-end">
                                             <Button variant="outline" size="sm" onClick={() => { setEditingVariant(variant); setVariantName(variant.name); setShowVariantDialog(true); }} className="h-8">
                                                 <Edit className="h-3 w-3 mr-1" />
-                                                Editar
+                                                {t('waste.edit')}
                                             </Button>
                                             <Button variant="outline" size="sm" onClick={() => handleOpenAssign(variant)} className="h-8">
                                                 <Users className="h-3 w-3 mr-1" />
-                                                Atribuir
+                                                {t('waste.assign')}
                                             </Button>
                                             <Button variant="outline" size="sm" className="text-destructive border-destructive/20 hover:bg-destructive/10 h-8" onClick={() => { setDeletingVariantId(variant.id); setShowDeleteConfirm(true); }}>
                                                 <Trash2 className="h-3 w-3 mr-1" />
-                                                Excluir
+                                                {t('waste.delete')}
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -817,7 +817,7 @@ const WasteManager: React.FC = () => {
                     {wasteVariants.length === 0 && (
                         <div className="text-center py-12">
                             <Settings className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-                            <p className="text-muted-foreground">Nenhuma variante cadastrada</p>
+                            <p className="text-muted-foreground">{t('waste.noVariantsRegistered')}</p>
                         </div>
                     )}
                 </CardContent>
@@ -829,14 +829,14 @@ const WasteManager: React.FC = () => {
                     <CardTitle className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <AlertTriangle className="h-6 w-6 text-primary" />
-                            <span className="text-foreground">Motivos de Desperdício</span>
+                            <span className="text-foreground">{t('waste.wasteReasons')}</span>
                             <Badge variant="outline" className="bg-background">
                                 {wasteReasons.length}
                             </Badge>
                         </div>
                         <Button size="sm" onClick={() => { setEditingReason(null); setReasonName(''); setShowReasonDialog(true); }}>
                             <Plus className="h-4 w-4 mr-2" />
-                            Novo Motivo
+                            {t('waste.newReason')}
                         </Button>
                     </CardTitle>
                 </CardHeader>
@@ -844,8 +844,8 @@ const WasteManager: React.FC = () => {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                <TableHead className="font-semibold text-foreground">Nome</TableHead>
-                                <TableHead className="font-semibold text-right text-foreground">Ações</TableHead>
+                                <TableHead className="font-semibold text-foreground">{t('waste.name')}</TableHead>
+                                <TableHead className="font-semibold text-right text-foreground">{t('waste.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -856,11 +856,11 @@ const WasteManager: React.FC = () => {
                                         <div className="flex gap-1 justify-end">
                                             <Button variant="outline" size="sm" onClick={() => { setEditingReason(reason); setReasonName(reason.name); setShowReasonDialog(true); }} className="h-8">
                                                 <Edit className="h-3 w-3 mr-1" />
-                                                Editar
+                                                {t('waste.edit')}
                                             </Button>
                                             <Button variant="outline" size="sm" className="text-destructive border-destructive/20 hover:bg-destructive/10 h-8" onClick={() => { setDeletingReasonId(reason.id); setShowDeleteReasonConfirm(true); }}>
                                                 <Trash2 className="h-3 w-3 mr-1" />
-                                                Excluir
+                                                {t('waste.delete')}
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -877,17 +877,17 @@ const WasteManager: React.FC = () => {
             <Dialog open={showVariantDialog} onOpenChange={setShowVariantDialog}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle>{editingVariant ? 'Editar Variante' : 'Nova Variante'}</DialogTitle>
+                        <DialogTitle>{editingVariant ? t('waste.editVariant') : t('waste.newVariant')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
-                            <Label>Nome *</Label>
-                            <Input value={variantName} onChange={(e) => setVariantName(e.target.value)} placeholder="Ex: Grande, Médio, Pequeno" className="mt-1" />
+                            <Label>{t('waste.nameRequired')}</Label>
+                            <Input value={variantName} onChange={(e) => setVariantName(e.target.value)} placeholder={t('waste.variantPlaceholder')} className="mt-1" />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowVariantDialog(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveVariant} className="bg-gradient-to-r from-purple-600 to-indigo-600">Salvar</Button>
+                        <Button variant="outline" onClick={() => setShowVariantDialog(false)}>{t('waste.cancel')}</Button>
+                        <Button onClick={handleSaveVariant} className="bg-gradient-to-r from-purple-600 to-indigo-600">{t('waste.save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -898,15 +898,15 @@ const WasteManager: React.FC = () => {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-red-600">
                             <AlertTriangle className="h-5 w-5" />
-                            Excluir Variante
+                            {t('waste.deleteVariant')}
                         </DialogTitle>
                         <DialogDescription>
-                            Tem certeza que deseja excluir esta variante? Esta ação não poderá ser desfeita. Todos os produtos serão desatribuídos desta variante.
+                            {t('waste.deleteVariantConfirm')}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Não</Button>
-                        <Button variant="destructive" onClick={handleConfirmDeleteVariant}>Sim, Excluir</Button>
+                        <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>{t('waste.no')}</Button>
+                        <Button variant="destructive" onClick={handleConfirmDeleteVariant}>{t('waste.yesDelete')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -916,7 +916,7 @@ const WasteManager: React.FC = () => {
                 <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
                     <DialogHeader>
                         <DialogTitle>
-                            Atribuir produtos à variante "{assigningVariant?.name}"
+                            {t('waste.assignProducts')} "{assigningVariant?.name}"
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -925,7 +925,7 @@ const WasteManager: React.FC = () => {
                             <div className="flex-1 relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                                 <Input
-                                    placeholder="Buscar produto..."
+                                    placeholder={t('waste.searchProduct')}
                                     value={assignSearch}
                                     onChange={(e) => setAssignSearch(e.target.value)}
                                     className="pl-10 h-9"
@@ -936,14 +936,14 @@ const WasteManager: React.FC = () => {
                                     <SelectValue placeholder="Categoria" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="__all__">Todas</SelectItem>
+                                    <SelectItem value="__all__">{t('waste.all')}</SelectItem>
                                     {categories.map(c => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
-                        <p className="text-sm text-gray-500">{assignSelectedProducts.length} produto(s) selecionado(s)</p>
+                        <p className="text-sm text-gray-500">{assignSelectedProducts.length} {t('waste.productsSelected')}</p>
                         {/* Product list by category */}
                         <div className="max-h-[400px] overflow-y-auto space-y-4">
                             {Object.entries(assignProductsByCategory).map(([catName, prods]) => (
@@ -982,9 +982,9 @@ const WasteManager: React.FC = () => {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowAssignDialog(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setShowAssignDialog(false)}>{t('waste.cancel')}</Button>
                         <Button onClick={handleSaveAssignment} className="bg-gradient-to-r from-purple-600 to-indigo-600">
-                            Salvar ({assignSelectedProducts.length} produtos)
+                            {t('waste.save')} ({assignSelectedProducts.length} {t('waste.products')})
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -994,15 +994,15 @@ const WasteManager: React.FC = () => {
             <Dialog open={showReasonDialog} onOpenChange={setShowReasonDialog}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle>{editingReason ? 'Editar Motivo' : 'Novo Motivo'}</DialogTitle>
+                        <DialogTitle>{editingReason ? t('waste.editReason') : t('waste.newReason')}</DialogTitle>
                     </DialogHeader>
                     <div>
-                        <Label>Nome *</Label>
-                        <Input value={reasonName} onChange={(e) => setReasonName(e.target.value)} placeholder="Nome do motivo" className="mt-1" />
+                        <Label>{t('waste.nameRequired')}</Label>
+                        <Input value={reasonName} onChange={(e) => setReasonName(e.target.value)} placeholder={t('waste.reasonPlaceholder')} className="mt-1" />
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowReasonDialog(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveReason}>Salvar</Button>
+                        <Button variant="outline" onClick={() => setShowReasonDialog(false)}>{t('waste.cancel')}</Button>
+                        <Button onClick={handleSaveReason}>{t('waste.save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -1013,15 +1013,15 @@ const WasteManager: React.FC = () => {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-red-600">
                             <AlertTriangle className="h-5 w-5" />
-                            Excluir Motivo
+                            {t('waste.deleteReason')}
                         </DialogTitle>
                         <DialogDescription>
-                            Tem certeza que deseja excluir este motivo? Esta ação não poderá ser desfeita.
+                            {t('waste.deleteReasonConfirm')}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowDeleteReasonConfirm(false)}>Não</Button>
-                        <Button variant="destructive" onClick={handleConfirmDeleteReason}>Sim, Excluir</Button>
+                        <Button variant="outline" onClick={() => setShowDeleteReasonConfirm(false)}>{t('waste.no')}</Button>
+                        <Button variant="destructive" onClick={handleConfirmDeleteReason}>{t('waste.yesDelete')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -1035,9 +1035,9 @@ const WasteManager: React.FC = () => {
                 {/* Header */}
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                        Desperdício
+                        {t('waste.title')}
                     </h1>
-                    <p className="text-muted-foreground">Gestão de desperdício de produtos</p>
+                    <p className="text-muted-foreground">{t('waste.subtitle')}</p>
                 </div>
 
                 {/* Tabs */}
@@ -1045,15 +1045,15 @@ const WasteManager: React.FC = () => {
                     <TabsList>
                         <TabsTrigger value="waste" className="flex items-center gap-2">
                             <Trash2 className="h-4 w-4" />
-                            Desperdício
+                            {t('waste.wasteTab')}
                         </TabsTrigger>
                         <TabsTrigger value="report" className="flex items-center gap-2">
                             <FileSpreadsheet className="h-4 w-4" />
-                            Relatório
+                            {t('waste.reportTab')}
                         </TabsTrigger>
                         <TabsTrigger value="settings" className="flex items-center gap-2">
                             <Settings className="h-4 w-4" />
-                            Definições
+                            {t('waste.settingsTab')}
                         </TabsTrigger>
                     </TabsList>
 

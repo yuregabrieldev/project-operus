@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,21 +12,23 @@ import { UsersProvider } from './contexts/UsersContext';
 import { ChecklistProvider } from './contexts/ChecklistContext';
 import LandingPage from './components/Landing/LandingPage';
 import BrandSelector from './components/Brand/BrandSelector';
-import Header from './components/Layout/Header';
-import Sidebar from './components/Layout/Sidebar';
+import MainLayout from './components/Layout/MainLayout';
+import DashboardLayout from './components/Dashboard/DashboardLayout';
 import Dashboard from './components/Dashboard/Dashboard';
+import FinanceSummary from './components/Dashboard/FinanceSummary';
 import InventoryManager from './components/Inventory/InventoryManager';
 import CashManager from './components/CashManagement/CashManager';
-import PurchaseSuggestions from './components/Purchases/PurchaseSuggestions';
+import CashDetail from './components/CashManagement/CashDetail';
+import PurchasesLayout from './components/Purchases/PurchasesLayout';
+import PurchaseList from './components/Purchases/PurchaseList';
+import PurchaseOrders from './components/Purchases/PurchaseOrders';
 import InvoiceManager from './components/Invoices/InvoiceManager';
 import TransitManager from './components/Transit/TransitManager';
 import LicenseManager from './components/Licenses/LicenseManager';
 import WasteManager from './components/Waste/WasteManager';
 import ChecklistManager from './components/Checklists/ChecklistManager';
-import ChecklistConfigManager from './components/Checklists/ChecklistConfigManager';
-import ChecklistExecution from './components/Checklists/ChecklistExecution';
-import ChecklistHistory from './components/Checklists/ChecklistHistory';
 import SettingsManager from './components/Settings/SettingsManager';
+import OperationsLayout from './components/Operations/OperationsLayout';
 import OperationsManager from './components/Operations/OperationsManager';
 import ProductionManager from './components/Production/ProductionManager';
 import ProfilePage from './components/Profile/ProfilePage';
@@ -39,31 +42,22 @@ import DevSettings from './components/Developer/DevSettings';
 
 const queryClient = new QueryClient();
 
-const MainApp = () => {
+/**
+ * LanguageWrapper — syncs :lang param with i18n
+ */
+const LanguageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // This wrapper exists for future use (e.g. syncing i18n with URL param).
+  // For now it just renders children.
+  return <>{children}</>;
+};
+
+/**
+ * AuthGate — handles auth, brand selection, and renders routes
+ */
+const AuthGate: React.FC = () => {
   const { isAuthenticated, loading, needsBrandSelection, user } = useAuth();
   const { selectedBrand } = useBrand();
   const isDev = user?.role === 'developer';
-
-  // Developer starts on dev-dashboard, others on dashboard
-  const [activeTab, setActiveTab] = useState(isDev ? 'dev-dashboard' : 'dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const mainRef = useRef<HTMLElement>(null);
-
-  // Smooth scroll to top on tab change with View Transitions
-  const handleTabChange = useCallback((tab: string) => {
-    if (!document.startViewTransition) {
-      setActiveTab(tab);
-      mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    document.startViewTransition(() => {
-      setActiveTab(tab);
-      mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }, []);
-
-  console.log('🚀 MainApp render - isAuthenticated:', isAuthenticated, 'needsBrandSelection:', needsBrandSelection, 'selectedBrand:', selectedBrand?.name);
 
   if (loading) {
     return (
@@ -82,88 +76,86 @@ const MainApp = () => {
     return <LandingPage />;
   }
 
-  // Developer bypasses brand selection entirely
   if (!isDev && (needsBrandSelection || !selectedBrand)) {
-    console.log('🎪 Mostrando BrandSelector - needsBrandSelection:', needsBrandSelection, 'selectedBrand:', selectedBrand);
     return <BrandSelector />;
   }
 
-  console.log('✅ Mostrando aplicação principal com marca:', selectedBrand?.name);
-
-  const renderContent = () => {
-    switch (activeTab) {
-      // Developer pages
-      case 'dev-dashboard':
-        return <DevDashboard />;
-      case 'dev-brands':
-        return <DevBrands />;
-      case 'dev-finance':
-        return <DevFinance />;
-      case 'dev-users':
-        return <DevUsers />;
-      case 'dev-settings':
-        return <DevSettings />;
-      // Regular pages
-      case 'dashboard':
-        return <Dashboard />;
-      case 'inventory':
-        return <InventoryManager />;
-      case 'operations':
-        return <OperationsManager />;
-      case 'production':
-        return <ProductionManager />;
-      case 'transit':
-        return <TransitManager />;
-      case 'purchases':
-        return <PurchaseSuggestions />;
-      case 'cashbox':
-        return <CashManager />;
-      case 'invoices':
-        return <InvoiceManager />;
-      case 'licenses':
-        return <LicenseManager />;
-      case 'waste':
-        return <WasteManager />;
-      case 'checklists':
-        return <ChecklistManager />;
-      case 'checklist-config':
-        return <ChecklistConfigManager />;
-      case 'checklist-execution':
-        return <ChecklistExecution />;
-      case 'checklist-history':
-        return <ChecklistHistory />;
-      case 'stores':
-        return <StoreManager />;
-      case 'users':
-        return <UserManager />;
-      case 'settings':
-        return <SettingsManager />;
-      case 'profile':
-        return <ProfilePage />;
-      default:
-        return isDev ? <DevDashboard /> : <Dashboard />;
-    }
-  };
+  const defaultPath = isDev ? '/pt/dev-dashboard' : '/pt/dashboard';
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar
-        isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+    <Routes>
+      {/* Root redirect */}
+      <Route path="/" element={<Navigate to={defaultPath} replace />} />
 
-      <div className="flex-1 flex flex-col">
-        <Header onTabChange={handleTabChange} />
+      {/* Language-prefixed routes */}
+      <Route path="/:lang" element={<LanguageWrapper><MainLayout /></LanguageWrapper>}>
+        {/* Dashboard — nested */}
+        <Route path="dashboard" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="financeiro" element={<FinanceSummary />} />
+        </Route>
 
-        <main ref={mainRef} className="flex-1 overflow-auto scroll-smooth">
-          <div key={activeTab} className="animate-in fade-in duration-200">
-            {renderContent()}
-          </div>
-        </main>
-      </div>
-    </div>
+        {/* Inventory */}
+        <Route path="estoque" element={<InventoryManager />} />
+
+        {/* Operations — nested */}
+        <Route path="operacoes" element={<OperationsLayout />}>
+          <Route index element={<OperationsManager />} />
+          <Route path="producao" element={<ProductionManager />} />
+        </Route>
+
+        {/* Transit */}
+        <Route path="transito" element={<TransitManager />} />
+
+        {/* Purchases — nested */}
+        <Route path="compras" element={<PurchasesLayout />}>
+          <Route index element={<PurchaseList />} />
+          <Route path="pedidos" element={<PurchaseOrders />} />
+        </Route>
+
+        {/* Cash */}
+        <Route path="caixa" element={<CashManager />} />
+        <Route path="caixa/:id" element={<CashDetail />} />
+
+        {/* Invoices */}
+        <Route path="faturas" element={<InvoiceManager />} />
+        <Route path="faturas/:invoiceId" element={<InvoiceManager />} />
+
+        {/* Licenses */}
+        <Route path="licencas" element={<LicenseManager />} />
+        <Route path="licencas/:id" element={<LicenseManager />} />
+
+        {/* Waste */}
+        <Route path="desperdicios" element={<WasteManager />} />
+
+        {/* Checklists */}
+        <Route path="checklists" element={<ChecklistManager />} />
+        <Route path="checklists/:id" element={<ChecklistManager />} />
+
+        {/* Store / User Management */}
+        <Route path="lojas" element={<StoreManager />} />
+        <Route path="usuarios" element={<UserManager />} />
+
+        {/* Settings */}
+        <Route path="configuracoes" element={<SettingsManager />} />
+
+        {/* Profile */}
+        <Route path="perfil" element={<ProfilePage />} />
+
+        {/* Developer pages */}
+        <Route path="dev-dashboard" element={<DevDashboard />} />
+        <Route path="dev-brands" element={<DevBrands />} />
+        <Route path="dev-finance" element={<DevFinance />} />
+        <Route path="dev-users" element={<DevUsers />} />
+        <Route path="dev-settings" element={<DevSettings />} />
+
+        {/* Language root redirect */}
+        <Route index element={<Navigate to={isDev ? 'dev-dashboard' : 'dashboard'} replace />} />
+      </Route>
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to={defaultPath} replace />} />
+    </Routes>
   );
 };
 
@@ -177,7 +169,9 @@ const App = () => {
               <UsersProvider>
                 <ChecklistProvider>
                   <DataProvider>
-                    <MainApp />
+                    <BrowserRouter>
+                      <AuthGate />
+                    </BrowserRouter>
                     <Toaster />
                     <Sonner />
                   </DataProvider>

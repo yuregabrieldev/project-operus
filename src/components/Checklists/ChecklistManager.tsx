@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CheckSquare, History, Settings, UserCheck, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import ChecklistDashboard from './ChecklistDashboard';
 import ChecklistAdminView from './ChecklistAdminView';
 import ChecklistExecution from './ChecklistExecution';
@@ -11,6 +12,7 @@ import ChecklistHistory from './ChecklistHistory';
 
 const ChecklistManager: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [activeView, setActiveView] = useState<'dashboard' | 'admin' | 'execution' | 'history'>('dashboard');
   const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
   const [shouldCreateNew, setShouldCreateNew] = useState(false);
@@ -57,29 +59,29 @@ const ChecklistManager: React.FC = () => {
         <div className="border-b bg-card">
           <div className="p-6 space-y-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Checklists</h1>
-              <p className="text-sm text-muted-foreground mt-1">Gerencie seus checklists e auditorias</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('checklists.title')}</h1>
+              <p className="text-sm text-muted-foreground mt-1">{t('checklists.subtitle')}</p>
             </div>
 
             <TabsList>
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <UserCheck className="h-4 w-4" />
-                <span className="hidden sm:inline">Meus Checklists</span>
-                <span className="sm:hidden">Checklist</span>
+                <span className="hidden sm:inline">{t('checklists.myChecklists')}</span>
+                <span className="sm:hidden">{t('checklists.title')}</span>
               </TabsTrigger>
 
               {isAdmin && (
                 <TabsTrigger value="admin" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  <span className="hidden sm:inline">Gerenciar</span>
+                  <span className="hidden sm:inline">{t('checklists.manage')}</span>
                   <span className="sm:hidden">Admin</span>
                 </TabsTrigger>
               )}
 
               <TabsTrigger value="history" className="flex items-center gap-2">
                 <History className="h-4 w-4" />
-                <span className="hidden sm:inline">Histórico</span>
-                <span className="sm:hidden">Histórico</span>
+                <span className="hidden sm:inline">{t('checklists.history')}</span>
+                <span className="sm:hidden">{t('checklists.history')}</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -113,12 +115,12 @@ const ChecklistManager: React.FC = () => {
           <Card>
             <CardContent className="p-8 text-center">
               <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2 text-foreground">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2 text-foreground">{t('checklists.accessRestricted')}</h3>
               <p className="text-muted-foreground mb-4">
-                Apenas administradores e gerentes podem acessar o gerenciamento de templates.
+                {t('checklists.accessRestrictedDesc')}
               </p>
               <Button onClick={() => setActiveView('dashboard')}>
-                Voltar aos Meus Checklists
+                {t('checklists.backToMyChecklists')}
               </Button>
             </CardContent>
           </Card>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,8 +12,9 @@ import {
   Settings, Package, Truck, Bell, Shield, Download, Upload, Plus, Edit, Trash2,
   Globe, Clock, DollarSign, Lock, Key, Eye, EyeOff, AlertTriangle, Save,
   Database, HardDrive, Mail, MessageSquare, CheckCircle, FileText, Calendar,
-  ChevronDown, ChevronUp, CreditCard
+  ChevronDown, ChevronUp, CreditCard, X, FileSpreadsheet
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,7 +23,7 @@ import { toast } from '@/hooks/use-toast';
 const SettingsManager: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
   const { user } = useAuth();
-  const { stores, categories, suppliers, addSupplier, deleteSupplier, addCategory, deleteCategory, products } = useData();
+  const { stores, categories, suppliers, addSupplier, deleteSupplier, addCategory, deleteCategory, products, addProduct } = useData();
 
   const [activeTab, setActiveTab] = useState('general');
 
@@ -60,6 +61,14 @@ const SettingsManager: React.FC = () => {
   const [twoFactor, setTwoFactor] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState('30');
 
+  // Import products state
+  const [importPreview, setImportPreview] = useState<Record<string, string>[]>([]);
+  const [importHeaders, setImportHeaders] = useState<string[]>([]);
+  const [importFileName, setImportFileName] = useState('');
+  const [showImportPreview, setShowImportPreview] = useState(false);
+  const [importMapping, setImportMapping] = useState<Record<string, string>>({});
+  const importFileRef = useRef<HTMLInputElement>(null);
+
   // Subscription state
   const [expandedSubscription, setExpandedSubscription] = useState<string | null>(null);
 
@@ -80,13 +89,13 @@ const SettingsManager: React.FC = () => {
   }));
 
   const tabs = [
-    { id: 'general', label: 'Geral', icon: Settings },
-    { id: 'notifications', label: 'Notificações', icon: Bell },
+    { id: 'general', label: t('settings.general'), icon: Settings },
+    { id: 'notifications', label: t('settings.notifications'), icon: Bell },
     { id: 'categories', label: t('settings.categories'), icon: Package },
     { id: 'suppliers', label: t('settings.suppliers'), icon: Truck },
     { id: 'security', label: t('settings.security'), icon: Shield },
     { id: 'backup', label: t('settings.backup'), icon: Download },
-    { id: 'assinatura', label: 'Assinatura', icon: CreditCard },
+    { id: 'assinatura', label: t('settings.subscription'), icon: CreditCard },
   ];
 
   const languages = [
@@ -102,14 +111,14 @@ const SettingsManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-primary" />
-            Idioma e Região
+            {t('settings.languageAndRegion')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="font-semibold">Idioma</Label>
-              <Select value={language} onValueChange={(v) => { setLanguage(v as 'pt' | 'en' | 'es'); toast({ title: 'Idioma alterado!' }); }}>
+              <Label className="font-semibold">{t('settings.language')}</Label>
+              <Select value={language} onValueChange={(v) => { setLanguage(v as 'pt' | 'en' | 'es'); toast({ title: t('settings.languageChanged') }); }}>
                 <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
@@ -121,7 +130,7 @@ const SettingsManager: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="font-semibold">Fuso Horário</Label>
+              <Label className="font-semibold">{t('settings.timezone')}</Label>
               <Select value={timezone} onValueChange={setTimezone}>
                 <SelectTrigger className="h-10">
                   <SelectValue />
@@ -142,14 +151,14 @@ const SettingsManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-primary" />
-            Moeda e Formato
+            {t('settings.currencyAndFormat')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="font-semibold">Moeda Padrão</Label>
-              <Select value={currency} onValueChange={(v) => { setCurrency(v); toast({ title: 'Moeda atualizada!' }); }}>
+              <Label className="font-semibold">{t('settings.defaultCurrency')}</Label>
+              <Select value={currency} onValueChange={(v) => { setCurrency(v); toast({ title: t('settings.currencyUpdated') }); }}>
                 <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
@@ -162,7 +171,7 @@ const SettingsManager: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="font-semibold">Formato de Data</Label>
+              <Label className="font-semibold">{t('settings.dateFormat')}</Label>
               <Select value={dateFormat} onValueChange={setDateFormat}>
                 <SelectTrigger className="h-10">
                   <SelectValue />
@@ -184,9 +193,9 @@ const SettingsManager: React.FC = () => {
   const renderNotificationsTab = () => (
     <Card className="shadow-sm border bg-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
           <Bell className="h-5 w-5 text-primary" />
-          Notificações
+          {t('settings.notifications')}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-1">
@@ -223,8 +232,8 @@ const SettingsManager: React.FC = () => {
               <Shield className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h4 className="font-semibold text-gray-800">Expiração de Licenças</h4>
-              <p className="text-sm text-gray-500">Receber alertas quando licenças estiverem próximas do vencimento</p>
+              <h4 className="font-semibold text-gray-800">{t('settings.licenseExpiry')}</h4>
+              <p className="text-sm text-gray-500">{t('settings.licenseExpiryDesc')}</p>
             </div>
           </div>
           <Switch checked={notifLicenseExpiry} onCheckedChange={setNotifLicenseExpiry} />
@@ -236,8 +245,8 @@ const SettingsManager: React.FC = () => {
               <Trash2 className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <h4 className="font-semibold text-gray-800">Alerta de Desperdício</h4>
-              <p className="text-sm text-gray-500">Notificar quando o desperdício ultrapassar limites definidos</p>
+              <h4 className="font-semibold text-gray-800">{t('settings.wasteAlert')}</h4>
+              <p className="text-sm text-gray-500">{t('settings.wasteAlertDesc')}</p>
             </div>
           </div>
           <Switch checked={notifWasteAlert} onCheckedChange={setNotifWasteAlert} />
@@ -249,8 +258,8 @@ const SettingsManager: React.FC = () => {
               <CheckCircle className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <h4 className="font-semibold text-gray-800">Checklists Pendentes</h4>
-              <p className="text-sm text-gray-500">Lembrar checklists que precisam ser executados</p>
+              <h4 className="font-semibold text-gray-800">{t('settings.pendingChecklists')}</h4>
+              <p className="text-sm text-gray-500">{t('settings.pendingChecklistsDesc')}</p>
             </div>
           </div>
           <Switch checked={notifChecklistDue} onCheckedChange={setNotifChecklistDue} />
@@ -258,7 +267,7 @@ const SettingsManager: React.FC = () => {
 
         <hr className="my-4" />
 
-        <h3 className="text-lg font-bold px-4 pt-2">Canais de Notificação</h3>
+        <h3 className="text-lg font-bold px-4 pt-2">{t('settings.notificationChannels')}</h3>
 
         <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
@@ -279,17 +288,17 @@ const SettingsManager: React.FC = () => {
               <MessageSquare className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <h4 className="font-semibold text-gray-800">Notificações Push</h4>
-              <p className="text-sm text-gray-500">Receber notificações em tempo real no navegador</p>
+              <h4 className="font-semibold text-gray-800">{t('settings.pushNotifications')}</h4>
+              <p className="text-sm text-gray-500">{t('settings.pushNotificationsDesc')}</p>
             </div>
           </div>
           <Switch checked={notifPush} onCheckedChange={setNotifPush} />
         </div>
 
         <div className="px-4 pt-4">
-          <Button onClick={() => toast({ title: 'Notificações salvas!' })}>
+          <Button onClick={() => toast({ title: t('settings.notificationsSaved') })}>
             <Save className="h-4 w-4 mr-2" />
-            Salvar Preferências
+            {t('settings.savePreferences')}
           </Button>
         </div>
       </CardContent>
@@ -306,12 +315,12 @@ const SettingsManager: React.FC = () => {
         <CardTitle className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
-            Categorias
+            {t('settings.categories')}
             <Badge variant="outline">{categories.length}</Badge>
           </div>
           <Button size="sm" onClick={() => { setNewCatName(''); setShowCatAddDialog(true); }}>
             <Plus className="h-4 w-4 mr-2" />
-            Nova Categoria
+            {t('settings.newCategory')}
           </Button>
         </CardTitle>
       </CardHeader>
@@ -319,9 +328,9 @@ const SettingsManager: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-semibold">Nome</TableHead>
-              <TableHead className="font-semibold text-center">Produtos</TableHead>
-              <TableHead className="font-semibold text-right">Ações</TableHead>
+              <TableHead className="font-semibold">{t('settings.name')}</TableHead>
+              <TableHead className="font-semibold text-center">{t('settings.products')}</TableHead>
+              <TableHead className="font-semibold text-right">{t('settings.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -335,11 +344,11 @@ const SettingsManager: React.FC = () => {
                     <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10"
                       onClick={() => {
                         if (productCount > 0) {
-                          toast({ title: 'Não é possível excluir', description: `Esta categoria tem ${productCount} produto(s) associado(s)`, variant: 'destructive' });
+                          toast({ title: t('settings.cannotDelete'), description: t('settings.categoryHasProducts', { count: productCount }), variant: 'destructive' });
                           return;
                         }
                         deleteCategory(cat.id);
-                        toast({ title: 'Categoria removida!' });
+                        toast({ title: t('settings.categoryRemoved') });
                       }}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -352,7 +361,7 @@ const SettingsManager: React.FC = () => {
         {categories.length === 0 && (
           <div className="text-center py-12">
             <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">Nenhuma categoria cadastrada</p>
+            <p className="text-gray-500">{t('settings.noCategories')}</p>
           </div>
         )}
       </CardContent>
@@ -361,23 +370,22 @@ const SettingsManager: React.FC = () => {
       <Dialog open={showCatAddDialog} onOpenChange={setShowCatAddDialog}>
         <DialogContent className="sm:max-w-[380px]">
           <DialogHeader>
-            <DialogTitle>Nova Categoria</DialogTitle>
+            <DialogTitle>{t('settings.newCategory')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Nome da Categoria *</Label>
-              <Input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="Ex: Frutas, Bebidas..." className="mt-1" />
+              <Label>{t('settings.categoryNameRequired')}</Label>
+              <Input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder={t('settings.categoryNamePlaceholder')} className="mt-1" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCatAddDialog(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowCatAddDialog(false)}>{t('common.cancel')}</Button>
             <Button onClick={() => {
               if (!newCatName.trim()) return;
               addCategory({ name: newCatName.trim() });
-              toast({ title: 'Categoria criada!' });
-              toast({ title: 'Categoria criada!' });
+              toast({ title: t('settings.categoryCreated') });
               setShowCatAddDialog(false);
-            }}>Salvar</Button>
+            }}>{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -391,12 +399,12 @@ const SettingsManager: React.FC = () => {
         <CardTitle className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Truck className="h-5 w-5 text-primary" />
-            Fornecedores
+            {t('settings.suppliers')}
             <Badge variant="outline">{suppliers.length}</Badge>
           </div>
           <Button size="sm" onClick={() => { setSupName(''); setSupContact(''); setSupEmail(''); setShowSupDialog(true); }}>
             <Plus className="h-4 w-4 mr-2" />
-            Novo Fornecedor
+            {t('settings.newSupplier')}
           </Button>
         </CardTitle>
       </CardHeader>
@@ -404,10 +412,10 @@ const SettingsManager: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
-              <TableHead className="font-semibold">Nome</TableHead>
-              <TableHead className="font-semibold">Contato</TableHead>
-              <TableHead className="font-semibold">Email</TableHead>
-              <TableHead className="font-semibold text-right">Ações</TableHead>
+              <TableHead className="font-semibold">{t('settings.name')}</TableHead>
+              <TableHead className="font-semibold">{t('settings.contact')}</TableHead>
+              <TableHead className="font-semibold">{t('settings.email')}</TableHead>
+              <TableHead className="font-semibold text-right">{t('settings.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -418,7 +426,7 @@ const SettingsManager: React.FC = () => {
                 <TableCell className="text-muted-foreground">{sup.email}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10"
-                    onClick={() => { deleteSupplier(sup.id); toast({ title: 'Fornecedor removido!' }); }}>
+                    onClick={() => { deleteSupplier(sup.id); toast({ title: t('settings.supplierRemoved') }); }}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </TableCell>
@@ -429,7 +437,7 @@ const SettingsManager: React.FC = () => {
         {suppliers.length === 0 && (
           <div className="text-center py-12">
             <Truck className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">Nenhum fornecedor cadastrado</p>
+            <p className="text-gray-500">{t('settings.noSuppliers')}</p>
           </div>
         )}
       </CardContent>
@@ -438,30 +446,30 @@ const SettingsManager: React.FC = () => {
       <Dialog open={showSupDialog} onOpenChange={setShowSupDialog}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>Novo Fornecedor</DialogTitle>
+            <DialogTitle>{t('settings.newSupplier')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Nome *</Label>
-              <Input value={supName} onChange={(e) => setSupName(e.target.value)} placeholder="Nome do fornecedor" className="mt-1" />
+              <Label>{t('settings.nameRequired')}</Label>
+              <Input value={supName} onChange={(e) => setSupName(e.target.value)} placeholder={t('settings.supplierNamePlaceholder')} className="mt-1" />
             </div>
             <div>
-              <Label>Contato</Label>
-              <Input value={supContact} onChange={(e) => setSupContact(e.target.value)} placeholder="Telefone" className="mt-1" />
+              <Label>{t('settings.contact')}</Label>
+              <Input value={supContact} onChange={(e) => setSupContact(e.target.value)} placeholder={t('settings.phone')} className="mt-1" />
             </div>
             <div>
-              <Label>Email</Label>
-              <Input value={supEmail} onChange={(e) => setSupEmail(e.target.value)} placeholder="email@exemplo.com" className="mt-1" />
+              <Label>{t('settings.email')}</Label>
+              <Input value={supEmail} onChange={(e) => setSupEmail(e.target.value)} placeholder={t('settings.emailPlaceholder')} className="mt-1" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSupDialog(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowSupDialog(false)}>{t('common.cancel')}</Button>
             <Button onClick={() => {
               if (!supName.trim()) return;
               addSupplier({ name: supName.trim(), contact: supContact.trim(), email: supEmail.trim() });
-              toast({ title: 'Fornecedor adicionado!' });
+              toast({ title: t('settings.supplierAdded') });
               setShowSupDialog(false);
-            }}>Salvar</Button>
+            }}>{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -475,12 +483,12 @@ const SettingsManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-primary" />
-            Alterar Senha
+            {t('settings.changePassword')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="space-y-2">
-            <Label className="font-semibold">Senha Atual</Label>
+            <Label className="font-semibold">{t('settings.currentPassword')}</Label>
             <div className="relative">
               <Input type={showCurrentPw ? 'text' : 'password'} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" />
               <button onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -489,7 +497,7 @@ const SettingsManager: React.FC = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="font-semibold">Nova Senha</Label>
+            <Label className="font-semibold">{t('settings.newPassword')}</Label>
             <div className="relative">
               <Input type={showNewPw ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" />
               <button onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -498,21 +506,21 @@ const SettingsManager: React.FC = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="font-semibold">Confirmar Nova Senha</Label>
+            <Label className="font-semibold">{t('settings.confirmNewPassword')}</Label>
             <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
             {confirmPassword && newPassword !== confirmPassword && (
-              <p className="text-xs text-destructive">As senhas não coincidem</p>
+              <p className="text-xs text-destructive">{t('settings.passwordsDoNotMatch')}</p>
             )}
           </div>
           <Button onClick={() => {
-            if (!currentPassword || !newPassword) { toast({ title: 'Preencha todos os campos', variant: 'destructive' }); return; }
-            if (newPassword !== confirmPassword) { toast({ title: 'As senhas não coincidem', variant: 'destructive' }); return; }
-            if (newPassword.length < 6) { toast({ title: 'A senha deve ter no mínimo 6 caracteres', variant: 'destructive' }); return; }
-            toast({ title: 'Senha alterada com sucesso!' });
+            if (!currentPassword || !newPassword) { toast({ title: t('settings.fillAllFields'), variant: 'destructive' }); return; }
+            if (newPassword !== confirmPassword) { toast({ title: t('settings.passwordsDoNotMatch'), variant: 'destructive' }); return; }
+            if (newPassword.length < 6) { toast({ title: t('settings.passwordMinLength'), variant: 'destructive' }); return; }
+            toast({ title: t('settings.passwordChanged') });
             setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
           }}>
             <Key className="h-4 w-4 mr-2" />
-            Alterar Senha
+            {t('settings.changePassword')}
           </Button>
         </CardContent>
       </Card>
@@ -521,33 +529,33 @@ const SettingsManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            Segurança da Conta
+            {t('settings.accountSecurity')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50">
             <div>
-              <h4 className="font-semibold">Autenticação de Dois Fatores (2FA)</h4>
-              <p className="text-sm text-muted-foreground">Adiciona uma camada extra de segurança à sua conta</p>
+              <h4 className="font-semibold">{t('settings.twoFactorAuth')}</h4>
+              <p className="text-sm text-muted-foreground">{t('settings.twoFactorAuthDesc')}</p>
             </div>
-            <Switch checked={twoFactor} onCheckedChange={(v) => { setTwoFactor(v); toast({ title: v ? '2FA ativado!' : '2FA desativado!' }); }} />
+            <Switch checked={twoFactor} onCheckedChange={(v) => { setTwoFactor(v); toast({ title: v ? t('settings.twoFactorEnabled') : t('settings.twoFactorDisabled') }); }} />
           </div>
           <div className="p-4 rounded-xl hover:bg-muted/50">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-semibold text-gray-800">Tempo Limite da Sessão</h4>
-                <p className="text-sm text-gray-500">Desconectar automaticamente após inatividade</p>
+                <h4 className="font-semibold text-gray-800">{t('settings.sessionTimeout')}</h4>
+                <p className="text-sm text-gray-500">{t('settings.sessionTimeoutDesc')}</p>
               </div>
-              <Select value={sessionTimeout} onValueChange={(v) => { setSessionTimeout(v); toast({ title: `Sessão: ${v} minutos` }); }}>
+              <Select value={sessionTimeout} onValueChange={(v) => { setSessionTimeout(v); toast({ title: t('settings.sessionMinutes', { v }) }); }}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="15">15 minutos</SelectItem>
-                  <SelectItem value="30">30 minutos</SelectItem>
-                  <SelectItem value="60">1 hora</SelectItem>
-                  <SelectItem value="120">2 horas</SelectItem>
-                  <SelectItem value="never">Nunca</SelectItem>
+                  <SelectItem value="15">{t('settings.minutes15')}</SelectItem>
+                  <SelectItem value="30">{t('settings.minutes30')}</SelectItem>
+                  <SelectItem value="60">{t('settings.hours1')}</SelectItem>
+                  <SelectItem value="120">{t('settings.hours2')}</SelectItem>
+                  <SelectItem value="never">{t('settings.never')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -584,7 +592,7 @@ const SettingsManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Download className="h-5 w-5 text-primary" />
-            Exportar Dados
+            {t('settings.export_data')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
@@ -592,7 +600,7 @@ const SettingsManager: React.FC = () => {
           <div className="flex gap-3">
             <Button onClick={exportData}>
               <Download className="h-4 w-4 mr-2" />
-              Exportar JSON
+              {t('settings.exportJSON')}
             </Button>
           </div>
         </CardContent>
@@ -602,16 +610,125 @@ const SettingsManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5 text-primary" />
-            Importar Dados
+            {t('settings.importProducts')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          <p className="text-muted-foreground">{t('settings.import_description')}</p>
-          <Button variant="outline" disabled>
-            <Upload className="h-4 w-4 mr-2" />
-            {t('settings.import_file')}
-          </Button>
-          <p className="text-sm text-gray-500">{t('settings.import_coming_soon')}</p>
+          <p className="text-muted-foreground">{t('settings.importProductsDesc')}</p>
+
+          <div className="p-4 bg-muted/50 rounded-lg border border-dashed space-y-3">
+            <div className="flex items-center gap-3">
+              <FileSpreadsheet className="h-8 w-8 text-emerald-600" />
+              <div>
+                <p className="font-medium text-sm text-foreground">{t('settings.importFormats')}</p>
+                <p className="text-xs text-muted-foreground">{t('settings.importColumnsHint')}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 flex-wrap">
+              <Button variant="outline" onClick={() => importFileRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" />
+                {t('settings.importSelectFile')}
+              </Button>
+              <Button variant="ghost" size="sm" className="text-primary" onClick={() => {
+                const BOM = '\uFEFF';
+                const template = BOM + 'nome;sku;categoria;fornecedor;preco_custo;preco_venda;codigo_barras;unidade\nExemplo Produto;SKU001;Bebidas;Fornecedor A;5.50;12.90;7891234567890;un\n';
+                const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'modelo_importacao_produtos.csv'; a.click();
+                URL.revokeObjectURL(url);
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                {t('settings.importDownloadTemplate')}
+              </Button>
+            </div>
+
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setImportFileName(file.name);
+
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                  try {
+                    const data = evt.target?.result;
+                    let rows: Record<string, string>[] = [];
+                    let headers: string[] = [];
+
+                    if (file.name.endsWith('.csv')) {
+                      const text = data as string;
+                      const lines = text.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim());
+                      if (lines.length < 2) { toast({ title: t('settings.importErrorEmpty'), variant: 'destructive' }); return; }
+                      const sep = lines[0].includes(';') ? ';' : ',';
+                      headers = lines[0].split(sep).map(h => h.trim().replace(/^["']|["']$/g, ''));
+                      rows = lines.slice(1).map(line => {
+                        const vals = line.split(sep).map(v => v.trim().replace(/^["']|["']$/g, ''));
+                        const obj: Record<string, string> = {};
+                        headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+                        return obj;
+                      });
+                    } else {
+                      const workbook = XLSX.read(data, { type: 'array' });
+                      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                      const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: '' });
+                      if (jsonData.length === 0) { toast({ title: t('settings.importErrorEmpty'), variant: 'destructive' }); return; }
+                      headers = Object.keys(jsonData[0]);
+                      rows = jsonData.map(row => {
+                        const obj: Record<string, string> = {};
+                        headers.forEach(h => { obj[h] = String(row[h] ?? ''); });
+                        return obj;
+                      });
+                    }
+
+                    setImportHeaders(headers);
+                    setImportPreview(rows);
+
+                    const fieldMap: Record<string, string[]> = {
+                      name: ['nome', 'name', 'produto', 'product', 'descripcion', 'nombre'],
+                      sku: ['sku', 'codigo', 'code', 'ref', 'referencia'],
+                      categoryId: ['categoria', 'category', 'categoría', 'cat'],
+                      supplierId: ['fornecedor', 'supplier', 'proveedor'],
+                      costPrice: ['preco_custo', 'custo', 'cost', 'cost_price', 'precio_costo', 'costo'],
+                      sellingPrice: ['preco_venda', 'venda', 'price', 'selling_price', 'precio_venta', 'precio'],
+                      barcode: ['codigo_barras', 'barcode', 'ean', 'gtin', 'codigo_barra'],
+                      unit: ['unidade', 'unit', 'un', 'medida', 'unidad'],
+                    };
+
+                    const autoMapping: Record<string, string> = {};
+                    const normalizedHeaders = headers.map(h => h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_'));
+                    Object.entries(fieldMap).forEach(([field, aliases]) => {
+                      const idx = normalizedHeaders.findIndex(nh => aliases.some(a => nh === a || nh.includes(a)));
+                      if (idx >= 0) autoMapping[field] = headers[idx];
+                    });
+                    setImportMapping(autoMapping);
+                    setShowImportPreview(true);
+                  } catch {
+                    toast({ title: t('settings.importErrorParse'), variant: 'destructive' });
+                  }
+                };
+
+                if (file.name.endsWith('.csv')) {
+                  reader.readAsText(file, 'UTF-8');
+                } else {
+                  reader.readAsArrayBuffer(file);
+                }
+                e.target.value = '';
+              }}
+            />
+          </div>
+
+          {importFileName && !showImportPreview && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <FileSpreadsheet className="h-4 w-4" />
+              {importFileName}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -619,25 +736,25 @@ const SettingsManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="h-5 w-5 text-primary" />
-            Informações do Sistema
+            {t('settings.system_info')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-gray-500 text-xs">Versão</p>
+              <p className="text-gray-500 text-xs">{t('settings.version')}</p>
               <p className="font-semibold">1.0.0</p>
             </div>
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground text-xs">Último Backup</p>
-              <p className="font-semibold">Nunca</p>
+              <p className="text-muted-foreground text-xs">{t('settings.last_backup')}</p>
+              <p className="font-semibold">{t('settings.never')}</p>
             </div>
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground text-xs">Base de Dados</p>
-              <p className="font-semibold">Local Storage</p>
+              <p className="text-muted-foreground text-xs">{t('settings.database')}</p>
+              <p className="font-semibold">{t('settings.localStorage')}</p>
             </div>
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-muted-foreground text-xs">Total de Registros</p>
+              <p className="text-muted-foreground text-xs">{t('settings.totalRecords')}</p>
               <p className="font-semibold">{stores.length + categories.length + suppliers.length}</p>
             </div>
           </div>
@@ -653,14 +770,14 @@ const SettingsManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-primary" />
-            Assinaturas das Lojas
+            {t('settings.storeSubscriptions')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {subscriptionData.length === 0 ? (
             <div className="p-12 text-center">
               <CreditCard className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-muted-foreground">Nenhuma assinatura encontrada</p>
+              <p className="text-muted-foreground">{t('settings.noSubscriptions')}</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -680,11 +797,11 @@ const SettingsManager: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-3 bg-muted rounded-lg">
-                        <p className="text-xs text-muted-foreground font-semibold">Data de Início</p>
+                        <p className="text-xs text-muted-foreground font-semibold">{t('settings.startDate')}</p>
                         <p className="font-medium flex items-center gap-1 mt-1"><Calendar className="h-3.5 w-3.5 text-primary" />{new Date(sub.startDate + 'T12:00:00').toLocaleDateString('pt-PT')}</p>
                       </div>
                       <div className="p-3 bg-muted rounded-lg">
-                        <p className="text-xs text-muted-foreground font-semibold">Data de Término</p>
+                        <p className="text-xs text-muted-foreground font-semibold">{t('settings.endDate')}</p>
                         <p className="font-medium flex items-center gap-1 mt-1"><Calendar className="h-3.5 w-3.5 text-destructive" />{new Date(sub.endDate + 'T12:00:00').toLocaleDateString('pt-PT')}</p>
                       </div>
                     </div>
@@ -694,7 +811,7 @@ const SettingsManager: React.FC = () => {
                       <div className="mt-4">
                         <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={() => setExpandedSubscription(expandedSubscription === sub.storeId ? null : sub.storeId)}>
                           <FileText className="h-3.5 w-3.5" />
-                          Documentos ({sub.documents.length})
+                          {t('settings.documents')} ({sub.documents.length})
                           {expandedSubscription === sub.storeId ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </Button>
 
@@ -703,10 +820,10 @@ const SettingsManager: React.FC = () => {
                             <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead className="text-xs">Descrição</TableHead>
-                                  <TableHead className="text-xs text-center">Data</TableHead>
-                                  <TableHead className="text-xs text-right">Valor</TableHead>
-                                  <TableHead className="text-xs text-center w-20">Ficheiro</TableHead>
+                                  <TableHead className="text-xs">{t('settings.description_label')}</TableHead>
+                                  <TableHead className="text-xs text-center">{t('settings.date')}</TableHead>
+                                  <TableHead className="text-xs text-right">{t('settings.value')}</TableHead>
+                                  <TableHead className="text-xs text-center w-20">{t('settings.file')}</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -759,9 +876,9 @@ const SettingsManager: React.FC = () => {
       <div className="p-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold bg-clip-text text-foreground">
-            Configurações
+            {t('settings.title')}
           </h1>
-          <p className="text-muted-foreground mt-1">Gerencie as configurações do sistema</p>
+          <p className="text-muted-foreground mt-1">{t('settings.subtitle')}</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
@@ -793,6 +910,144 @@ const SettingsManager: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Import Products Preview Dialog */}
+      <Dialog open={showImportPreview} onOpenChange={setShowImportPreview}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+              {t('settings.importPreviewTitle')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('settings.importPreviewDesc', { count: importPreview.length, file: importFileName })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
+            {/* Field Mapping */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">{t('settings.importMapFields')}</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: 'name', label: t('settings.importFieldName'), required: true },
+                  { key: 'sku', label: 'SKU', required: false },
+                  { key: 'categoryId', label: t('settings.importFieldCategory'), required: false },
+                  { key: 'supplierId', label: t('settings.importFieldSupplier'), required: false },
+                  { key: 'costPrice', label: t('settings.importFieldCost'), required: false },
+                  { key: 'sellingPrice', label: t('settings.importFieldPrice'), required: false },
+                  { key: 'barcode', label: t('settings.importFieldBarcode'), required: false },
+                  { key: 'unit', label: t('settings.importFieldUnit'), required: false },
+                ].map(field => (
+                  <div key={field.key} className="flex items-center gap-2">
+                    <Label className="text-xs w-28 shrink-0">
+                      {field.label} {field.required && <span className="text-destructive">*</span>}
+                    </Label>
+                    <Select
+                      value={importMapping[field.key] || '_skip_'}
+                      onValueChange={v => setImportMapping(prev => ({ ...prev, [field.key]: v === '_skip_' ? '' : v }))}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder={t('settings.importSkipColumn')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_skip_">{t('settings.importSkipColumn')}</SelectItem>
+                        {importHeaders.map(h => (
+                          <SelectItem key={h} value={h}>{h}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview Table */}
+            <div className="border rounded-lg overflow-auto max-h-[300px]">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="text-xs font-semibold w-8">#</TableHead>
+                    {importHeaders.map(h => (
+                      <TableHead key={h} className="text-xs font-semibold whitespace-nowrap">{h}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {importPreview.slice(0, 10).map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
+                      {importHeaders.map(h => (
+                        <TableCell key={h} className="text-xs whitespace-nowrap">{row[h]}</TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {importPreview.length > 10 && (
+                <div className="p-2 text-center text-xs text-muted-foreground bg-muted/30 border-t">
+                  {t('settings.importMoreRows', { count: importPreview.length - 10 })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => { setShowImportPreview(false); setImportPreview([]); setImportHeaders([]); setImportFileName(''); }}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => {
+                if (!importMapping.name) {
+                  toast({ title: t('settings.importErrorNoName'), variant: 'destructive' });
+                  return;
+                }
+
+                let imported = 0;
+                let skipped = 0;
+
+                importPreview.forEach(row => {
+                  const name = (row[importMapping.name] || '').trim();
+                  if (!name) { skipped++; return; }
+
+                  const catName = importMapping.categoryId ? (row[importMapping.categoryId] || '').trim() : '';
+                  const supName = importMapping.supplierId ? (row[importMapping.supplierId] || '').trim() : '';
+
+                  const category = catName ? categories.find(c => c.name.toLowerCase() === catName.toLowerCase()) : undefined;
+                  const supplier = supName ? suppliers.find(s => s.name.toLowerCase() === supName.toLowerCase()) : undefined;
+
+                  addProduct({
+                    name,
+                    sku: importMapping.sku ? (row[importMapping.sku] || '').trim() : '',
+                    categoryId: category?.id || '',
+                    supplierId: supplier?.id || '',
+                    costPrice: importMapping.costPrice ? parseFloat(String(row[importMapping.costPrice]).replace(',', '.')) || 0 : 0,
+                    sellingPrice: importMapping.sellingPrice ? parseFloat(String(row[importMapping.sellingPrice]).replace(',', '.')) || 0 : 0,
+                    barcode: importMapping.barcode ? (row[importMapping.barcode] || '').trim() : '',
+                    unit: importMapping.unit ? (row[importMapping.unit] || '').trim() : 'un',
+                  });
+                  imported++;
+                });
+
+                setShowImportPreview(false);
+                setImportPreview([]);
+                setImportHeaders([]);
+                setImportFileName('');
+
+                const msg = skipped > 0
+                  ? t('settings.importSuccessPartial', { imported: String(imported), skipped: String(skipped) })
+                  : t('settings.importSuccess', { count: String(imported) });
+
+                toast({ title: msg });
+              }}
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {t('settings.importConfirm', { count: importPreview.length })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
