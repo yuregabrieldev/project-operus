@@ -30,13 +30,15 @@ const LandingPage: React.FC = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
-  const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({ name: '', email: '', phone: '', brandName: '', storesRange: '' });
+  const [registerRequestLoading, setRegisterRequestLoading] = useState(false);
+  const [registerRequestSent, setRegisterRequestSent] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [subscribePlan, setSubscribePlan] = useState('');
   const [subscribeForm, setSubscribeForm] = useState({ name: '', email: '', phone: '', countryCode: '+351' });
   const [subscribeSuccess, setSubscribeSuccess] = useState(false);
-  const { login, register, loading } = useAuth();
+  const { login, loading } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -58,31 +60,37 @@ const LandingPage: React.FC = () => {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegisterRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pwd = registerForm.password;
-    if (pwd.length < 8) {
-      toast({ title: "Senha fraca", description: "A senha deve ter no mínimo 8 caracteres.", variant: "destructive" });
+    if (!registerForm.brandName.trim()) {
+      toast({ title: "Campo obrigatório", description: "Preencha o nome da sua marca.", variant: "destructive" });
       return;
     }
-    if (!/[A-Z]/.test(pwd) || !/[0-9]/.test(pwd)) {
-      toast({ title: "Senha fraca", description: "A senha deve conter pelo menos uma letra maiúscula e um número.", variant: "destructive" });
+    if (!registerForm.storesRange) {
+      toast({ title: "Campo obrigatório", description: "Selecione a quantidade de lojas.", variant: "destructive" });
       return;
     }
-    const success = await register(registerForm.name, registerForm.email, pwd);
-
-    if (success) {
-      toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Verifique seu email para confirmar a conta.",
+    setRegisterRequestLoading(true);
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.from('registration_requests').insert({
+        name: registerForm.name.trim(),
+        email: registerForm.email.trim().toLowerCase(),
+        phone: (registerForm.phone || '').trim(),
+        brand_name: (registerForm.brandName || '').trim(),
+        stores_range: registerForm.storesRange || null,
       });
-      setIsRegisterOpen(false);
-    } else {
+      if (error) throw error;
+      setRegisterRequestSent(true);
+      setRegisterForm({ name: '', email: '', phone: '', brandName: '', storesRange: '' });
+    } catch {
       toast({
-        title: "Erro no cadastro",
-        description: "Email já registrado ou dados inválidos.",
+        title: "Erro ao enviar",
+        description: "Não foi possível enviar sua solicitação. Tente novamente.",
         variant: "destructive",
       });
+    } finally {
+      setRegisterRequestLoading(false);
     }
   };
 
@@ -210,7 +218,7 @@ const LandingPage: React.FC = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
+              <Dialog open={isRegisterOpen} onOpenChange={(open) => { setIsRegisterOpen(open); if (!open) setRegisterRequestSent(false); }}>
                 <DialogTrigger asChild>
                   <Button>Cadastrar</Button>
                 </DialogTrigger>
@@ -218,46 +226,83 @@ const LandingPage: React.FC = () => {
                   <DialogHeader>
                     <DialogTitle>Criar Conta</DialogTitle>
                     <DialogDescription>
-                      Preencha os dados para criar sua conta
+                      Preencha os dados para solicitar acesso. Nossa equipe entrará em contato.
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleRegister} className="space-y-4">
-                    <div>
-                      <Label htmlFor="register-name">Nome</Label>
-                      <Input
-                        id="register-name"
-                        placeholder="Seu nome completo"
-                        value={registerForm.name}
-                        onChange={(e) => setRegisterForm(prev => ({ ...prev, name: e.target.value }))}
-                        required
-                      />
+                  {registerRequestSent ? (
+                    <div className="py-6 text-center space-y-4">
+                      <CheckCircle className="h-14 w-14 text-green-500 mx-auto" />
+                      <p className="text-lg font-medium text-gray-900">
+                        Solicitação enviada!
+                      </p>
+                      <p className="text-gray-600">
+                        Em breve a nossa equipe entrará em contato.
+                      </p>
+                      <Button type="button" variant="outline" onClick={() => { setIsRegisterOpen(false); setRegisterRequestSent(false); }}>
+                        Fechar
+                      </Button>
                     </div>
-                    <div>
-                      <Label htmlFor="register-email">Email</Label>
-                      <Input
-                        id="register-email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={registerForm.email}
-                        onChange={(e) => setRegisterForm(prev => ({ ...prev, email: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="register-password">Senha</Label>
-                      <Input
-                        id="register-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={registerForm.password}
-                        onChange={(e) => setRegisterForm(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "Criando conta..." : "Criar Conta"}
-                    </Button>
-                  </form>
+                  ) : (
+                    <form onSubmit={handleRegisterRequest} className="space-y-4">
+                      <div>
+                        <Label htmlFor="register-name">Nome</Label>
+                        <Input
+                          id="register-name"
+                          placeholder="Seu nome completo"
+                          value={registerForm.name}
+                          onChange={(e) => setRegisterForm(prev => ({ ...prev, name: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="register-email">Email</Label>
+                        <Input
+                          id="register-email"
+                          type="email"
+                          placeholder="seu@email.com"
+                          value={registerForm.email}
+                          onChange={(e) => setRegisterForm(prev => ({ ...prev, email: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="register-phone">Telefone para contato</Label>
+                        <Input
+                          id="register-phone"
+                          type="tel"
+                          placeholder="+351 912 345 678"
+                          value={registerForm.phone}
+                          onChange={(e) => setRegisterForm(prev => ({ ...prev, phone: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="register-brand">Nome da sua marca</Label>
+                        <Input
+                          id="register-brand"
+                          placeholder="Ex: Minha Marca"
+                          value={registerForm.brandName}
+                          onChange={(e) => setRegisterForm(prev => ({ ...prev, brandName: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="register-stores">Quantidade de lojas</Label>
+                        <Select value={registerForm.storesRange} onValueChange={(v) => setRegisterForm(prev => ({ ...prev, storesRange: v }))}>
+                          <SelectTrigger id="register-stores" aria-required="true">
+                            <SelectValue placeholder="Selecione a quantidade" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1-5">1 - 5 lojas</SelectItem>
+                            <SelectItem value="5-10">5 - 10 lojas</SelectItem>
+                            <SelectItem value="10+">10+ lojas</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button type="submit" className="w-full" disabled={registerRequestLoading}>
+                        {registerRequestLoading ? "Enviando..." : "Criar Conta"}
+                      </Button>
+                    </form>
+                  )}
                 </DialogContent>
               </Dialog>
             </div>
@@ -315,11 +360,8 @@ const LandingPage: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg px-8" onClick={() => setIsRegisterOpen(true)}>
-                Começar Gratuitamente
+                Começar Agora
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8" onClick={() => setIsLoginOpen(true)}>
-                Ver Demo
               </Button>
             </div>
           </div>

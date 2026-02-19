@@ -46,6 +46,17 @@ CREATE TABLE user_brands (
   UNIQUE(user_id, brand_id)
 );
 
+-- 4. REGISTRATION_REQUESTS (solicitações de cadastro na landing; só developer lê)
+CREATE TABLE registration_requests (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  email text NOT NULL,
+  phone text DEFAULT '',
+  brand_name text DEFAULT '',
+  stores_range text DEFAULT '',
+  created_at timestamptz DEFAULT now()
+);
+
 -- ============================================================
 -- STEP 2: Helper functions (now user_brands exists)
 -- ============================================================
@@ -180,6 +191,14 @@ CREATE POLICY "Users can insert own first brand association"
       SELECT 1 FROM user_brands WHERE user_id = auth.uid()
     )
   );
+
+-- Registration_requests RLS (landing: anon insert; só developer lê)
+ALTER TABLE registration_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow insert registration requests"
+  ON registration_requests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Developer can read registration requests"
+  ON registration_requests FOR SELECT
+  USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'developer');
 
 -- ============================================================
 -- 4. STORES
