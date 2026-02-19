@@ -93,7 +93,7 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="p-4 md:p-6">
         {/* Filtros */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -145,8 +145,8 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
         </div>
 
         {/* Tabela */}
-        <div className="border rounded-lg">
-          <Table>
+        <div className="border rounded-lg overflow-x-auto">
+          <Table className="min-w-[700px]">
             <TableHeader>
               <TableRow>
                 <TableHead>{t('users.name')}</TableHead>
@@ -166,14 +166,14 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {user.stores.map((store) => (
-                        <Badge key={store.id} variant="outline" className="text-xs">
+                        <Badge key={store.id} variant="outline" className="text-xs whitespace-nowrap">
                           {store.name}
                         </Badge>
                       ))}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.isActive ? 'default' : 'secondary'}>
+                    <Badge variant={user.isActive ? 'default' : 'secondary'} className="whitespace-nowrap">
                       {user.isActive ? t('users.active') : t('users.inactive')}
                     </Badge>
                   </TableCell>

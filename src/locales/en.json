@@ -214,7 +214,8 @@
     "export_quantity_csv": "Quantity"
   },
   "purchases": {
-    "title": "Purchase Suggestions",
+    "title": "Purchases",
+    "subtitle": "Manage purchase suggestions and orders",
     "tabSuggestions": "Purchase Suggestions",
     "description": "Low stock products that need replenishment",
     "orderCreated": "Order Created",
@@ -1313,5 +1314,16 @@
     "loggedOut": "Signed Out",
     "loggedOutDesc": "You have been signed out successfully.",
     "disconnected": "Disconnected"
+  },
+  "brand": {
+    "loadingBrands": "Loading your brands...",
+    "noBrandsTitle": "No brand access",
+    "noBrandsMessage": "You don't have any brand or store associated with your account yet.",
+    "contactDeveloper": "Please contact the administrator or developer to have a brand added to your account.",
+    "loggedAs": "Logged in as",
+    "logout": "Sign out",
+    "myBrands": "My Brands",
+    "selectBrandGreeting": "Hello, {{name}}! Select a brand to access:",
+    "primary": "Primary"
   }
 }

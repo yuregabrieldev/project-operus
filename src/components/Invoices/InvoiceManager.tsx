@@ -291,7 +291,7 @@ const InvoiceManager: React.FC = () => {
   if (isFormOpen) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Back + Title */}
           <div className="flex items-center gap-4">
             <Button
@@ -331,11 +331,11 @@ const InvoiceManager: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {t('invoices.title')}
             </h1>
             <p className="text-muted-foreground">{t('invoices.description')}</p>
@@ -358,18 +358,18 @@ const InvoiceManager: React.FC = () => {
 
         {/* Search Bar */}
         <Card>
-          <CardContent className="p-6">
-            <div className="flex gap-4">
+          <CardContent className="p-3 md:p-6">
+            <div className="flex gap-2 md:gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 md:h-5 md:w-5" />
                 <Input
                   placeholder={t('invoices.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 h-12 text-lg"
+                  className="pl-10 h-10 text-sm md:pl-12 md:h-12 md:text-lg"
                 />
               </div>
-              <Button onClick={clearFilters} variant="outline" className="h-12 px-6">
+              <Button onClick={clearFilters} variant="outline" className="h-10 px-4 text-sm md:h-12 md:px-6">
                 <X className="h-4 w-4 mr-2" />
                 {t('invoices.clearFilters')}
               </Button>
@@ -493,9 +493,9 @@ const InvoiceManager: React.FC = () => {
         )}
 
         {/* Dashboard Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           <Card className="bg-primary/5 border-primary/10">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-primary/70 text-sm font-medium">{t('invoices.totalInvoices')}</p>
@@ -508,7 +508,7 @@ const InvoiceManager: React.FC = () => {
           </Card>
 
           <Card className="bg-emerald-50/50 border-emerald-100">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-emerald-600 text-sm font-medium">{t('invoices.paidLabel')}</p>
@@ -521,7 +521,7 @@ const InvoiceManager: React.FC = () => {
           </Card>
 
           <Card className="bg-amber-50/50 border-amber-100">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-amber-600 text-sm font-medium">{t('invoices.pendingLabel')}</p>
@@ -534,7 +534,7 @@ const InvoiceManager: React.FC = () => {
           </Card>
 
           <Card className="bg-rose-50/50 border-rose-100">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-rose-600 text-sm font-medium">{t('invoices.overdueLabel')}</p>
@@ -550,20 +550,20 @@ const InvoiceManager: React.FC = () => {
         {/* Invoices Table */}
         <Card>
           <CardHeader className="bg-muted/50 border-b">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FileText className="h-6 w-6 text-primary" />
-                <span>{t('invoices.listTitle')}</span>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+            <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                <FileText className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                <span className="text-base md:text-lg">{t('invoices.listTitle')}</span>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
                   {filteredInvoices.length} de {invoices.length}
                 </Badge>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-sm font-normal text-muted-foreground">
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="text-xs md:text-sm font-normal text-muted-foreground hidden sm:block">
                   Total: €{dashboardStats.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
                 <Button size="sm" variant="outline" className="shadow-sm" onClick={exportCSV}>
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 mr-1 md:mr-2" />
                   {t('invoices.export')}
                 </Button>
               </div>
@@ -602,10 +602,10 @@ const InvoiceManager: React.FC = () => {
                           {invoice.paidDate ? formatDate(invoice.paidDate) : '-'}
                         </TableCell>
                         <TableCell>
-                          <Badge className={`${getStatusColor(invoice.status)} transition-colors border ${overdueStatus ? 'animate-heartbeat' : ''}`}>
-                            <div className="flex items-center gap-2">
+                          <Badge className={`${getStatusColor(invoice.status)} transition-colors border whitespace-nowrap ${overdueStatus ? 'animate-heartbeat' : ''}`}>
+                            <div className="flex items-center gap-1.5">
                               {getStatusIcon(invoice.status)}
-                              <span className="font-medium">
+                              <span className="font-medium text-xs">
                                 {t(`invoices.status_${invoice.status}`)}
                               </span>
                             </div>

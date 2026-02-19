@@ -126,37 +126,39 @@ const CashManager: React.FC = () => {
     <div className="space-y-4">
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="space-y-1">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 sm:items-end">
+            <div className="space-y-1 w-full sm:w-auto">
               <Label className="text-xs font-semibold text-muted-foreground">{t('cash.store')}</Label>
               <Select value={filterStore} onValueChange={setFilterStore}>
-                <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('cash.allStores')}</SelectItem>
                   {allStores.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-muted-foreground">{t('cash.month')}</Label>
-              <Select value={filterMonth} onValueChange={setFilterMonth}>
-                <SelectTrigger className="w-[140px] h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('cash.allMonths')}</SelectItem>
-                  {months.map((m, i) => (
-                    <SelectItem key={i} value={(i + 1).toString()}>{m}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex gap-3 w-full sm:w-auto">
+              <div className="space-y-1 flex-1 sm:flex-none">
+                <Label className="text-xs font-semibold text-muted-foreground">{t('cash.month')}</Label>
+                <Select value={filterMonth} onValueChange={setFilterMonth}>
+                  <SelectTrigger className="w-full sm:w-[140px] h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('cash.allMonths')}</SelectItem>
+                    {months.map((m, i) => (
+                      <SelectItem key={i} value={(i + 1).toString()}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 flex-1 sm:flex-none">
+                <Label className="text-xs font-semibold text-muted-foreground">{t('cash.year')}</Label>
+                <Select value={filterYear} onValueChange={setFilterYear}>
+                  <SelectTrigger className="w-full sm:w-[110px] h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>{[2024, 2025, 2026].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-muted-foreground">{t('cash.year')}</Label>
-              <Select value={filterYear} onValueChange={setFilterYear}>
-                <SelectTrigger className="w-[110px] h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>{[2024, 2025, 2026].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <Button onClick={handleAddClick} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 ml-auto">
+            <Button onClick={handleAddClick} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 w-full sm:w-auto sm:ml-auto">
               <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
             </Button>
           </div>
@@ -740,13 +742,13 @@ const CashManager: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t('cash.title')}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('cash.title')}</h1>
           <p className="text-muted-foreground mt-1">{t('cash.description')}</p>
         </div>
 
-        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit overflow-x-auto pb-1">
+        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit max-w-full overflow-x-auto scrollbar-hide">
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (

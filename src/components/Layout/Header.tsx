@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Sun, Moon, Globe, Bell, LogOut, User, Settings,
-  ChevronDown, Plus, Store
+  ChevronDown, Menu, Store
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,11 @@ import { toast } from '@/hooks/use-toast';
 import { StoreForm } from '../Store/StoreForm';
 import { cn } from '@/lib/utils';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onMenuToggle: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const navigate = useNavigate();
   const { lang = 'pt' } = useParams<{ lang: string }>();
   const location = useLocation();
@@ -34,7 +38,6 @@ const Header: React.FC = () => {
   const langMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -57,10 +60,6 @@ const Header: React.FC = () => {
       title: t('header.loggedOut'),
       description: t('header.loggedOutDesc'),
     });
-  };
-
-  const handleCreateStore = () => {
-    setShowStoreForm(true);
   };
 
   const toggleDarkMode = () => {
@@ -98,7 +97,6 @@ const Header: React.FC = () => {
       .slice(0, 2);
   };
 
-  // Sample notifications
   const notifications = [
     { id: '1', text: 'Estoque baixo: Açaí 10L', time: 'há 5 min', read: false },
     { id: '2', text: 'Checklist pendente: Abertura Loja', time: 'há 15 min', read: false },
@@ -108,21 +106,30 @@ const Header: React.FC = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-6 h-16 flex items-center shadow-sm relative z-40">
+    <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 md:px-6 h-14 md:h-16 flex items-center shadow-sm relative z-40">
       <div className="flex items-center justify-between w-full">
-        {/* Left: Brand info */}
-        <div className="flex items-center space-x-4">
+        {/* Left: Hamburger (mobile) + Brand info */}
+        <div className="flex items-center gap-3">
+          {/* Hamburger - mobile only */}
+          <button
+            onClick={onMenuToggle}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors md:hidden"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
           {selectedBrand && (
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-2 md:gap-3">
               {selectedBrand.logoUrl && selectedBrand.logoUrl !== '/placeholder.svg' ? (
                 <img
                   src={selectedBrand.logoUrl}
                   alt={selectedBrand.name}
-                  className="w-8 h-8 rounded-lg object-cover"
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-lg object-cover"
                 />
               ) : (
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs md:text-sm"
                   style={{ backgroundColor: selectedBrand.primaryColor }}
                 >
                   {selectedBrand.name.charAt(0)}
@@ -130,7 +137,7 @@ const Header: React.FC = () => {
               )}
               <div>
                 <h2 className="font-semibold text-gray-900 text-sm leading-tight">{selectedBrand.name}</h2>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 hidden sm:block">
                   {selectedBrand.storesCount === 1
                     ? t('header.storeCount', { count: selectedBrand.storesCount })
                     : t('header.storesCount', { count: selectedBrand.storesCount })}
@@ -138,22 +145,21 @@ const Header: React.FC = () => {
               </div>
             </div>
           )}
-          {/* Nova Loja button removed — store creation via dev brand management */}
         </div>
 
         {/* Right: Action icons + User */}
-        <div className="flex items-center gap-1">
-          {/* Dark Mode Toggle */}
+        <div className="flex items-center gap-0.5 md:gap-1">
+          {/* Dark Mode Toggle - desktop only */}
           <button
             onClick={toggleDarkMode}
-            className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            className="hidden md:flex p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             title={darkMode ? t('header.lightMode') : t('header.darkMode')}
           >
             {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
 
-          {/* Language Selector */}
-          <div className="relative" ref={langMenuRef}>
+          {/* Language Selector - desktop only */}
+          <div className="relative hidden md:block" ref={langMenuRef}>
             <button
               onClick={() => {
                 setShowLangMenu(!showLangMenu);
@@ -174,7 +180,6 @@ const Header: React.FC = () => {
                     onClick={() => {
                       const newLang = lang2;
                       setLanguage(newLang);
-                      // Replace language prefix in current path
                       const pathAfterLang = location.pathname.replace(/^\/[a-z]{2}/, '');
                       navigate(`/${newLang}${pathAfterLang}`, { replace: true });
                       setShowLangMenu(false);
@@ -204,19 +209,19 @@ const Header: React.FC = () => {
                 setShowUserMenu(false);
                 setShowLangMenu(false);
               }}
-              className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors relative"
+              className="p-2 md:p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors relative"
               title={t('header.notifications')}
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive rounded-full text-destructive-foreground text-[10px] font-bold px-1">
+                <span className="absolute top-0.5 right-0.5 md:top-1 md:right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive rounded-full text-destructive-foreground text-[10px] font-bold px-1">
                   {unreadCount}
                 </span>
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-popover rounded-xl shadow-xl border border-border py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 top-full mt-2 w-72 md:w-80 bg-popover rounded-xl shadow-xl border border-border py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="px-4 py-2 border-b border-border flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">{t('header.notifications')}</h3>
                   {unreadCount > 0 && (
@@ -255,8 +260,8 @@ const Header: React.FC = () => {
             )}
           </div>
 
-          {/* Divider */}
-          <div className="w-px h-8 bg-border mx-2" />
+          {/* Divider - desktop only */}
+          <div className="w-px h-8 bg-border mx-1 md:mx-2 hidden md:block" />
 
           {/* User Profile Dropdown */}
           <div className="relative" ref={userMenuRef}>
@@ -266,7 +271,7 @@ const Header: React.FC = () => {
                 setShowLangMenu(false);
                 setShowNotifications(false);
               }}
-              className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="flex items-center gap-2 px-1.5 md:px-2 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               {user?.imageUrl ? (
                 <img
@@ -279,24 +284,22 @@ const Header: React.FC = () => {
                   {user?.name ? getInitials(user.name) : 'U'}
                 </div>
               )}
-              <span className="text-sm font-medium text-muted-foreground hidden md:block">
+              <span className="text-sm font-medium text-muted-foreground hidden lg:block">
                 {user?.name}
               </span>
               <ChevronDown className={cn(
-                "h-4 w-4 text-muted-foreground transition-transform duration-200 hidden md:block",
+                "h-4 w-4 text-muted-foreground transition-transform duration-200 hidden lg:block",
                 showUserMenu && "rotate-180"
               )} />
             </button>
 
             {showUserMenu && (
               <div className="absolute right-0 top-full mt-2 w-56 bg-popover rounded-xl shadow-xl border border-border py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                {/* User Info */}
                 <div className="px-4 py-3 border-b border-border">
                   <p className="text-sm font-semibold text-foreground">{user?.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
                 </div>
 
-                {/* Menu Items */}
                 <div className="py-1">
                   <button
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -320,7 +323,6 @@ const Header: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Logout */}
                 <div className="border-t border-border py-1">
                   <button
                     onClick={() => {

@@ -65,13 +65,13 @@ const LandingPage: React.FC = () => {
     if (success) {
       toast({
         title: "Cadastro realizado com sucesso!",
-        description: "Bem-vindo ao Operus",
+        description: "Verifique seu email para confirmar a conta.",
       });
       setIsRegisterOpen(false);
     } else {
       toast({
         title: "Erro no cadastro",
-        description: "Tente novamente",
+        description: "Email já registrado ou dados inválidos.",
         variant: "destructive",
       });
     }
@@ -192,11 +192,7 @@ const LandingPage: React.FC = () => {
                       />
                     </div>
                     <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-                      <p className="font-semibold mb-2">Credenciais de teste:</p>
-                      <p className="text-purple-700 font-medium">🔧 Dev: dev@operus.com / 123456</p>
-                      <p>Admin: admin@operus.com / 123456</p>
-                      <p>Gerente: manager@operus.com / 123456</p>
-                      <p>Assistente: funcionario@operus.com / 123456</p>
+                      <p>Use o email e senha da sua conta para entrar.</p>
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? "Entrando..." : "Entrar"}

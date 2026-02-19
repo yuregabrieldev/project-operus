@@ -39,6 +39,7 @@ import DevBrands from './components/Developer/DevBrands';
 import DevFinance from './components/Developer/DevFinance';
 import DevUsers from './components/Developer/DevUsers';
 import DevSettings from './components/Developer/DevSettings';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 const queryClient = new QueryClient();
 
@@ -63,9 +64,7 @@ const AuthGate: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-sm">O</span>
-          </div>
+          <img src="/operus-logo.png" alt="OPERUS" className="w-14 h-14 rounded-lg mx-auto mb-4 object-contain" />
           <p className="text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -132,22 +131,22 @@ const AuthGate: React.FC = () => {
         <Route path="checklists" element={<ChecklistManager />} />
         <Route path="checklists/:id" element={<ChecklistManager />} />
 
-        {/* Store / User Management */}
-        <Route path="lojas" element={<StoreManager />} />
-        <Route path="usuarios" element={<UserManager />} />
+        {/* Store / User Management — admin/manager only */}
+        <Route path="lojas" element={<ProtectedRoute allowedRoles={['developer', 'admin', 'manager']}><StoreManager /></ProtectedRoute>} />
+        <Route path="usuarios" element={<ProtectedRoute allowedRoles={['developer', 'admin']}><UserManager /></ProtectedRoute>} />
 
-        {/* Settings */}
-        <Route path="configuracoes" element={<SettingsManager />} />
+        {/* Settings — admin only */}
+        <Route path="configuracoes" element={<ProtectedRoute allowedRoles={['developer', 'admin']}><SettingsManager /></ProtectedRoute>} />
 
-        {/* Profile */}
+        {/* Profile — everyone */}
         <Route path="perfil" element={<ProfilePage />} />
 
-        {/* Developer pages */}
-        <Route path="dev-dashboard" element={<DevDashboard />} />
-        <Route path="dev-brands" element={<DevBrands />} />
-        <Route path="dev-finance" element={<DevFinance />} />
-        <Route path="dev-users" element={<DevUsers />} />
-        <Route path="dev-settings" element={<DevSettings />} />
+        {/* Developer pages — developer only */}
+        <Route path="dev-dashboard" element={<ProtectedRoute allowedRoles={['developer']}><DevDashboard /></ProtectedRoute>} />
+        <Route path="dev-brands" element={<ProtectedRoute allowedRoles={['developer']}><DevBrands /></ProtectedRoute>} />
+        <Route path="dev-finance" element={<ProtectedRoute allowedRoles={['developer']}><DevFinance /></ProtectedRoute>} />
+        <Route path="dev-users" element={<ProtectedRoute allowedRoles={['developer']}><DevUsers /></ProtectedRoute>} />
+        <Route path="dev-settings" element={<ProtectedRoute allowedRoles={['developer']}><DevSettings /></ProtectedRoute>} />
 
         {/* Language root redirect */}
         <Route index element={<Navigate to={isDev ? 'dev-dashboard' : 'dashboard'} replace />} />

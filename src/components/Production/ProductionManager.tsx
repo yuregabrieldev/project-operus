@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -92,54 +93,31 @@ const ProductionManager: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Receitas</p>
-                <p className="text-2xl font-bold">{productionStats.totalRecipes}</p>
-              </div>
-              <Factory className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Produções Hoje</p>
-                <p className="text-2xl font-bold text-green-600">{productionStats.todayProductions}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Disponíveis</p>
-                <p className="text-2xl font-bold text-blue-600">{productionStats.availableRecipes}</p>
-              </div>
-              <Play className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Bloqueadas</p>
-                <p className="text-2xl font-bold text-red-600">{productionStats.blockedRecipes}</p>
-              </div>
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatsCard
+          title={t('production.totalRecipes')}
+          value={productionStats.totalRecipes}
+          icon={Factory}
+          variant="default"
+        />
+        <StatsCard
+          title={t('production.todayProductions')}
+          value={productionStats.todayProductions}
+          icon={CheckCircle}
+          variant="success"
+        />
+        <StatsCard
+          title={t('production.available')}
+          value={productionStats.availableRecipes}
+          icon={Play}
+          variant="default"
+        />
+        <StatsCard
+          title={t('production.blocked')}
+          value={productionStats.blockedRecipes}
+          icon={AlertTriangle}
+          variant="destructive"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useBrand } from './BrandContext';
+import {
+  categoriesService, suppliersService, productsService, inventoryService,
+  costCentersService, cashService, invoicesService, movementsService,
+  operationLogsService, purchaseOrdersService, recipesService, productionService,
+  wasteService, licensesService, simpleChecklistsService,
+} from '@/lib/supabase-services';
 
-// Types
+// Types - kept identical for backward compat
 export interface Store {
   id: string;
   name: string;
@@ -237,7 +244,6 @@ export interface PurchaseOrder {
 }
 
 interface DataContextType {
-  // State
   stores: Store[];
   categories: Category[];
   suppliers: Supplier[];
@@ -256,38 +262,29 @@ interface DataContextType {
   wasteVariants: WasteVariant[];
   wasteReasons: WasteReason[];
   wasteRecords: WasteRecord[];
+  dataLoading: boolean;
 
-  // Actions
   addStore: (store: Omit<Store, 'id'>) => void;
   updateStore: (id: string, store: Partial<Store>) => void;
   deleteStore: (id: string) => void;
-
   addCategory: (category: Omit<Category, 'id'>) => void;
   deleteCategory: (id: string) => void;
-
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
-
   addInventoryItem: (item: Omit<InventoryItem, 'id'>) => void;
   updateInventoryItem: (id: string, item: Partial<InventoryItem>) => void;
-
   addCashRegister: (cashRegister: Omit<CashRegister, 'id'>) => void;
   updateCashRegister: (id: string, cashRegister: Partial<CashRegister>) => void;
-
   addInvoice: (invoice: Omit<Invoice, 'id'>) => void;
   updateInvoice: (id: string, invoice: Partial<Invoice>) => void;
-
   addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
   deleteSupplier: (id: string) => void;
-
   addCostCenter: (costCenter: Omit<CostCenter, 'id'>) => void;
   deleteCostCenter: (id: string) => void;
-
   addLicense: (license: Omit<License, 'id'>) => void;
   updateLicense: (id: string, license: Partial<License>) => void;
   deleteLicense: (id: string) => void;
-
   addWasteVariant: (variant: Omit<WasteVariant, 'id'>) => void;
   updateWasteVariant: (id: string, variant: Partial<WasteVariant>) => void;
   deleteWasteVariant: (id: string) => void;
@@ -296,28 +293,20 @@ interface DataContextType {
   deleteWasteReason: (id: string) => void;
   addWasteRecord: (record: Omit<WasteRecord, 'id'>) => void;
   deleteWasteRecord: (id: string) => void;
-
   addChecklist: (checklist: Omit<Checklist, 'id'>) => void;
   updateChecklist: (id: string, checklist: Partial<Checklist>) => void;
-
   addMovement: (movement: Omit<InventoryMovement, 'id'>) => void;
   updateMovement: (id: string, movement: Partial<InventoryMovement>) => void;
-
   addOperationLog: (log: Omit<OperationLog, 'id'>) => void;
   getOperationLogsByProduct: (productId: string) => OperationLog[];
-
   addRecipe: (recipe: Omit<Recipe, 'id'>) => void;
   updateRecipe: (id: string, recipe: Partial<Recipe>) => void;
   deleteRecipe: (id: string) => void;
-
   addProductionRecord: (record: Omit<ProductionRecord, 'id'>) => void;
   getProductionRecordsByRecipe: (recipeId: string) => ProductionRecord[];
-
   addPurchaseOrder: (order: Omit<PurchaseOrder, 'id'>) => void;
   updatePurchaseOrder: (id: string, order: Partial<PurchaseOrder>) => void;
   deletePurchaseOrder: (id: string) => void;
-
-  // Getters
   getProductById: (id: string) => Product | undefined;
   getStoreById: (id: string) => Store | undefined;
   getSupplierById: (id: string) => Supplier | undefined;
@@ -331,456 +320,631 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Mock data initialization
-  const [stores, setStores] = useState<Store[]>([
-    { id: '1', name: 'Loja Centro', address: 'Rua Principal, 123', contact: '(11) 1234-5678', isActive: true },
-    { id: '2', name: 'Loja Shopping', address: 'Shopping Center, Loja 45', contact: '(11) 8765-4321', isActive: true },
-    { id: '3', name: 'Loja Norte', address: 'Av. Norte, 456', contact: '(11) 5555-5555', isActive: true }
-  ]);
+  const { selectedBrand, stores: brandStores } = useBrand();
+  const brandId = selectedBrand?.id;
 
-  const [categories, setCategories] = useState<Category[]>([
-    { id: '1', name: 'Eletrônicos' },
-    { id: '2', name: 'Roupas' },
-    { id: '3', name: 'Casa e Jardim' },
-    { id: '4', name: 'Livros' },
-    { id: '5', name: 'Alimentos' }
-  ]);
-
-  const [suppliers, setSuppliers] = useState<Supplier[]>([
-    { id: '1', name: 'Tech Supply Co.', contact: '(11) 1111-1111', email: 'contato@techsupply.com' },
-    { id: '2', name: 'Fashion Wholesale', contact: '(11) 2222-2222', email: 'vendas@fashionwholesale.com' },
-    { id: '3', name: 'Home & Garden Ltd.', contact: '(11) 3333-3333', email: 'info@homeandgarden.com' }
-  ]);
-
-  const [products, setProducts] = useState<Product[]>([
-    { id: '1', name: 'Smartphone Galaxy', sku: 'PHONE001', supplierId: '1', categoryId: '1', costPrice: 800, sellingPrice: 1200, barcode: '1234567890123', unit: 'UN.' },
-    { id: '2', name: 'Camiseta Básica', sku: 'SHIRT001', supplierId: '2', categoryId: '2', costPrice: 20, sellingPrice: 50, barcode: '1234567890124', unit: 'UN.' },
-    { id: '3', name: 'Vaso Decorativo', sku: 'VASE001', supplierId: '3', categoryId: '3', costPrice: 30, sellingPrice: 75, barcode: '1234567890125', unit: 'UN.' },
-    { id: '4', name: 'Fone Bluetooth', sku: 'HEADPHONE001', supplierId: '1', categoryId: '1', costPrice: 100, sellingPrice: 180, barcode: '1234567890126', unit: 'UN.' },
-    { id: '5', name: 'Jaqueta Jeans', sku: 'JACKET001', supplierId: '2', categoryId: '2', costPrice: 80, sellingPrice: 150, barcode: '1234567890127', unit: 'UN.' },
-    { id: '6', name: 'Suco de Abacaxi 300ml', sku: 'JUICE001', supplierId: '3', categoryId: '5', costPrice: 3, sellingPrice: 8, barcode: '1234567890128', unit: 'UN.' },
-    { id: '7', name: 'Abacaxi Inteiro', sku: 'FRUIT001', supplierId: '3', categoryId: '5', costPrice: 5, sellingPrice: 12, barcode: '1234567890129', unit: 'KG' },
-    { id: '8', name: 'Casca de Abacaxi', sku: 'WASTE001', supplierId: '3', categoryId: '5', costPrice: 0, sellingPrice: 0, barcode: '1234567890130', unit: 'KG' }
-  ]);
-
-  const [inventory, setInventory] = useState<InventoryItem[]>([
-    { id: '1', storeId: '1', productId: '1', currentQuantity: 15, minQuantity: 10, lastUpdated: new Date() },
-    { id: '2', storeId: '1', productId: '2', currentQuantity: 5, minQuantity: 20, lastUpdated: new Date() },
-    { id: '3', storeId: '2', productId: '1', currentQuantity: 8, minQuantity: 10, lastUpdated: new Date() },
-    { id: '4', storeId: '2', productId: '3', currentQuantity: 25, minQuantity: 15, lastUpdated: new Date() },
-    { id: '5', storeId: '3', productId: '4', currentQuantity: 3, minQuantity: 8, lastUpdated: new Date() },
-    { id: '6', storeId: '1', productId: '7', currentQuantity: 50, minQuantity: 20, lastUpdated: new Date() },
-    { id: '7', storeId: '1', productId: '6', currentQuantity: 10, minQuantity: 50, lastUpdated: new Date() },
-    // Additional multi-store inventory for richer demo
-    { id: '8', storeId: '2', productId: '2', currentQuantity: 30, minQuantity: 20, lastUpdated: new Date() },
-    { id: '9', storeId: '3', productId: '2', currentQuantity: 12, minQuantity: 20, lastUpdated: new Date() },
-    { id: '10', storeId: '3', productId: '1', currentQuantity: 20, minQuantity: 10, lastUpdated: new Date() },
-    { id: '11', storeId: '2', productId: '4', currentQuantity: 18, minQuantity: 8, lastUpdated: new Date() },
-    { id: '12', storeId: '1', productId: '4', currentQuantity: 22, minQuantity: 8, lastUpdated: new Date() },
-    { id: '13', storeId: '3', productId: '3', currentQuantity: 7, minQuantity: 15, lastUpdated: new Date() },
-    { id: '14', storeId: '1', productId: '3', currentQuantity: 10, minQuantity: 15, lastUpdated: new Date() },
-    { id: '15', storeId: '2', productId: '7', currentQuantity: 35, minQuantity: 20, lastUpdated: new Date() },
-    { id: '16', storeId: '3', productId: '7', currentQuantity: 28, minQuantity: 20, lastUpdated: new Date() },
-    { id: '17', storeId: '2', productId: '6', currentQuantity: 45, minQuantity: 50, lastUpdated: new Date() },
-    { id: '18', storeId: '3', productId: '6', currentQuantity: 60, minQuantity: 50, lastUpdated: new Date() },
-    { id: '19', storeId: '1', productId: '5', currentQuantity: 14, minQuantity: 10, lastUpdated: new Date() },
-    { id: '20', storeId: '2', productId: '5', currentQuantity: 9, minQuantity: 10, lastUpdated: new Date() },
-    { id: '21', storeId: '3', productId: '5', currentQuantity: 6, minQuantity: 10, lastUpdated: new Date() },
-  ]);
-
-  const [cashRegisters, setCashRegisters] = useState<CashRegister[]>([
-    { id: '1', storeId: '1', openingBalance: 500, openedAt: new Date(), openedBy: 'user1', status: 'open' },
-    { id: '2', storeId: '2', openingBalance: 300, closingBalance: 450, openedAt: new Date(Date.now() - 86400000), closedAt: new Date(), openedBy: 'user2', closedBy: 'user2', status: 'closed' }
-  ]);
-
-  const [invoices, setInvoices] = useState<Invoice[]>([
-    { id: '1', supplierId: '1', invoiceNumber: 'INV001', amount: 5000, status: 'pedido_realizado', issueDate: new Date(), dueDate: new Date(Date.now() + 30 * 86400000) },
-    { id: '2', supplierId: '2', invoiceNumber: 'INV002', amount: 2500, status: 'contas_a_pagar', issueDate: new Date(Date.now() - 45 * 86400000), dueDate: new Date(Date.now() - 15 * 86400000) },
-    { id: '3', supplierId: '3', invoiceNumber: 'INV003', amount: 1800, status: 'finalizado_pago', issueDate: new Date(Date.now() - 60 * 86400000), dueDate: new Date(Date.now() - 30 * 86400000), paidDate: new Date(Date.now() - 25 * 86400000) }
-  ]);
-
-  const [costCenters, setCostCenters] = useState<CostCenter[]>([
-    { id: '1', name: '5544 - TESTE 2' },
-    { id: '2', name: '4545 - Teste 9' },
-    { id: '3', name: '5454 - Teste 49' },
-    { id: '4', name: '4565 - Agora Vai' },
-  ]);
-
-  const [checklists, setChecklists] = useState<Checklist[]>([
-    {
-      id: '1',
-      storeId: '1',
-      type: 'opening',
-      tasks: [
-        { id: '1', taskName: 'Ligar luzes', isCompleted: true },
-        { id: '2', taskName: 'Abrir caixa', isCompleted: true },
-        { id: '3', taskName: 'Verificar produtos em destaque', isCompleted: false }
-      ],
-      completedAt: new Date(),
-      completedBy: 'user1'
-    }
-  ]);
-
-  const [movements, setMovements] = useState<InventoryMovement[]>([
-    { id: '1', productId: '1', fromStoreId: '1', toStoreId: '2', quantity: 5, status: 'delivered', createdAt: new Date(), userId: 'user1', type: 'transfer' },
-    { id: '2', productId: '2', toStoreId: '1', quantity: 10, status: 'delivered', createdAt: new Date(), userId: 'user1', type: 'in' },
-    // In-transit movements for demo
-    { id: '3', productId: '1', fromStoreId: '1', toStoreId: '3', quantity: 5, status: 'in_transit', createdAt: new Date(), userId: 'user1', type: 'transfer' },
-    { id: '4', productId: '4', fromStoreId: '2', toStoreId: '1', quantity: 8, status: 'in_transit', createdAt: new Date(), userId: 'user1', type: 'transfer' },
-    { id: '5', productId: '6', fromStoreId: '3', toStoreId: '2', quantity: 15, status: 'in_transit', createdAt: new Date(), userId: 'user1', type: 'transfer' },
-    { id: '6', productId: '2', fromStoreId: '1', toStoreId: '2', quantity: 10, status: 'pending', createdAt: new Date(), userId: 'user1', type: 'transfer' },
-  ]);
-
-  const [operationLogs, setOperationLogs] = useState<OperationLog[]>([
-    { id: '1', productId: '1', storeId: '1', userId: 'user1', quantity: 2, actionType: 'withdrawal', createdAt: new Date(Date.now() - 86400000), notes: 'Retirada para reposição' },
-    { id: '2', productId: '2', storeId: '1', userId: 'user1', quantity: 5, actionType: 'withdrawal', createdAt: new Date(Date.now() - 172800000) },
-    { id: '3', productId: '3', storeId: '2', userId: 'user2', quantity: 1, actionType: 'withdrawal', createdAt: new Date() }
-  ]);
-
-  const [recipes, setRecipes] = useState<Recipe[]>([
-    {
-      id: '1',
-      name: 'Suco de Abacaxi',
-      finalProductId: '6',
-      ingredients: [{ productId: '7', quantity: 2 }],
-      expectedYield: 600,
-      createdAt: new Date(),
-      isActive: true
-    }
-  ]);
-
+  const [dataLoading, setDataLoading] = useState(false);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [cashRegisters, setCashRegisters] = useState<CashRegister[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [checklists, setChecklists] = useState<Checklist[]>([]);
+  const [movements, setMovements] = useState<InventoryMovement[]>([]);
+  const [operationLogs, setOperationLogs] = useState<OperationLog[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [productionRecords, setProductionRecords] = useState<ProductionRecord[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [wasteVariants, setWasteVariants] = useState<WasteVariant[]>([]);
+  const [wasteReasons, setWasteReasons] = useState<WasteReason[]>([]);
+  const [wasteRecords, setWasteRecords] = useState<WasteRecord[]>([]);
 
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([
-    {
-      id: '1',
-      supplierId: '1',
-      userId: 'user1',
-      storeIds: ['1'],
-      items: [
-        { productId: '1', storeId: '1', unit: 'UN.', quantity: 5 },
-        { productId: '4', storeId: '1', unit: 'UN.', quantity: 3 }
-      ],
-      hasInvoiceManagement: true,
-      hasTransitGenerated: true,
-      invoiceId: '1',
-      observation: 'Pedido urgente de eletrônicos',
-      createdAt: new Date()
-    },
-    {
-      id: '2',
-      supplierId: '2',
-      userId: 'user1',
-      storeIds: ['2'],
-      items: [
-        { productId: '2', storeId: '2', unit: 'UN.', quantity: 10 }
-      ],
-      hasInvoiceManagement: false,
-      hasTransitGenerated: false,
-      createdAt: new Date(Date.now() - 5 * 86400000)
-    },
-    {
-      id: '3',
-      supplierId: '3',
-      userId: 'user1',
-      storeIds: ['1', '3'],
-      items: [
-        { productId: '3', storeId: '1', unit: 'UN.', quantity: 8 },
-        { productId: '6', storeId: '3', unit: 'UN.', quantity: 20 }
-      ],
-      hasInvoiceManagement: true,
-      hasTransitGenerated: true,
-      invoiceId: '3',
-      observation: 'Reposição mensal',
-      createdAt: new Date(Date.now() - 10 * 86400000)
+  // Derive stores from BrandContext
+  useEffect(() => {
+    setStores(brandStores.map(s => ({
+      id: s.id, name: s.name, address: s.address, contact: s.contact, isActive: s.isActive,
+    })));
+  }, [brandStores]);
+
+  // Load all data when brand changes
+  const loadAllData = useCallback(async () => {
+    if (!brandId) return;
+    setDataLoading(true);
+    try {
+      const [
+        dbCats, dbSupp, dbProds, dbInv, dbCC, dbCash, dbInv2, dbMov,
+        dbOpLogs, dbPO, dbRecipes, dbProdRecs, dbWV, dbWR, dbWRec,
+        dbLic, dbCL,
+      ] = await Promise.all([
+        categoriesService.getByBrand(brandId),
+        suppliersService.getByBrand(brandId),
+        productsService.getByBrand(brandId),
+        inventoryService.getByBrand(brandId),
+        costCentersService.getByBrand(brandId),
+        cashService.getByBrand(brandId),
+        invoicesService.getByBrand(brandId),
+        movementsService.getByBrand(brandId),
+        operationLogsService.getByBrand(brandId),
+        purchaseOrdersService.getByBrand(brandId),
+        recipesService.getByBrand(brandId),
+        productionService.getByBrand(brandId),
+        wasteService.getVariants(brandId),
+        wasteService.getReasons(brandId),
+        wasteService.getRecords(brandId),
+        licensesService.getByBrand(brandId),
+        simpleChecklistsService.getByBrand(brandId),
+      ]);
+
+      setCategories(dbCats.map(c => ({ id: c.id, name: c.name })));
+      setSuppliers(dbSupp.map(s => ({ id: s.id, name: s.name, contact: s.contact, email: s.email })));
+      setProducts(dbProds.map(p => ({
+        id: p.id, name: p.name, sku: p.sku,
+        supplierId: p.supplier_id || '', categoryId: p.category_id || '',
+        costPrice: Number(p.cost_price), sellingPrice: Number(p.selling_price),
+        barcode: p.barcode, imageUrl: p.image_url ?? undefined, unit: p.unit,
+      })));
+      setInventory(dbInv.map(i => ({
+        id: i.id, storeId: i.store_id, productId: i.product_id,
+        currentQuantity: Number(i.current_quantity), minQuantity: Number(i.min_quantity),
+        lastUpdated: new Date(i.last_updated),
+        alertWarning: i.alert_warning != null ? Number(i.alert_warning) : undefined,
+        alertCritical: i.alert_critical != null ? Number(i.alert_critical) : undefined,
+      })));
+      setCostCenters(dbCC.map(c => ({ id: c.id, name: c.name })));
+      setCashRegisters(dbCash.map(cr => ({
+        id: cr.id, storeId: cr.store_id,
+        openingBalance: Number(cr.opening_balance),
+        closingBalance: cr.closing_balance != null ? Number(cr.closing_balance) : undefined,
+        openedAt: new Date(cr.opened_at), closedAt: cr.closed_at ? new Date(cr.closed_at) : undefined,
+        openedBy: cr.opened_by, closedBy: cr.closed_by ?? undefined,
+        status: cr.status,
+      })));
+      setInvoices(dbInv2.map(inv => ({
+        id: inv.id, supplierId: inv.supplier_id || '', invoiceNumber: inv.invoice_number,
+        amount: Number(inv.amount), status: inv.status as InvoiceStatus,
+        issueDate: new Date(inv.issue_date), dueDate: new Date(inv.due_date || inv.issue_date),
+        paidDate: inv.paid_date ? new Date(inv.paid_date) : undefined,
+        storeId: inv.store_id ?? undefined, description: inv.description ?? undefined,
+        orderNumber: inv.order_number ?? undefined, costCenter: inv.cost_center ?? undefined,
+        currency: inv.currency, directDebit: inv.direct_debit,
+        paymentMethod: inv.payment_method ?? undefined,
+        financialInstitution: inv.financial_institution ?? undefined,
+        observations: inv.observations ?? [],
+      })));
+      setMovements(dbMov.map(m => ({
+        id: m.id, productId: m.product_id,
+        fromStoreId: m.from_store_id ?? undefined, toStoreId: m.to_store_id ?? undefined,
+        quantity: Number(m.quantity), status: m.status as any,
+        createdAt: new Date(m.created_at), userId: m.user_id || '', type: m.type as any,
+      })));
+      setOperationLogs(dbOpLogs.map(l => ({
+        id: l.id, productId: l.product_id, storeId: l.store_id,
+        userId: l.user_id || '', quantity: Number(l.quantity),
+        actionType: l.action_type as any, createdAt: new Date(l.created_at),
+        notes: l.notes ?? undefined,
+      })));
+      setPurchaseOrders(dbPO.map(po => ({
+        id: po.id, supplierId: po.supplier_id || '', userId: po.user_id || '',
+        storeIds: po.store_ids ?? [], items: po.items ?? [],
+        hasInvoiceManagement: po.has_invoice_management,
+        hasTransitGenerated: po.has_transit_generated,
+        invoiceId: po.invoice_id ?? undefined, observation: po.observation ?? undefined,
+        createdAt: new Date(po.created_at),
+      })));
+      setRecipes(dbRecipes.map(r => ({
+        id: r.id, name: r.name, finalProductId: r.final_product_id || '',
+        ingredients: r.ingredients ?? [], expectedYield: Number(r.expected_yield),
+        createdAt: new Date(r.created_at), isActive: r.is_active,
+      })));
+      setProductionRecords(dbProdRecs.map(pr => ({
+        id: pr.id, recipeId: pr.recipe_id || '', storeId: pr.store_id,
+        userId: pr.user_id || '', actualYield: Number(pr.actual_yield),
+        ingredientsUsed: pr.ingredients_used ?? [], leftovers: pr.leftovers ?? [],
+        notes: pr.notes ?? undefined, createdAt: new Date(pr.created_at),
+      })));
+      setWasteVariants(dbWV.map(v => ({ id: v.id, name: v.name, productIds: v.product_ids ?? [] })));
+      setWasteReasons(dbWR.map(r => ({ id: r.id, name: r.name })));
+      setWasteRecords(dbWRec.map(r => ({
+        id: r.id, productId: r.product_id, variantId: r.variant_id || '',
+        storeId: r.store_id, userId: r.user_id || '', userName: r.user_name,
+        quantity: Number(r.quantity), reasonId: r.reason_id || '',
+        comment: r.comment ?? undefined, createdAt: new Date(r.created_at),
+      })));
+      setLicenses(dbLic.map(l => ({
+        id: l.id, name: l.name, storeIds: l.store_ids ?? [],
+        description: l.description ?? undefined, periodicity: l.periodicity,
+        alertDays: l.alert_days, status: l.status,
+        renewals: (l.renewals ?? []).map((r: any) => ({
+          ...r, issueDate: new Date(r.issueDate), renewalDate: new Date(r.renewalDate),
+        })),
+        contacts: l.contacts ?? [], attachments: (l.attachments ?? []).map((a: any) => ({
+          ...a, createdAt: new Date(a.createdAt),
+        })),
+        observations: l.observations ?? [],
+      })));
+      setChecklists(dbCL.map(c => ({
+        id: c.id, storeId: c.store_id, type: c.type, tasks: c.tasks ?? [],
+        completedAt: c.completed_at ? new Date(c.completed_at) : undefined,
+        completedBy: c.completed_by ?? undefined,
+      })));
+    } catch (err) {
+      console.error('Error loading data:', err);
+    } finally {
+      setDataLoading(false);
     }
-  ]);
+  }, [brandId]);
 
-  const [licenses, setLicenses] = useState<License[]>([
-    {
-      id: '1',
-      name: 'Licença ASAE',
-      storeIds: ['1', '2', '3'],
-      description: 'Licença de funcionamento ASAE',
-      periodicity: 'anual',
-      alertDays: 10,
-      status: 'ativa',
-      renewals: [
-        { id: '1', issueDate: new Date(2025, 5, 23), renewalDate: new Date(2026, 5, 24), value: 150, currency: '€' },
-        { id: '2', issueDate: new Date(2025, 1, 1), renewalDate: new Date(2026, 1, 1), value: 100, currency: '€' },
-      ],
-      contacts: [{ id: '1', name: 'Joao', phone: '', email: '' }],
-      attachments: [],
-      observations: [
-        { user: 'William Cardoso', text: 'Novo controle de licença criado.', date: '21/02/25 17:55' },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Licença de Esplanada',
-      storeIds: ['2'],
-      description: 'Licença de Esplanada',
-      periodicity: 'mensal',
-      alertDays: 10,
-      status: 'expirada',
-      renewals: [
-        { id: '1', issueDate: new Date(2025, 4, 24), renewalDate: new Date(2025, 5, 23), value: 320, currency: '€' },
-      ],
-      contacts: [],
-      attachments: [],
-      observations: [
-        { user: 'William Cardoso', text: 'Novo controle de licença criado.', date: '24/06/25 02:07' },
-      ],
-    },
-  ]);
+  useEffect(() => { loadAllData(); }, [loadAllData]);
 
-  const [wasteVariants, setWasteVariants] = useState<WasteVariant[]>([
-    { id: '1', name: 'Grande', productIds: ['1', '2', '3', '6', '7'] },
-    { id: '2', name: 'Médio', productIds: ['1', '2', '3', '6', '7'] },
-    { id: '3', name: 'Pequeno', productIds: ['1', '2', '3', '6', '7'] },
-  ]);
+  // ---- CRUD actions: insert into Supabase, then update local state ----
 
-  const [wasteReasons, setWasteReasons] = useState<WasteReason[]>([
-    { id: '1', name: 'Validade expirada' },
-    { id: '2', name: 'Queda / Acidente' },
-    { id: '3', name: 'Qualidade comprometida' },
-    { id: '4', name: 'Outros' },
-  ]);
-
-  const [wasteRecords, setWasteRecords] = useState<WasteRecord[]>([
-    {
-      id: '1',
-      productId: '6',
-      variantId: '1',
-      storeId: '1',
-      userId: 'user1',
-      userName: 'William Cardoso',
-      quantity: 1,
-      reasonId: '4',
-      comment: 'Produto caiu no chão',
-      createdAt: new Date(),
-    },
-    {
-      id: '2',
-      productId: '7',
-      variantId: '2',
-      storeId: '1',
-      userId: 'user1',
-      userName: 'William Cardoso',
-      quantity: 2,
-      reasonId: '1',
-      createdAt: new Date(Date.now() - 86400000),
-    },
-  ]);
-
-  // Helper functions
-  const generateId = () => Math.random().toString(36).substr(2, 9);
-
-  // Store actions
-  const addStore = (store: Omit<Store, 'id'>) => {
-    const newStore = { ...store, id: generateId() };
-    setStores(prev => [...prev, newStore]);
+  const addStore = async (store: Omit<Store, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await productsService.create({ ...store, brand_id: brandId } as any);
+      setStores(prev => [...prev, { ...store, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updateStore = (id: string, store: Partial<Store>) => {
-    setStores(prev => prev.map(s => s.id === id ? { ...s, ...store } : s));
+  const updateStore = async (id: string, store: Partial<Store>) => {
+    try {
+      // DataContext stores are read from BrandContext; delegate to BrandContext for store updates
+      setStores(prev => prev.map(s => s.id === id ? { ...s, ...store } : s));
+    } catch (err) { console.error(err); }
   };
 
   const deleteStore = (id: string) => {
     setStores(prev => prev.filter(s => s.id !== id));
   };
 
-  // Category actions
-  const addCategory = (category: Omit<Category, 'id'>) => {
-    const newCategory = { ...category, id: generateId() };
-    setCategories(prev => [...prev, newCategory]);
+  const addCategory = async (category: Omit<Category, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await categoriesService.create({ brand_id: brandId, name: category.name });
+      setCategories(prev => [...prev, { id: created.id, name: created.name }]);
+    } catch (err) { console.error(err); }
   };
 
-  const deleteCategory = (id: string) => {
-    setCategories(prev => prev.filter(c => c.id !== id));
+  const deleteCategory = async (id: string) => {
+    try {
+      await categoriesService.delete(id);
+      setCategories(prev => prev.filter(c => c.id !== id));
+    } catch (err) { console.error(err); }
   };
 
-  // Product actions
-  const addProduct = (product: Omit<Product, 'id'>) => {
-    const newProduct = { ...product, id: generateId() };
-    setProducts(prev => [...prev, newProduct]);
+  const addProduct = async (product: Omit<Product, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await productsService.create({
+        brand_id: brandId, name: product.name, sku: product.sku,
+        supplier_id: product.supplierId || null, category_id: product.categoryId || null,
+        cost_price: product.costPrice, selling_price: product.sellingPrice,
+        barcode: product.barcode, image_url: product.imageUrl ?? null, unit: product.unit || 'UN.',
+      });
+      setProducts(prev => [...prev, { ...product, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updateProduct = (id: string, product: Partial<Product>) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...product } : p));
+  const updateProduct = async (id: string, product: Partial<Product>) => {
+    try {
+      const dbUpdate: any = {};
+      if (product.name !== undefined) dbUpdate.name = product.name;
+      if (product.sku !== undefined) dbUpdate.sku = product.sku;
+      if (product.supplierId !== undefined) dbUpdate.supplier_id = product.supplierId || null;
+      if (product.categoryId !== undefined) dbUpdate.category_id = product.categoryId || null;
+      if (product.costPrice !== undefined) dbUpdate.cost_price = product.costPrice;
+      if (product.sellingPrice !== undefined) dbUpdate.selling_price = product.sellingPrice;
+      if (product.barcode !== undefined) dbUpdate.barcode = product.barcode;
+      if (product.imageUrl !== undefined) dbUpdate.image_url = product.imageUrl;
+      if (product.unit !== undefined) dbUpdate.unit = product.unit;
+      await productsService.update(id, dbUpdate);
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, ...product } : p));
+    } catch (err) { console.error(err); }
   };
 
-  const deleteProduct = (id: string) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
+  const deleteProduct = async (id: string) => {
+    try {
+      await productsService.delete(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (err) { console.error(err); }
   };
 
-  // Inventory actions
-  const addInventoryItem = (item: Omit<InventoryItem, 'id'>) => {
-    const newItem = { ...item, id: generateId() };
-    setInventory(prev => [...prev, newItem]);
+  const addInventoryItem = async (item: Omit<InventoryItem, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await inventoryService.create({
+        brand_id: brandId, store_id: item.storeId, product_id: item.productId,
+        current_quantity: item.currentQuantity, min_quantity: item.minQuantity,
+        alert_warning: item.alertWarning ?? null, alert_critical: item.alertCritical ?? null,
+        last_updated: new Date().toISOString(),
+      });
+      setInventory(prev => [...prev, { ...item, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updateInventoryItem = (id: string, item: Partial<InventoryItem>) => {
-    setInventory(prev => prev.map(i => i.id === id ? { ...i, ...item, lastUpdated: new Date() } : i));
+  const updateInventoryItem = async (id: string, item: Partial<InventoryItem>) => {
+    try {
+      const dbUpdate: any = {};
+      if (item.currentQuantity !== undefined) dbUpdate.current_quantity = item.currentQuantity;
+      if (item.minQuantity !== undefined) dbUpdate.min_quantity = item.minQuantity;
+      if (item.alertWarning !== undefined) dbUpdate.alert_warning = item.alertWarning;
+      if (item.alertCritical !== undefined) dbUpdate.alert_critical = item.alertCritical;
+      await inventoryService.update(id, dbUpdate);
+      setInventory(prev => prev.map(i => i.id === id ? { ...i, ...item, lastUpdated: new Date() } : i));
+    } catch (err) { console.error(err); }
   };
 
-  // Cash register actions
-  const addCashRegister = (cashRegister: Omit<CashRegister, 'id'>) => {
-    const newCashRegister = { ...cashRegister, id: generateId() };
-    setCashRegisters(prev => [...prev, newCashRegister]);
+  const addCashRegister = async (cashRegister: Omit<CashRegister, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await cashService.create({
+        brand_id: brandId, store_id: cashRegister.storeId,
+        opening_balance: cashRegister.openingBalance,
+        closing_balance: cashRegister.closingBalance ?? null,
+        opened_at: cashRegister.openedAt.toISOString(),
+        closed_at: cashRegister.closedAt?.toISOString() ?? null,
+        opened_by: cashRegister.openedBy, closed_by: cashRegister.closedBy ?? null,
+        status: cashRegister.status,
+      });
+      setCashRegisters(prev => [...prev, { ...cashRegister, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updateCashRegister = (id: string, cashRegister: Partial<CashRegister>) => {
-    setCashRegisters(prev => prev.map(cr => cr.id === id ? { ...cr, ...cashRegister } : cr));
+  const updateCashRegister = async (id: string, cashRegister: Partial<CashRegister>) => {
+    try {
+      const dbUpdate: any = {};
+      if (cashRegister.closingBalance !== undefined) dbUpdate.closing_balance = cashRegister.closingBalance;
+      if (cashRegister.closedAt !== undefined) dbUpdate.closed_at = cashRegister.closedAt?.toISOString() ?? null;
+      if (cashRegister.closedBy !== undefined) dbUpdate.closed_by = cashRegister.closedBy;
+      if (cashRegister.status !== undefined) dbUpdate.status = cashRegister.status;
+      if (cashRegister.openingBalance !== undefined) dbUpdate.opening_balance = cashRegister.openingBalance;
+      await cashService.update(id, dbUpdate);
+      setCashRegisters(prev => prev.map(cr => cr.id === id ? { ...cr, ...cashRegister } : cr));
+    } catch (err) { console.error(err); }
   };
 
-  // Invoice actions
-  const addInvoice = (invoice: Omit<Invoice, 'id'>) => {
-    const newInvoice = { ...invoice, id: generateId() };
-    setInvoices(prev => [...prev, newInvoice]);
+  const addInvoice = async (invoice: Omit<Invoice, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await invoicesService.create({
+        brand_id: brandId, supplier_id: invoice.supplierId || null,
+        invoice_number: invoice.invoiceNumber, amount: invoice.amount,
+        status: invoice.status, issue_date: invoice.issueDate.toISOString(),
+        due_date: invoice.dueDate.toISOString(),
+        paid_date: invoice.paidDate?.toISOString() ?? null,
+        store_id: invoice.storeId ?? null, description: invoice.description ?? null,
+        order_number: invoice.orderNumber ?? null, cost_center: invoice.costCenter ?? null,
+        currency: invoice.currency ?? 'EUR', direct_debit: invoice.directDebit ?? false,
+        payment_method: invoice.paymentMethod ?? null,
+        financial_institution: invoice.financialInstitution ?? null,
+        observations: invoice.observations ?? [],
+      });
+      setInvoices(prev => [...prev, { ...invoice, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updateInvoice = (id: string, invoice: Partial<Invoice>) => {
-    setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...invoice } : i));
+  const updateInvoice = async (id: string, invoice: Partial<Invoice>) => {
+    try {
+      const dbUpdate: any = {};
+      if (invoice.status !== undefined) dbUpdate.status = invoice.status;
+      if (invoice.amount !== undefined) dbUpdate.amount = invoice.amount;
+      if (invoice.paidDate !== undefined) dbUpdate.paid_date = invoice.paidDate?.toISOString() ?? null;
+      if (invoice.observations !== undefined) dbUpdate.observations = invoice.observations;
+      if (invoice.description !== undefined) dbUpdate.description = invoice.description;
+      if (invoice.storeId !== undefined) dbUpdate.store_id = invoice.storeId;
+      if (invoice.costCenter !== undefined) dbUpdate.cost_center = invoice.costCenter;
+      if (invoice.paymentMethod !== undefined) dbUpdate.payment_method = invoice.paymentMethod;
+      if (invoice.financialInstitution !== undefined) dbUpdate.financial_institution = invoice.financialInstitution;
+      if (invoice.directDebit !== undefined) dbUpdate.direct_debit = invoice.directDebit;
+      if (invoice.currency !== undefined) dbUpdate.currency = invoice.currency;
+      if (invoice.invoiceNumber !== undefined) dbUpdate.invoice_number = invoice.invoiceNumber;
+      if (invoice.orderNumber !== undefined) dbUpdate.order_number = invoice.orderNumber;
+      await invoicesService.update(id, dbUpdate);
+      setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...invoice } : i));
+    } catch (err) { console.error(err); }
   };
 
-  // Checklist actions
-  const addChecklist = (checklist: Omit<Checklist, 'id'>) => {
-    const newChecklist = { ...checklist, id: generateId() };
-    setChecklists(prev => [...prev, newChecklist]);
+  const addSupplier = async (supplier: Omit<Supplier, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await suppliersService.create({ brand_id: brandId, ...supplier });
+      setSuppliers(prev => [...prev, { ...supplier, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updateChecklist = (id: string, checklist: Partial<Checklist>) => {
-    setChecklists(prev => prev.map(c => c.id === id ? { ...c, ...checklist } : c));
+  const deleteSupplier = async (id: string) => {
+    try {
+      await suppliersService.delete(id);
+      setSuppliers(prev => prev.filter(s => s.id !== id));
+    } catch (err) { console.error(err); }
   };
 
-  // Movement actions
-  const addMovement = (movement: Omit<InventoryMovement, 'id'>) => {
-    const newMovement = { ...movement, id: generateId() };
-    setMovements(prev => [...prev, newMovement]);
+  const addCostCenter = async (costCenter: Omit<CostCenter, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await costCentersService.create({ brand_id: brandId, name: costCenter.name });
+      setCostCenters(prev => [...prev, { id: created.id, name: created.name }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updateMovement = (id: string, movement: Partial<InventoryMovement>) => {
-    setMovements(prev => prev.map(m => m.id === id ? { ...m, ...movement } : m));
+  const deleteCostCenter = async (id: string) => {
+    try {
+      await costCentersService.delete(id);
+      setCostCenters(prev => prev.filter(cc => cc.id !== id));
+    } catch (err) { console.error(err); }
   };
 
-  // Operation log actions
-  const addOperationLog = (log: Omit<OperationLog, 'id'>) => {
-    const newLog = { ...log, id: generateId() };
-    setOperationLogs(prev => [...prev, newLog]);
+  const addLicense = async (license: Omit<License, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await licensesService.create({
+        brand_id: brandId, name: license.name, store_ids: license.storeIds,
+        description: license.description ?? null, periodicity: license.periodicity,
+        alert_days: license.alertDays, status: license.status,
+        renewals: license.renewals.map(r => ({
+          ...r, issueDate: r.issueDate.toISOString(), renewalDate: r.renewalDate.toISOString(),
+        })) as any,
+        contacts: license.contacts as any, attachments: license.attachments.map(a => ({
+          ...a, createdAt: a.createdAt.toISOString(), file: undefined,
+        })) as any,
+        observations: license.observations,
+      });
+      setLicenses(prev => [...prev, { ...license, id: created.id }]);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateLicense = async (id: string, license: Partial<License>) => {
+    try {
+      const dbUpdate: any = {};
+      if (license.name !== undefined) dbUpdate.name = license.name;
+      if (license.storeIds !== undefined) dbUpdate.store_ids = license.storeIds;
+      if (license.description !== undefined) dbUpdate.description = license.description;
+      if (license.periodicity !== undefined) dbUpdate.periodicity = license.periodicity;
+      if (license.alertDays !== undefined) dbUpdate.alert_days = license.alertDays;
+      if (license.status !== undefined) dbUpdate.status = license.status;
+      if (license.renewals !== undefined) dbUpdate.renewals = license.renewals.map(r => ({
+        ...r, issueDate: r.issueDate instanceof Date ? r.issueDate.toISOString() : r.issueDate,
+        renewalDate: r.renewalDate instanceof Date ? r.renewalDate.toISOString() : r.renewalDate,
+      }));
+      if (license.contacts !== undefined) dbUpdate.contacts = license.contacts;
+      if (license.attachments !== undefined) dbUpdate.attachments = license.attachments.map(a => ({
+        ...a, createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : a.createdAt, file: undefined,
+      }));
+      if (license.observations !== undefined) dbUpdate.observations = license.observations;
+      await licensesService.update(id, dbUpdate);
+      setLicenses(prev => prev.map(l => l.id === id ? { ...l, ...license } : l));
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteLicense = async (id: string) => {
+    try {
+      await licensesService.delete(id);
+      setLicenses(prev => prev.filter(l => l.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const addWasteVariant = async (variant: Omit<WasteVariant, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await wasteService.createVariant({ brand_id: brandId, name: variant.name, product_ids: variant.productIds });
+      setWasteVariants(prev => [...prev, { ...variant, id: created.id }]);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateWasteVariant = async (id: string, variant: Partial<WasteVariant>) => {
+    try {
+      const dbUpdate: any = {};
+      if (variant.name !== undefined) dbUpdate.name = variant.name;
+      if (variant.productIds !== undefined) dbUpdate.product_ids = variant.productIds;
+      await wasteService.updateVariant(id, dbUpdate);
+      setWasteVariants(prev => prev.map(v => v.id === id ? { ...v, ...variant } : v));
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteWasteVariant = async (id: string) => {
+    try {
+      await wasteService.deleteVariant(id);
+      setWasteVariants(prev => prev.filter(v => v.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const addWasteReason = async (reason: Omit<WasteReason, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await wasteService.createReason({ brand_id: brandId, name: reason.name });
+      setWasteReasons(prev => [...prev, { id: created.id, name: created.name }]);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateWasteReason = async (id: string, reason: Partial<WasteReason>) => {
+    try {
+      if (reason.name !== undefined) await wasteService.updateReason(id, { name: reason.name });
+      setWasteReasons(prev => prev.map(r => r.id === id ? { ...r, ...reason } : r));
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteWasteReason = async (id: string) => {
+    try {
+      await wasteService.deleteReason(id);
+      setWasteReasons(prev => prev.filter(r => r.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const addWasteRecord = async (record: Omit<WasteRecord, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await wasteService.createRecord({
+        brand_id: brandId, product_id: record.productId, variant_id: record.variantId || null,
+        store_id: record.storeId, user_id: record.userId || null, user_name: record.userName,
+        quantity: record.quantity, reason_id: record.reasonId || null,
+        comment: record.comment ?? null, created_at: record.createdAt.toISOString(),
+      });
+      setWasteRecords(prev => [...prev, { ...record, id: created.id }]);
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteWasteRecord = async (id: string) => {
+    try {
+      await wasteService.deleteRecord(id);
+      setWasteRecords(prev => prev.filter(r => r.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const addChecklist = async (checklist: Omit<Checklist, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await simpleChecklistsService.create({
+        brand_id: brandId, store_id: checklist.storeId, type: checklist.type,
+        tasks: checklist.tasks, completed_at: checklist.completedAt?.toISOString() ?? null,
+        completed_by: checklist.completedBy ?? null,
+      });
+      setChecklists(prev => [...prev, { ...checklist, id: created.id }]);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateChecklist = async (id: string, checklist: Partial<Checklist>) => {
+    try {
+      const dbUpdate: any = {};
+      if (checklist.tasks !== undefined) dbUpdate.tasks = checklist.tasks;
+      if (checklist.completedAt !== undefined) dbUpdate.completed_at = checklist.completedAt?.toISOString() ?? null;
+      if (checklist.completedBy !== undefined) dbUpdate.completed_by = checklist.completedBy;
+      await simpleChecklistsService.update(id, dbUpdate);
+      setChecklists(prev => prev.map(c => c.id === id ? { ...c, ...checklist } : c));
+    } catch (err) { console.error(err); }
+  };
+
+  const addMovement = async (movement: Omit<InventoryMovement, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await movementsService.create({
+        brand_id: brandId, product_id: movement.productId,
+        from_store_id: movement.fromStoreId ?? null, to_store_id: movement.toStoreId ?? null,
+        quantity: movement.quantity, status: movement.status,
+        user_id: movement.userId || null, type: movement.type,
+        created_at: movement.createdAt.toISOString(),
+      });
+      setMovements(prev => [...prev, { ...movement, id: created.id }]);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateMovement = async (id: string, movement: Partial<InventoryMovement>) => {
+    try {
+      const dbUpdate: any = {};
+      if (movement.status !== undefined) dbUpdate.status = movement.status;
+      if (movement.quantity !== undefined) dbUpdate.quantity = movement.quantity;
+      await movementsService.update(id, dbUpdate);
+      setMovements(prev => prev.map(m => m.id === id ? { ...m, ...movement } : m));
+    } catch (err) { console.error(err); }
+  };
+
+  const addOperationLog = async (log: Omit<OperationLog, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await operationLogsService.create({
+        brand_id: brandId, product_id: log.productId, store_id: log.storeId,
+        user_id: log.userId || null, quantity: log.quantity,
+        action_type: log.actionType, notes: log.notes ?? null,
+        created_at: log.createdAt.toISOString(),
+      });
+      setOperationLogs(prev => [...prev, { ...log, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
   const getOperationLogsByProduct = (productId: string) =>
     operationLogs.filter(log => log.productId === productId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-  // Recipe actions
-  const addRecipe = (recipe: Omit<Recipe, 'id'>) => {
-    const newRecipe = { ...recipe, id: generateId() };
-    setRecipes(prev => [...prev, newRecipe]);
+  const addRecipe = async (recipe: Omit<Recipe, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await recipesService.create({
+        brand_id: brandId, name: recipe.name,
+        final_product_id: recipe.finalProductId || null,
+        ingredients: recipe.ingredients, expected_yield: recipe.expectedYield,
+        is_active: recipe.isActive, created_at: recipe.createdAt.toISOString(),
+      });
+      setRecipes(prev => [...prev, { ...recipe, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updateRecipe = (id: string, recipe: Partial<Recipe>) => {
-    setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...recipe } : r));
+  const updateRecipe = async (id: string, recipe: Partial<Recipe>) => {
+    try {
+      const dbUpdate: any = {};
+      if (recipe.name !== undefined) dbUpdate.name = recipe.name;
+      if (recipe.finalProductId !== undefined) dbUpdate.final_product_id = recipe.finalProductId;
+      if (recipe.ingredients !== undefined) dbUpdate.ingredients = recipe.ingredients;
+      if (recipe.expectedYield !== undefined) dbUpdate.expected_yield = recipe.expectedYield;
+      if (recipe.isActive !== undefined) dbUpdate.is_active = recipe.isActive;
+      await recipesService.update(id, dbUpdate);
+      setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...recipe } : r));
+    } catch (err) { console.error(err); }
   };
 
-  const deleteRecipe = (id: string) => {
-    setRecipes(prev => prev.filter(r => r.id !== id));
+  const deleteRecipe = async (id: string) => {
+    try {
+      await recipesService.delete(id);
+      setRecipes(prev => prev.filter(r => r.id !== id));
+    } catch (err) { console.error(err); }
   };
 
-  // Production record actions
-  const addProductionRecord = (record: Omit<ProductionRecord, 'id'>) => {
-    const newRecord = { ...record, id: generateId() };
-    setProductionRecords(prev => [...prev, newRecord]);
+  const addProductionRecord = async (record: Omit<ProductionRecord, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await productionService.create({
+        brand_id: brandId, recipe_id: record.recipeId || null, store_id: record.storeId,
+        user_id: record.userId || null, actual_yield: record.actualYield,
+        ingredients_used: record.ingredientsUsed, leftovers: record.leftovers,
+        notes: record.notes ?? null, created_at: record.createdAt.toISOString(),
+      });
+      setProductionRecords(prev => [...prev, { ...record, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
   const getProductionRecordsByRecipe = (recipeId: string) =>
     productionRecords.filter(record => record.recipeId === recipeId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-  // Purchase Order actions
-  const addPurchaseOrder = (order: Omit<PurchaseOrder, 'id'>) => {
-    const newOrder = { ...order, id: generateId() };
-    setPurchaseOrders(prev => [...prev, newOrder]);
+  const addPurchaseOrder = async (order: Omit<PurchaseOrder, 'id'>) => {
+    if (!brandId) return;
+    try {
+      const created = await purchaseOrdersService.create({
+        brand_id: brandId, supplier_id: order.supplierId || null,
+        user_id: order.userId || null, store_ids: order.storeIds, items: order.items,
+        has_invoice_management: order.hasInvoiceManagement,
+        has_transit_generated: order.hasTransitGenerated,
+        invoice_id: order.invoiceId ?? null, observation: order.observation ?? null,
+        created_at: order.createdAt.toISOString(),
+      });
+      setPurchaseOrders(prev => [...prev, { ...order, id: created.id }]);
+    } catch (err) { console.error(err); }
   };
 
-  const updatePurchaseOrder = (id: string, order: Partial<PurchaseOrder>) => {
-    setPurchaseOrders(prev => prev.map(o => o.id === id ? { ...o, ...order } : o));
+  const updatePurchaseOrder = async (id: string, order: Partial<PurchaseOrder>) => {
+    try {
+      const dbUpdate: any = {};
+      if (order.items !== undefined) dbUpdate.items = order.items;
+      if (order.storeIds !== undefined) dbUpdate.store_ids = order.storeIds;
+      if (order.hasInvoiceManagement !== undefined) dbUpdate.has_invoice_management = order.hasInvoiceManagement;
+      if (order.hasTransitGenerated !== undefined) dbUpdate.has_transit_generated = order.hasTransitGenerated;
+      if (order.invoiceId !== undefined) dbUpdate.invoice_id = order.invoiceId;
+      if (order.observation !== undefined) dbUpdate.observation = order.observation;
+      await purchaseOrdersService.update(id, dbUpdate);
+      setPurchaseOrders(prev => prev.map(o => o.id === id ? { ...o, ...order } : o));
+    } catch (err) { console.error(err); }
   };
 
-  const deletePurchaseOrder = (id: string) => {
-    setPurchaseOrders(prev => prev.filter(o => o.id !== id));
+  const deletePurchaseOrder = async (id: string) => {
+    try {
+      await purchaseOrdersService.delete(id);
+      setPurchaseOrders(prev => prev.filter(o => o.id !== id));
+    } catch (err) { console.error(err); }
   };
 
   // Getters
   const getProductById = (id: string) => products.find(p => p.id === id);
   const getStoreById = (id: string) => stores.find(s => s.id === id);
-  const addSupplier = (supplier: Omit<Supplier, 'id'>) => {
-    const newSupplier = { ...supplier, id: generateId() };
-    setSuppliers(prev => [...prev, newSupplier]);
-  };
-
-  const deleteSupplier = (id: string) => {
-    setSuppliers(prev => prev.filter(s => s.id !== id));
-  };
-
-  const addCostCenter = (costCenter: Omit<CostCenter, 'id'>) => {
-    const newCC = { ...costCenter, id: generateId() };
-    setCostCenters(prev => [...prev, newCC]);
-  };
-
-  const deleteCostCenter = (id: string) => {
-    setCostCenters(prev => prev.filter(cc => cc.id !== id));
-  };
-
-  // License actions
-  const addLicense = (license: Omit<License, 'id'>) => {
-    const newLicense = { ...license, id: generateId() };
-    setLicenses(prev => [...prev, newLicense]);
-  };
-
-  const updateLicense = (id: string, license: Partial<License>) => {
-    setLicenses(prev => prev.map(l => l.id === id ? { ...l, ...license } : l));
-  };
-
-  const deleteLicense = (id: string) => {
-    setLicenses(prev => prev.filter(l => l.id !== id));
-  };
-
-  // Waste actions
-  const addWasteVariant = (variant: Omit<WasteVariant, 'id'>) => {
-    const newVariant = { ...variant, id: generateId() };
-    setWasteVariants(prev => [...prev, newVariant]);
-  };
-
-  const updateWasteVariant = (id: string, variant: Partial<WasteVariant>) => {
-    setWasteVariants(prev => prev.map(v => v.id === id ? { ...v, ...variant } : v));
-  };
-
-  const deleteWasteVariant = (id: string) => {
-    setWasteVariants(prev => prev.filter(v => v.id !== id));
-  };
-
-  const addWasteReason = (reason: Omit<WasteReason, 'id'>) => {
-    const newReason = { ...reason, id: generateId() };
-    setWasteReasons(prev => [...prev, newReason]);
-  };
-
-  const updateWasteReason = (id: string, reason: Partial<WasteReason>) => {
-    setWasteReasons(prev => prev.map(r => r.id === id ? { ...r, ...reason } : r));
-  };
-
-  const deleteWasteReason = (id: string) => {
-    setWasteReasons(prev => prev.filter(r => r.id !== id));
-  };
-
-  const addWasteRecord = (record: Omit<WasteRecord, 'id'>) => {
-    const newRecord = { ...record, id: generateId() };
-    setWasteRecords(prev => [...prev, newRecord]);
-  };
-
-  const deleteWasteRecord = (id: string) => {
-    setWasteRecords(prev => prev.filter(r => r.id !== id));
-  };
-
   const getSupplierById = (id: string) => suppliers.find(s => s.id === id);
   const getCategoryById = (id: string) => categories.find(c => c.id === id);
   const getInventoryByStore = (storeId: string) => inventory.filter(i => i.storeId === storeId);
@@ -788,28 +952,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getOpenCashRegisters = () => cashRegisters.filter(cr => cr.status === 'open');
   const getOverdueInvoices = () => invoices.filter(i => i.status === 'contas_a_pagar');
 
-  const value = {
-    stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists, movements, operationLogs, recipes, productionRecords, purchaseOrders, costCenters, licenses, wasteVariants, wasteReasons, wasteRecords,
-    addStore, updateStore, deleteStore,
-    addProduct, updateProduct, deleteProduct,
-    addInventoryItem, updateInventoryItem,
-    addCashRegister, updateCashRegister,
-    addCategory, deleteCategory,
-    addInvoice, updateInvoice,
-    addSupplier, deleteSupplier,
-    addCostCenter, deleteCostCenter,
+  const value: DataContextType = {
+    stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists,
+    movements, operationLogs, recipes, productionRecords, purchaseOrders, costCenters,
+    licenses, wasteVariants, wasteReasons, wasteRecords, dataLoading,
+    addStore, updateStore, deleteStore, addCategory, deleteCategory,
+    addProduct, updateProduct, deleteProduct, addInventoryItem, updateInventoryItem,
+    addCashRegister, updateCashRegister, addInvoice, updateInvoice,
+    addSupplier, deleteSupplier, addCostCenter, deleteCostCenter,
     addLicense, updateLicense, deleteLicense,
     addWasteVariant, updateWasteVariant, deleteWasteVariant,
     addWasteReason, updateWasteReason, deleteWasteReason,
     addWasteRecord, deleteWasteRecord,
-    addChecklist, updateChecklist,
-    addMovement, updateMovement,
+    addChecklist, updateChecklist, addMovement, updateMovement,
     addOperationLog, getOperationLogsByProduct,
     addRecipe, updateRecipe, deleteRecipe,
     addProductionRecord, getProductionRecordsByRecipe,
     addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder,
     getProductById, getStoreById, getSupplierById, getCategoryById,
-    getInventoryByStore, getLowStockItems, getOpenCashRegisters, getOverdueInvoices
+    getInventoryByStore, getLowStockItems, getOpenCashRegisters, getOverdueInvoices,
   };
 
   return (

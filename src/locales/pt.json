@@ -215,6 +215,7 @@
   },
   "purchases": {
     "title": "Compras",
+    "subtitle": "Gestão de sugestões e pedidos de compra",
     "tabSuggestions": "Sugestões de Compra",
     "description": "Produtos com estoque baixo que precisam ser repostos",
     "orderCreated": "Pedido Criado",
@@ -1252,6 +1253,17 @@
     "loggedOut": "Desconectado",
     "loggedOutDesc": "Você foi desconectado com sucesso.",
     "disconnected": "Desconectado"
+  },
+  "brand": {
+    "loadingBrands": "Carregando suas marcas...",
+    "noBrandsTitle": "Sem acesso a marcas",
+    "noBrandsMessage": "Você ainda não possui nenhuma marca ou loja associada à sua conta.",
+    "contactDeveloper": "Entre em contacto com o administrador ou desenvolvedor para que uma marca seja adicionada à sua conta.",
+    "loggedAs": "Conectado como",
+    "logout": "Sair da conta",
+    "myBrands": "Minhas Marcas",
+    "selectBrandGreeting": "Olá, {{name}}! Selecione a marca para acessar:",
+    "primary": "Principal"
   },
   "months": {
     "january": "Janeiro",

@@ -214,7 +214,8 @@
     "export_quantity_csv": "Cantidad"
   },
   "purchases": {
-    "title": "Sugerencias de Compra",
+    "title": "Compras",
+    "subtitle": "Gestión de sugerencias y pedidos de compra",
     "tabSuggestions": "Sugerencias de Compra",
     "description": "Productos con stock bajo que necesitan reposición",
     "orderCreated": "Pedido Creado",
@@ -1313,5 +1314,16 @@
     "loggedOut": "Desconectado",
     "loggedOutDesc": "Se ha desconectado exitosamente.",
     "disconnected": "Desconectado"
+  },
+  "brand": {
+    "loadingBrands": "Cargando tus marcas...",
+    "noBrandsTitle": "Sin acceso a marcas",
+    "noBrandsMessage": "Aún no tienes ninguna marca o tienda asociada a tu cuenta.",
+    "contactDeveloper": "Contacta al administrador o desarrollador para que añadan una marca a tu cuenta.",
+    "loggedAs": "Conectado como",
+    "logout": "Cerrar sesión",
+    "myBrands": "Mis Marcas",
+    "selectBrandGreeting": "¡Hola, {{name}}! Selecciona la marca para acceder:",
+    "primary": "Principal"
   }
 }

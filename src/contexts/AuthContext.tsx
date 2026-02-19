@@ -1,7 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '@/lib/supabase-services';
+import type { DbProfile } from '@/types/database';
+import type { Session } from '@supabase/supabase-js';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -34,140 +36,129 @@ export const useAuth = () => {
   return context;
 };
 
+function profileToUser(profile: DbProfile): User {
+  return {
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    role: profile.role,
+    imageUrl: profile.image_url ?? undefined,
+    permissions: profile.permissions ?? [],
+    pin: profile.pin ?? undefined,
+    hasMultipleBrands: undefined,
+  };
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsBrandSelection, setNeedsBrandSelection] = useState(false);
 
-  useEffect(() => {
-    // Verificar se há um usuário salvo no localStorage
-    const savedUser = localStorage.getItem('operus_user');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
-
-      // Verificar se precisa selecionar marca
-      const selectedBrand = localStorage.getItem('selected_brand');
-      if (userData.hasMultipleBrands && !selectedBrand) {
-        setNeedsBrandSelection(true);
-      }
+  const loadProfile = async (session: Session | null) => {
+    if (!session?.user) {
+      setUser(null);
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    try {
+      const profile = await authService.getProfile(session.user.id);
+      if (profile) {
+        const u = profileToUser(profile);
+        setUser(u);
+
+        const selectedBrand = localStorage.getItem('selected_brand');
+        if (!selectedBrand && u.role !== 'developer') {
+          setNeedsBrandSelection(true);
+        }
+      } else {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata?.name || session.user.email || '',
+          email: session.user.email || '',
+          role: 'assistant',
+          permissions: [],
+        });
+      }
+    } catch (err) {
+      console.error('Error loading profile:', err);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    authService.getSession().then(({ data }) => {
+      loadProfile(data.session);
+    });
+
+    const { data: { subscription } } = authService.onAuthStateChange((_event, session) => {
+      if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
+        loadProfile(session);
+      } else if (_event === 'SIGNED_OUT') {
+        setUser(null);
+        setNeedsBrandSelection(false);
+        localStorage.removeItem('selected_brand');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
-
-    // Simular uma chamada de API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Credenciais de exemplo com informação de múltiplas marcas
-    const validCredentials = [
-      {
-        email: 'dev@operus.com',
-        password: '123456',
-        name: 'Desenvolvedor',
-        role: 'developer' as const,
-        hasMultipleBrands: false,
-        permissions: ['*'],
-        pin: undefined as string | undefined,
-      },
-      {
-        email: 'admin@operus.com',
-        password: '123456',
-        name: 'Administrador',
-        role: 'admin' as const,
-        hasMultipleBrands: true,
-        permissions: ['dashboard', 'inventory', 'operations', 'transit', 'purchases', 'cashbox', 'invoices', 'licenses', 'waste', 'checklists', 'stores', 'users', 'settings'],
-        pin: undefined as string | undefined,
-      },
-      {
-        email: 'manager@operus.com',
-        password: '123456',
-        name: 'Gerente',
-        role: 'manager' as const,
-        hasMultipleBrands: true,
-        permissions: ['dashboard', 'inventory', 'operations', 'transit', 'purchases', 'cashbox', 'invoices', 'licenses', 'waste', 'checklists', 'users', 'settings'],
-        pin: undefined as string | undefined,
-      },
-      {
-        email: 'funcionario@operus.com',
-        password: '123456',
-        name: 'Assistente',
-        role: 'assistant' as const,
-        hasMultipleBrands: false,
-        permissions: ['inventory', 'operations', 'transit', 'purchases', 'waste', 'checklists'],
-        pin: '1234',
-      },
-    ];
-
-    const userCredentials = validCredentials.find(
-      cred => cred.email === email && cred.password === password
-    );
-
-    if (userCredentials) {
-      const userData: User = {
-        id: Math.random().toString(36),
-        name: userCredentials.name,
-        email: userCredentials.email,
-        role: userCredentials.role,
-        hasMultipleBrands: userCredentials.hasMultipleBrands,
-        permissions: userCredentials.permissions,
-        pin: userCredentials.pin,
-      };
-
-      setUser(userData);
-      localStorage.setItem('operus_user', JSON.stringify(userData));
-
-      // Verificar se precisa selecionar marca
-      if (userData.hasMultipleBrands) {
-        const selectedBrand = localStorage.getItem('selected_brand');
-        if (!selectedBrand) {
-          setNeedsBrandSelection(true);
-        }
+    try {
+      const { error } = await authService.signIn(email, password);
+      if (error) {
+        setLoading(false);
+        return false;
       }
-
-      setLoading(false);
       return true;
+    } catch {
+      setLoading(false);
+      return false;
     }
-
-    setLoading(false);
-    return false;
   };
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
     setLoading(true);
-
-    // Simular uma chamada de API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const userData: User = {
-      id: Math.random().toString(36),
-      name,
-      email,
-      role: 'assistant',
-      hasMultipleBrands: false,
-      permissions: ['inventory', 'operations', 'transit', 'purchases', 'waste', 'checklists'],
-    };
-
-    setUser(userData);
-    localStorage.setItem('operus_user', JSON.stringify(userData));
-    setLoading(false);
-    return true;
+    try {
+      const { error } = await authService.signUp(email, password, { name, role: 'assistant' });
+      if (error) {
+        setLoading(false);
+        return false;
+      }
+      return true;
+    } catch {
+      setLoading(false);
+      return false;
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authService.signOut();
     setUser(null);
     setNeedsBrandSelection(false);
-    localStorage.removeItem('operus_user');
     localStorage.removeItem('selected_brand');
   };
 
-  const updateUser = (data: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...data };
-      setUser(updatedUser);
-      localStorage.setItem('operus_user', JSON.stringify(updatedUser));
+  const updateUser = async (data: Partial<User>) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...data };
+    setUser(updatedUser);
+
+    try {
+      const dbUpdates: any = {};
+      if (data.name !== undefined) dbUpdates.name = data.name;
+      if (data.imageUrl !== undefined) dbUpdates.image_url = data.imageUrl;
+      if (data.permissions !== undefined) dbUpdates.permissions = data.permissions;
+      if (data.pin !== undefined) dbUpdates.pin = data.pin;
+      if (Object.keys(dbUpdates).length > 0) {
+        await authService.updateProfile(user.id, dbUpdates);
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
     }
   };
 

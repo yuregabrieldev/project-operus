@@ -1,27 +1,35 @@
 import React from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Settings, Wallet, FileText,
   ClipboardList, Truck, ShoppingCart,
-  Factory, Store, Users, ChevronLeft, ChevronRight, ArrowLeftRight, Shield, Trash2,
-  Building2, CreditCard, Code2
+  Factory, Store, Users, ChevronLeft, X, ArrowLeftRight, Shield, Trash2,
+  Building2, CreditCard, Sun, Moon, Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from '@/hooks/use-toast';
 
 interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
+  mode?: 'desktop' | 'mobile';
+  onClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, mode = 'desktop', onClose }) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { lang = 'pt' } = useParams<{ lang: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Developer menu — completely separate layout
+  const [darkMode, setDarkMode] = React.useState(() =>
+    document.documentElement.classList.contains('dark')
+  );
+
   const devMenuItems = [
     { path: `/${lang}/dev-dashboard`, label: 'Dashboard', icon: LayoutDashboard },
     { path: `/${lang}/dev-brands`, label: 'Marcas', icon: Building2 },
@@ -30,7 +38,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
     { path: `/${lang}/dev-settings`, label: 'Configurações', icon: Settings },
   ];
 
-  // Regular menu items filtered by role
   const allMenuItems = [
     { id: 'dashboard', path: `/${lang}/dashboard`, label: t('sidebar.dashboard'), icon: LayoutDashboard },
     { id: 'inventory', path: `/${lang}/estoque`, label: t('sidebar.inventory'), icon: Package },
@@ -49,29 +56,58 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
 
   const getMenuItems = () => {
     if (user?.role === 'developer') return devMenuItems;
-
     const userPermissions = user?.permissions || [];
     if (userPermissions.includes('*')) return allMenuItems;
-
     return allMenuItems.filter(item => userPermissions.includes(item.id!));
   };
 
   const menuItems = getMenuItems();
   const isDev = user?.role === 'developer';
+  const isMobile = mode === 'mobile';
+
+  const languageLabels: Record<string, string> = {
+    pt: 'Português', en: 'English', es: 'Español'
+  };
+
+  const languageFlags: Record<string, string> = {
+    pt: '🇵🇹', en: '🇺🇸', es: '🇪🇸'
+  };
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    document.documentElement.classList.toggle('dark', newMode);
+    toast({
+      title: newMode ? t('header.darkMode') : t('header.lightMode'),
+      description: newMode ? t('header.darkModeEnabled') : t('header.lightModeEnabled'),
+    });
+  };
+
+  const handleLanguageChange = (newLang: string) => {
+    setLanguage(newLang);
+    const pathAfterLang = location.pathname.replace(/^\/[a-z]{2}/, '');
+    navigate(`/${newLang}${pathAfterLang}`, { replace: true });
+    toast({
+      title: languageLabels[newLang],
+      description: t('header.languageChanged', { lang: languageLabels[newLang] }),
+    });
+  };
 
   return (
     <aside className={cn(
-      "flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
-      isCollapsed ? "w-[68px]" : "w-60"
+      "flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
+      isMobile
+        ? "w-72"
+        : cn("sticky top-0 transition-all duration-300 ease-in-out", isCollapsed ? "w-[68px]" : "w-60")
     )}>
       {/* Brand Header */}
       <div className={cn(
-        "flex items-center h-16 border-b border-white/10 px-3",
-        isCollapsed ? "justify-center" : "justify-between"
+        "flex items-center h-16 border-b border-white/10 px-3 flex-shrink-0",
+        isCollapsed && !isMobile ? "justify-center" : "justify-between"
       )}>
-        {isCollapsed ? (
-          <button onClick={onToggle} className="p-1 rounded-lg hover:bg-sidebar-accent transition-colors" aria-label="Expand sidebar">
-            <img src="/operus-logo.png" alt="OPERUS" className="h-8 w-8 object-contain brightness-0 invert" />
+        {isCollapsed && !isMobile ? (
+          <button onClick={onToggle} className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors" aria-label="Expand sidebar">
+            <img src="/operus-logo.png" alt="OPERUS" className="h-5 w-5 object-contain brightness-0 invert" />
           </button>
         ) : (
           <>
@@ -83,18 +119,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
               )}
             </div>
             <button
-              onClick={onToggle}
+              onClick={isMobile ? onClose : onToggle}
               className="p-1.5 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-              aria-label="Collapse sidebar"
+              aria-label={isMobile ? "Close menu" : "Collapse sidebar"}
             >
-              <ChevronLeft className="h-5 w-5" />
+              {isMobile ? <X className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
             </button>
           </>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+      <nav className={cn(
+        "flex-1 overflow-y-auto",
+        isCollapsed && !isMobile ? "py-4 px-2.5 space-y-3" : "py-3 px-2 space-y-0.5"
+      )}>
         {menuItems.map((item) => {
           const Icon = item.icon;
 
@@ -103,9 +142,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
               key={item.path}
               to={item.path}
               end={false}
+              onClick={isMobile ? onClose : undefined}
               className={({ isActive }) => cn(
-                "w-full flex items-center gap-3 rounded-lg transition-all duration-200",
-                isCollapsed ? "justify-center px-0 py-2.5" : "px-3 py-2",
+                "w-full flex items-center rounded-lg transition-all duration-200",
+                isCollapsed && !isMobile ? "justify-center p-2" : "gap-3 px-3 py-2",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                   : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -114,10 +154,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
               {({ isActive }) => (
                 <>
                   <Icon className={cn(
-                    "h-5 w-5 flex-shrink-0",
+                    "flex-shrink-0 h-5 w-5",
                     isActive ? "text-sidebar-primary" : ""
                   )} />
-                  {!isCollapsed && (
+                  {(!isCollapsed || isMobile) && (
                     <span className={cn(
                       "text-sm font-medium truncate",
                       isActive ? "text-sidebar-accent-foreground" : ""
@@ -130,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
             </NavLink>
           );
 
-          if (isCollapsed) {
+          if (isCollapsed && !isMobile) {
             return (
               <Tooltip key={item.path} delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -146,6 +186,41 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
           return <React.Fragment key={item.path}>{linkContent}</React.Fragment>;
         })}
       </nav>
+
+      {/* Footer: Dark Mode + Language (mobile drawer only) */}
+      {isMobile && (
+        <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+          >
+            {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <span className="text-sm font-medium">
+              {darkMode ? t('header.lightMode') : t('header.darkMode')}
+            </span>
+          </button>
+
+          {/* Language Selector */}
+          <div className="flex items-center gap-1 px-1">
+            {(['pt', 'en', 'es'] as const).map((lg) => (
+              <button
+                key={lg}
+                onClick={() => handleLanguageChange(lg)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  language === lg
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                )}
+              >
+                <span className="text-sm">{languageFlags[lg]}</span>
+                <span className="uppercase">{lg}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

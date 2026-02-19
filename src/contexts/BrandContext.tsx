@@ -1,5 +1,6 @@
-
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { brandsService, storesService } from '@/lib/supabase-services';
+import type { DbBrand, DbStore } from '@/types/database';
 
 export interface Brand {
   id: string;
@@ -39,6 +40,7 @@ interface BrandContextType {
   updateStore: (store: Store) => Promise<void>;
   toggleStoreStatus: (storeId: string) => Promise<void>;
   isLoading: boolean;
+  brandsLoaded: boolean;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
@@ -51,215 +53,162 @@ export const useBrand = () => {
   return context;
 };
 
+function dbBrandToBrand(db: DbBrand): Brand {
+  return {
+    id: db.id,
+    name: db.name,
+    logoUrl: db.logo_url,
+    primaryColor: db.primary_color,
+    storesCount: db.stores_count,
+  };
+}
+
+function dbStoreToStore(db: DbStore): Store {
+  return {
+    id: db.id,
+    brandId: db.brand_id,
+    name: db.name,
+    address: db.address,
+    contact: db.contact,
+    manager: db.manager,
+    isActive: db.is_active,
+    createdAt: db.created_at,
+    updatedAt: db.updated_at,
+  };
+}
+
 export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedBrand, setSelectedBrandState] = useState<Brand | null>(null);
   const [userBrands, setUserBrands] = useState<Brand[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [brandsLoaded, setBrandsLoaded] = useState(false);
+  const loadingRef = useRef(false);
 
-  // Mock data - em produção virá da API
-  const mockBrands: Brand[] = [
-    {
-      id: '1',
-      name: 'Oakberry',
-      logoUrl: '/placeholder.svg',
-      primaryColor: '#2563EB',
-      storesCount: 12
-    },
-    {
-      id: '2',
-      name: 'Spike',
-      logoUrl: '/placeholder.svg',
-      primaryColor: '#8B5CF6',
-      storesCount: 5
-    },
-    {
-      id: '3',
-      name: 'Green Bowl',
-      logoUrl: '/placeholder.svg',
-      primaryColor: '#10B981',
-      storesCount: 8
-    }
-  ];
-
-  // Mock stores data
-  const mockStores: Store[] = [
-    {
-      id: '1',
-      brandId: '1',
-      name: 'Alvalade',
-      address: 'Rua A, 123',
-      contact: '(11) 99999-1111',
-      manager: 'João Silva',
-      isActive: true,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: '2',
-      brandId: '1',
-      name: 'Rossio',
-      address: 'Rua B, 456',
-      contact: '(11) 99999-2222',
-      manager: 'Maria Santos',
-      isActive: false,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: '3',
-      brandId: '2',
-      name: 'Saldanha',
-      address: 'Rua C, 789',
-      contact: '(11) 99999-3333',
-      manager: 'Pedro Costa',
-      isActive: true,
-      createdAt: new Date().toISOString()
-    }
-  ];
-
-  const loadUserBrands = useCallback(async (userId: string, userRole?: string) => {
-    console.log('🔄 Iniciando carregamento das marcas para userId:', userId, 'userRole:', userRole);
-    
-    if (isLoading) {
-      console.log('⚠️ Já está carregando, ignorando nova chamada');
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Simular chamada da API
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Buscar marcas baseado no role do usuário
-      let brandsToSet: Brand[] = [];
-      
-      if (userRole === 'admin') {
-        brandsToSet = mockBrands;
-        console.log('👑 Usuário admin - carregando todas as marcas:', brandsToSet);
-        // Admin também carrega todas as lojas mock
-        setStores(mockStores);
-      } else if (userRole === 'manager') {
-        brandsToSet = mockBrands.slice(0, 2);
-        console.log('👔 Usuário manager - carregando marcas limitadas:', brandsToSet);
-        // Manager carrega lojas das suas marcas
-        setStores(mockStores.filter(store => 
-          brandsToSet.some(brand => brand.id === store.brandId)
-        ));
-      } else {
-        brandsToSet = [mockBrands[0]];
-        console.log('👤 Usuário comum - carregando marca única:', brandsToSet);
-        // Funcionário carrega apenas lojas da sua marca
-        setStores(mockStores.filter(store => store.brandId === '1'));
+  const loadStoresForBrands = useCallback(async (brands: Brand[]) => {
+    const allStores: Store[] = [];
+    for (const brand of brands) {
+      try {
+        const dbStores = await storesService.getByBrand(brand.id);
+        allStores.push(...dbStores.map(dbStoreToStore));
+      } catch (err) {
+        console.error('Error loading stores for brand', brand.id, err);
       }
-      
-      setUserBrands(brandsToSet);
-      console.log('✅ Marcas carregadas com sucesso, total:', brandsToSet.length);
+    }
+    setStores(allStores);
+  }, []);
+
+  const loadUserBrands = useCallback(async (userId: string, _userRole?: string) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const dbBrands = await brandsService.getUserBrands(userId);
+      const brands = dbBrands.map(dbBrandToBrand);
+      setUserBrands(brands);
+      await loadStoresForBrands(brands);
+
+      const savedBrand = localStorage.getItem('selected_brand');
+      if (savedBrand) {
+        try {
+          const cached = JSON.parse(savedBrand);
+          const fresh = brands.find(b => b.id === cached.id);
+          if (fresh) {
+            setSelectedBrandState(fresh);
+            localStorage.setItem('selected_brand', JSON.stringify(fresh));
+            document.documentElement.style.setProperty('--brand-primary', fresh.primaryColor);
+          } else {
+            localStorage.removeItem('selected_brand');
+            setSelectedBrandState(null);
+          }
+        } catch { /* ignore */ }
+      }
     } catch (error) {
-      console.error('❌ Erro ao carregar marcas:', error);
+      console.error('Error loading brands:', error);
       setUserBrands([]);
     } finally {
+      loadingRef.current = false;
       setIsLoading(false);
-      console.log('🏁 Carregamento finalizado, isLoading definido como false');
+      setBrandsLoaded(true);
     }
-  }, [isLoading, mockBrands, mockStores]);
+  }, [loadStoresForBrands]);
 
   const addBrand = async (brand: Brand, userId: string) => {
-    console.log('🏢 Adicionando nova marca:', brand);
-    
     try {
-      // Simular chamada da API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Adicionar à lista local (em produção seria salvo no banco)
-      setUserBrands(prev => [...prev, brand]);
-      console.log('✅ Marca adicionada com sucesso');
+      const created = await brandsService.createBrand(
+        { name: brand.name, logo_url: brand.logoUrl, primary_color: brand.primaryColor },
+        userId
+      );
+      setUserBrands(prev => [...prev, dbBrandToBrand(created)]);
     } catch (error) {
-      console.error('❌ Erro ao adicionar marca:', error);
+      console.error('Error adding brand:', error);
       throw error;
     }
   };
 
   const addStore = async (store: Store) => {
-    console.log('🏪 Adicionando nova loja:', store);
-    
     try {
-      // Simular chamada da API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Adicionar à lista local
-      setStores(prev => [...prev, store]);
-      
-      // Atualizar contador de lojas da marca
-      setUserBrands(prev => prev.map(brand => 
-        brand.id === store.brandId 
-          ? { ...brand, storesCount: brand.storesCount + 1 }
-          : brand
-      ));
-      
-      console.log('✅ Loja adicionada com sucesso');
+      const created = await storesService.create({
+        brand_id: store.brandId,
+        name: store.name,
+        address: store.address,
+        contact: store.contact,
+        manager: store.manager,
+        is_active: store.isActive,
+      });
+      setStores(prev => [...prev, dbStoreToStore(created)]);
+      setUserBrands(prev =>
+        prev.map(b => b.id === store.brandId ? { ...b, storesCount: b.storesCount + 1 } : b)
+      );
     } catch (error) {
-      console.error('❌ Erro ao adicionar loja:', error);
+      console.error('Error adding store:', error);
       throw error;
     }
   };
 
   const updateStore = async (updatedStore: Store) => {
-    console.log('🔄 Atualizando loja:', updatedStore);
-    
     try {
-      // Simular chamada da API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Atualizar na lista local
-      setStores(prev => prev.map(store => 
-        store.id === updatedStore.id ? updatedStore : store
-      ));
-      
-      console.log('✅ Loja atualizada com sucesso');
+      const result = await storesService.update(updatedStore.id, {
+        name: updatedStore.name,
+        address: updatedStore.address,
+        contact: updatedStore.contact,
+        manager: updatedStore.manager,
+        is_active: updatedStore.isActive,
+      });
+      setStores(prev => prev.map(s => s.id === result.id ? dbStoreToStore(result) : s));
     } catch (error) {
-      console.error('❌ Erro ao atualizar loja:', error);
+      console.error('Error updating store:', error);
       throw error;
     }
   };
 
   const toggleStoreStatus = async (storeId: string) => {
-    console.log('🔄 Alterando status da loja:', storeId);
-    
+    const store = stores.find(s => s.id === storeId);
+    if (!store) return;
     try {
-      // Simular chamada da API
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Alterar status na lista local
-      setStores(prev => prev.map(store => 
-        store.id === storeId 
-          ? { ...store, isActive: !store.isActive, updatedAt: new Date().toISOString() }
-          : store
-      ));
-      
-      console.log('✅ Status da loja alterado com sucesso');
+      const result = await storesService.toggleStatus(storeId, store.isActive);
+      setStores(prev => prev.map(s => s.id === result.id ? dbStoreToStore(result) : s));
     } catch (error) {
-      console.error('❌ Erro ao alterar status da loja:', error);
+      console.error('Error toggling store status:', error);
       throw error;
     }
   };
 
   const setSelectedBrand = (brand: Brand) => {
-    console.log('🎯 Marca selecionada:', brand);
     setSelectedBrandState(brand);
     localStorage.setItem('selected_brand', JSON.stringify(brand));
-    
-    // Aplicar tema da marca
     document.documentElement.style.setProperty('--brand-primary', brand.primaryColor);
   };
 
   useEffect(() => {
-    // Recuperar marca selecionada do localStorage
     const savedBrand = localStorage.getItem('selected_brand');
     if (savedBrand) {
-      console.log('💾 Recuperando marca salva do localStorage');
-      const brand = JSON.parse(savedBrand);
-      setSelectedBrandState(brand);
-      document.documentElement.style.setProperty('--brand-primary', brand.primaryColor);
+      try {
+        const brand = JSON.parse(savedBrand);
+        setSelectedBrandState(brand);
+        document.documentElement.style.setProperty('--brand-primary', brand.primaryColor);
+      } catch { /* ignore */ }
     }
   }, []);
 
@@ -273,7 +222,8 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     addStore,
     updateStore,
     toggleStoreStatus,
-    isLoading
+    isLoading,
+    brandsLoaded,
   };
 
   return (

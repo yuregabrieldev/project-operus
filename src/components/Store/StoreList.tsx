@@ -125,7 +125,7 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('stores.name')}</TableHead>
