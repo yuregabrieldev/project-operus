@@ -92,7 +92,7 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const dbStores = await storesService.getByBrand(brand.id);
         allStores.push(...dbStores.map(dbStoreToStore));
       } catch (err) {
-        console.error('Error loading stores for brand', brand.id, err);
+        console.error('Error loading stores for brand:', err?.message);
       }
     }
     setStores(allStores);
@@ -125,7 +125,7 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } catch { /* ignore */ }
       }
     } catch (error) {
-      console.error('Error loading brands:', error);
+      console.error('Error loading brands:', error?.message);
       setUserBrands([]);
     } finally {
       loadingRef.current = false;
@@ -142,7 +142,7 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       );
       setUserBrands(prev => [...prev, dbBrandToBrand(created)]);
     } catch (error) {
-      console.error('Error adding brand:', error);
+      console.error('Error adding brand:', error?.message);
       throw error;
     }
   };
@@ -162,7 +162,7 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         prev.map(b => b.id === store.brandId ? { ...b, storesCount: b.storesCount + 1 } : b)
       );
     } catch (error) {
-      console.error('Error adding store:', error);
+      console.error('Error adding store:', error?.message);
       throw error;
     }
   };
@@ -178,7 +178,7 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       setStores(prev => prev.map(s => s.id === result.id ? dbStoreToStore(result) : s));
     } catch (error) {
-      console.error('Error updating store:', error);
+      console.error('Error updating store:', error?.message);
       throw error;
     }
   };
@@ -190,7 +190,7 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const result = await storesService.toggleStatus(storeId, store.isActive);
       setStores(prev => prev.map(s => s.id === result.id ? dbStoreToStore(result) : s));
     } catch (error) {
-      console.error('Error toggling store status:', error);
+      console.error('Error toggling store status:', error?.message);
       throw error;
     }
   };

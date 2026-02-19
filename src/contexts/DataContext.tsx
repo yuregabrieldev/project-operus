@@ -472,7 +472,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         completedBy: c.completed_by ?? undefined,
       })));
     } catch (err) {
-      console.error('Error loading data:', err);
+      console.error('Error loading data:', err?.message);
     } finally {
       setDataLoading(false);
     }
@@ -487,14 +487,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const created = await productsService.create({ ...store, brand_id: brandId } as any);
       setStores(prev => [...prev, { ...store, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateStore = async (id: string, store: Partial<Store>) => {
     try {
       // DataContext stores are read from BrandContext; delegate to BrandContext for store updates
       setStores(prev => prev.map(s => s.id === id ? { ...s, ...store } : s));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteStore = (id: string) => {
@@ -506,14 +506,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const created = await categoriesService.create({ brand_id: brandId, name: category.name });
       setCategories(prev => [...prev, { id: created.id, name: created.name }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteCategory = async (id: string) => {
     try {
       await categoriesService.delete(id);
       setCategories(prev => prev.filter(c => c.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
@@ -526,7 +526,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         barcode: product.barcode, image_url: product.imageUrl ?? null, unit: product.unit || 'UN.',
       });
       setProducts(prev => [...prev, { ...product, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateProduct = async (id: string, product: Partial<Product>) => {
@@ -543,14 +543,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (product.unit !== undefined) dbUpdate.unit = product.unit;
       await productsService.update(id, dbUpdate);
       setProducts(prev => prev.map(p => p.id === id ? { ...p, ...product } : p));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteProduct = async (id: string) => {
     try {
       await productsService.delete(id);
       setProducts(prev => prev.filter(p => p.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addInventoryItem = async (item: Omit<InventoryItem, 'id'>) => {
@@ -563,7 +563,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         last_updated: new Date().toISOString(),
       });
       setInventory(prev => [...prev, { ...item, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateInventoryItem = async (id: string, item: Partial<InventoryItem>) => {
@@ -575,7 +575,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (item.alertCritical !== undefined) dbUpdate.alert_critical = item.alertCritical;
       await inventoryService.update(id, dbUpdate);
       setInventory(prev => prev.map(i => i.id === id ? { ...i, ...item, lastUpdated: new Date() } : i));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addCashRegister = async (cashRegister: Omit<CashRegister, 'id'>) => {
@@ -591,7 +591,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: cashRegister.status,
       });
       setCashRegisters(prev => [...prev, { ...cashRegister, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateCashRegister = async (id: string, cashRegister: Partial<CashRegister>) => {
@@ -604,7 +604,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (cashRegister.openingBalance !== undefined) dbUpdate.opening_balance = cashRegister.openingBalance;
       await cashService.update(id, dbUpdate);
       setCashRegisters(prev => prev.map(cr => cr.id === id ? { ...cr, ...cashRegister } : cr));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addInvoice = async (invoice: Omit<Invoice, 'id'>) => {
@@ -624,7 +624,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         observations: invoice.observations ?? [],
       });
       setInvoices(prev => [...prev, { ...invoice, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateInvoice = async (id: string, invoice: Partial<Invoice>) => {
@@ -645,7 +645,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (invoice.orderNumber !== undefined) dbUpdate.order_number = invoice.orderNumber;
       await invoicesService.update(id, dbUpdate);
       setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...invoice } : i));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addSupplier = async (supplier: Omit<Supplier, 'id'>) => {
@@ -653,14 +653,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const created = await suppliersService.create({ brand_id: brandId, ...supplier });
       setSuppliers(prev => [...prev, { ...supplier, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteSupplier = async (id: string) => {
     try {
       await suppliersService.delete(id);
       setSuppliers(prev => prev.filter(s => s.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addCostCenter = async (costCenter: Omit<CostCenter, 'id'>) => {
@@ -668,14 +668,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const created = await costCentersService.create({ brand_id: brandId, name: costCenter.name });
       setCostCenters(prev => [...prev, { id: created.id, name: created.name }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteCostCenter = async (id: string) => {
     try {
       await costCentersService.delete(id);
       setCostCenters(prev => prev.filter(cc => cc.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addLicense = async (license: Omit<License, 'id'>) => {
@@ -694,7 +694,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         observations: license.observations,
       });
       setLicenses(prev => [...prev, { ...license, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateLicense = async (id: string, license: Partial<License>) => {
@@ -717,14 +717,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (license.observations !== undefined) dbUpdate.observations = license.observations;
       await licensesService.update(id, dbUpdate);
       setLicenses(prev => prev.map(l => l.id === id ? { ...l, ...license } : l));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteLicense = async (id: string) => {
     try {
       await licensesService.delete(id);
       setLicenses(prev => prev.filter(l => l.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addWasteVariant = async (variant: Omit<WasteVariant, 'id'>) => {
@@ -732,7 +732,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const created = await wasteService.createVariant({ brand_id: brandId, name: variant.name, product_ids: variant.productIds });
       setWasteVariants(prev => [...prev, { ...variant, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateWasteVariant = async (id: string, variant: Partial<WasteVariant>) => {
@@ -742,14 +742,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (variant.productIds !== undefined) dbUpdate.product_ids = variant.productIds;
       await wasteService.updateVariant(id, dbUpdate);
       setWasteVariants(prev => prev.map(v => v.id === id ? { ...v, ...variant } : v));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteWasteVariant = async (id: string) => {
     try {
       await wasteService.deleteVariant(id);
       setWasteVariants(prev => prev.filter(v => v.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addWasteReason = async (reason: Omit<WasteReason, 'id'>) => {
@@ -757,21 +757,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const created = await wasteService.createReason({ brand_id: brandId, name: reason.name });
       setWasteReasons(prev => [...prev, { id: created.id, name: created.name }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateWasteReason = async (id: string, reason: Partial<WasteReason>) => {
     try {
       if (reason.name !== undefined) await wasteService.updateReason(id, { name: reason.name });
       setWasteReasons(prev => prev.map(r => r.id === id ? { ...r, ...reason } : r));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteWasteReason = async (id: string) => {
     try {
       await wasteService.deleteReason(id);
       setWasteReasons(prev => prev.filter(r => r.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addWasteRecord = async (record: Omit<WasteRecord, 'id'>) => {
@@ -784,14 +784,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         comment: record.comment ?? null, created_at: record.createdAt.toISOString(),
       });
       setWasteRecords(prev => [...prev, { ...record, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteWasteRecord = async (id: string) => {
     try {
       await wasteService.deleteRecord(id);
       setWasteRecords(prev => prev.filter(r => r.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addChecklist = async (checklist: Omit<Checklist, 'id'>) => {
@@ -803,7 +803,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         completed_by: checklist.completedBy ?? null,
       });
       setChecklists(prev => [...prev, { ...checklist, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateChecklist = async (id: string, checklist: Partial<Checklist>) => {
@@ -814,7 +814,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (checklist.completedBy !== undefined) dbUpdate.completed_by = checklist.completedBy;
       await simpleChecklistsService.update(id, dbUpdate);
       setChecklists(prev => prev.map(c => c.id === id ? { ...c, ...checklist } : c));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addMovement = async (movement: Omit<InventoryMovement, 'id'>) => {
@@ -828,7 +828,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         created_at: movement.createdAt.toISOString(),
       });
       setMovements(prev => [...prev, { ...movement, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateMovement = async (id: string, movement: Partial<InventoryMovement>) => {
@@ -838,7 +838,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (movement.quantity !== undefined) dbUpdate.quantity = movement.quantity;
       await movementsService.update(id, dbUpdate);
       setMovements(prev => prev.map(m => m.id === id ? { ...m, ...movement } : m));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addOperationLog = async (log: Omit<OperationLog, 'id'>) => {
@@ -851,7 +851,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         created_at: log.createdAt.toISOString(),
       });
       setOperationLogs(prev => [...prev, { ...log, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const getOperationLogsByProduct = (productId: string) =>
@@ -867,7 +867,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         is_active: recipe.isActive, created_at: recipe.createdAt.toISOString(),
       });
       setRecipes(prev => [...prev, { ...recipe, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updateRecipe = async (id: string, recipe: Partial<Recipe>) => {
@@ -880,14 +880,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (recipe.isActive !== undefined) dbUpdate.is_active = recipe.isActive;
       await recipesService.update(id, dbUpdate);
       setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...recipe } : r));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deleteRecipe = async (id: string) => {
     try {
       await recipesService.delete(id);
       setRecipes(prev => prev.filter(r => r.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const addProductionRecord = async (record: Omit<ProductionRecord, 'id'>) => {
@@ -900,7 +900,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         notes: record.notes ?? null, created_at: record.createdAt.toISOString(),
       });
       setProductionRecords(prev => [...prev, { ...record, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const getProductionRecordsByRecipe = (recipeId: string) =>
@@ -918,7 +918,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         created_at: order.createdAt.toISOString(),
       });
       setPurchaseOrders(prev => [...prev, { ...order, id: created.id }]);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const updatePurchaseOrder = async (id: string, order: Partial<PurchaseOrder>) => {
@@ -932,14 +932,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (order.observation !== undefined) dbUpdate.observation = order.observation;
       await purchaseOrdersService.update(id, dbUpdate);
       setPurchaseOrders(prev => prev.map(o => o.id === id ? { ...o, ...order } : o));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   const deletePurchaseOrder = async (id: string) => {
     try {
       await purchaseOrdersService.delete(id);
       setPurchaseOrders(prev => prev.filter(o => o.id !== id));
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
   // Getters

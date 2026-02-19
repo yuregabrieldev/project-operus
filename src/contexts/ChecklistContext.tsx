@@ -131,7 +131,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         })),
       })));
     } catch (err) {
-      console.error('Error loading checklist data:', err);
+      console.error('Error loading checklist data:', err?.message);
     }
   }, [brandId]);
 
@@ -152,7 +152,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           lastEditedAt: new Date(created.last_edited_at), usageCount: 0,
         }]);
         toast({ title: "Template criado", description: "Novo template foi criado com sucesso." });
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error(err?.message || 'Operation failed'); }
     })();
   };
 
@@ -171,7 +171,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         await checklistService.updateTemplate(id, dbUpdate);
         setTemplates(prev => prev.map(t => t.id === id ? { ...t, ...updates, lastEditedAt: new Date() } : t));
         toast({ title: "Template atualizado", description: "Template foi atualizado com sucesso." });
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error(err?.message || 'Operation failed'); }
     })();
   };
 
@@ -181,7 +181,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         await checklistService.deleteTemplate(id);
         setTemplates(prev => prev.filter(t => t.id !== id));
         toast({ title: "Template removido", description: "Template foi removido com sucesso." });
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error(err?.message || 'Operation failed'); }
     })();
   };
 
@@ -192,7 +192,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         await checklistService.updateTemplate(id, { is_active: !template.isActive });
         setTemplates(prev => prev.map(t => t.id === id ? { ...t, isActive: !t.isActive, lastEditedAt: new Date() } : t));
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error(err?.message || 'Operation failed'); }
     })();
   };
 
@@ -215,7 +215,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             current_item_index: executionData.currentItemIndex,
           });
           setExecutions(prev => prev.map(e => e.id === tempId ? { ...e, id: created.id } : e));
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error(err?.message || 'Operation failed'); }
       })();
     }
 
@@ -234,14 +234,14 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }));
         if (updates.currentItemIndex !== undefined) dbUpdate.current_item_index = updates.currentItemIndex;
         await checklistService.updateExecution(id, dbUpdate);
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error(err?.message || 'Operation failed'); }
     })();
   };
 
   const deleteExecution = (id: string) => {
     setExecutions(prev => prev.filter(e => e.id !== id));
     (async () => {
-      try { await checklistService.deleteExecution(id); } catch (err) { console.error(err); }
+      try { await checklistService.deleteExecution(id); } catch (err) { console.error(err?.message || 'Operation failed'); }
     })();
   };
 
@@ -274,7 +274,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             ...r, completedAt: r.completedAt instanceof Date ? r.completedAt.toISOString() : r.completedAt,
           })) as any,
         });
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error(err?.message || 'Operation failed'); }
     })();
   };
 

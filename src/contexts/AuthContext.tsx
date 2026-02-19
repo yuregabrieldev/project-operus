@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
     } catch (err) {
-      console.error('Error loading profile:', err);
+      console.error('Error loading profile:', err?.message);
       setUser(null);
     } finally {
       setLoading(false);
@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await authService.updateProfile(user.id, dbUpdates);
       }
     } catch (err) {
-      console.error('Error updating profile:', err);
+      console.error('Error updating profile:', err?.message);
     }
   };
 

@@ -141,7 +141,7 @@ const ProductionExecutionForm: React.FC<ProductionExecutionFormProps> = ({ recip
 
       onClose();
     } catch (error) {
-      console.error('Erro ao registrar produção:', error);
+      console.error('Erro ao registrar produção:', error?.message);
       toast({
         title: "Erro",
         description: "Erro ao registrar produção.",

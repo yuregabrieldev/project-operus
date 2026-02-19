@@ -91,7 +91,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       setUsers(mappedUsers);
     } catch (err) {
-      console.error('Error loading users:', err);
+      console.error('Error loading users:', err?.message);
     }
   }, [selectedBrand?.id, stores]);
 
@@ -152,7 +152,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           )
         );
       } catch (err) {
-        console.error('Error updating user:', err);
+        console.error('Error updating user:', err?.message);
         setUsers(prev =>
           prev.map(user =>
             user.id === userData.id
@@ -172,7 +172,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         await usersService.updateProfile(userId, { is_active: !user.isActive } as any);
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, isActive: !u.isActive } : u));
       } catch (err) {
-        console.error('Error toggling user status:', err);
+        console.error('Error toggling user status:', err?.message);
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, isActive: !u.isActive } : u));
       }
     })();
@@ -184,7 +184,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       try {
         await usersService.updateProfile(userId, { needs_password_change: true } as any);
       } catch (err) {
-        console.error('Error generating temp password:', err);
+        console.error('Error generating temp password:', err?.message);
       }
     })();
     setUsers(prev => prev.map(user => user.id === userId ? { ...user, needsPasswordChange: true } : user));
@@ -198,7 +198,7 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         await usersService.removeUserFromBrand(userId, selectedBrand.id);
         setUsers(prev => prev.filter(user => user.id !== userId));
       } catch (err) {
-        console.error('Error deleting user:', err);
+        console.error('Error deleting user:', err?.message);
         setUsers(prev => prev.filter(user => user.id !== userId));
       }
     })();

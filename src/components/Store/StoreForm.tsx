@@ -67,7 +67,7 @@ export const StoreForm: React.FC<StoreFormProps> = ({ isOpen, onClose }) => {
 
       onClose();
     } catch (error) {
-      console.error('Erro ao criar loja:', error);
+      console.error('Erro ao criar loja:', error?.message);
       toast({
         title: t('stores.createError'),
         description: t('stores.tryAgainLater'),

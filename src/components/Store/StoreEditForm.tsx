@@ -75,7 +75,7 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
 
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar loja:', error);
+      console.error('Erro ao atualizar loja:', error?.message);
       toast({
         title: t('stores.updateError'),
         description: t('stores.tryAgainLater'),

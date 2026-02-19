@@ -60,7 +60,16 @@ const LandingPage: React.FC = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await register(registerForm.name, registerForm.email, registerForm.password);
+    const pwd = registerForm.password;
+    if (pwd.length < 8) {
+      toast({ title: "Senha fraca", description: "A senha deve ter no mínimo 8 caracteres.", variant: "destructive" });
+      return;
+    }
+    if (!/[A-Z]/.test(pwd) || !/[0-9]/.test(pwd)) {
+      toast({ title: "Senha fraca", description: "A senha deve conter pelo menos uma letra maiúscula e um número.", variant: "destructive" });
+      return;
+    }
+    const success = await register(registerForm.name, registerForm.email, pwd);
 
     if (success) {
       toast({

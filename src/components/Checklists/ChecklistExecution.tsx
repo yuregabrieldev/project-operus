@@ -291,7 +291,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
 
   const syncToServer = async () => {
     // Mock sync - em produção faria POST para API
-    console.log('Syncing to server:', syncQueue);
+    // syncQueue processed
 
     // Simular sucesso
     setTimeout(() => {

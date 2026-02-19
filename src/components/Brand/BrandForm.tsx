@@ -53,7 +53,7 @@ export const BrandForm: React.FC<BrandFormProps> = ({ isOpen, onClose }) => {
       
       onClose();
     } catch (error) {
-      console.error('Erro ao criar marca:', error);
+      console.error('Erro ao criar marca:', error?.message);
       toast({
         title: "Erro ao criar marca",
         description: "Tente novamente em alguns instantes.",

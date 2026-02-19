@@ -395,14 +395,22 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
   };
 
   const handleViewAttachment = (attachment: AttachmentFile) => {
-    const newWindow = window.open();
-    if (newWindow) {
-      if (attachment.mimeType.startsWith('image/')) {
-        newWindow.document.write(`<img src="${attachment.dataUrl}" style="max-width:100%" />`);
-      } else {
-        newWindow.document.write(`<iframe src="${attachment.dataUrl}" style="width:100%;height:100%;border:none;" />`);
-      }
+    if (attachment.mimeType.startsWith('image/')) {
+      const blob = dataUrlToBlob(attachment.dataUrl);
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } else {
+      handleDownloadAttachment(attachment);
     }
+  };
+
+  const dataUrlToBlob = (dataUrl: string): Blob => {
+    const [header, base64] = dataUrl.split(',');
+    const mime = header.match(/:(.*?);/)?.[1] || 'application/octet-stream';
+    const bytes = atob(base64);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    return new Blob([arr], { type: mime });
   };
 
   const handleDownloadAttachment = (attachment: AttachmentFile) => {
@@ -415,18 +423,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
   };
 
   const handleDownloadAsPdf = (attachment: AttachmentFile) => {
-    // For images, create a simple HTML-to-print PDF approach
-    const printWindow = window.open();
+    const blob = dataUrlToBlob(attachment.dataUrl);
+    const blobUrl = URL.createObjectURL(blob);
+    const printWindow = window.open(blobUrl, '_blank');
     if (printWindow) {
-      printWindow.document.write(`
-        <html><head><title>${attachment.name}</title><style>
-          body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-          img { max-width: 100%; max-height: 100vh; }
-        </style></head><body>
-          <img src="${attachment.dataUrl}" />
-          <script>setTimeout(() => { window.print(); }, 500);</script>
-        </body></html>
-      `);
+      printWindow.addEventListener('load', () => {
+        printWindow.print();
+      });
     }
   };
 

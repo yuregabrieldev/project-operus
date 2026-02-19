@@ -512,12 +512,24 @@ const SettingsManager: React.FC = () => {
               <p className="text-xs text-destructive">{t('settings.passwordsDoNotMatch')}</p>
             )}
           </div>
-          <Button onClick={() => {
+          <Button onClick={async () => {
             if (!currentPassword || !newPassword) { toast({ title: t('settings.fillAllFields'), variant: 'destructive' }); return; }
             if (newPassword !== confirmPassword) { toast({ title: t('settings.passwordsDoNotMatch'), variant: 'destructive' }); return; }
-            if (newPassword.length < 6) { toast({ title: t('settings.passwordMinLength'), variant: 'destructive' }); return; }
-            toast({ title: t('settings.passwordChanged') });
-            setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+            if (newPassword.length < 8) { toast({ title: t('settings.passwordMinLength'), variant: 'destructive' }); return; }
+            if (!/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+              toast({ title: t('settings.passwordStrength'), variant: 'destructive' }); return;
+            }
+            try {
+              const { authService } = await import('@/lib/supabase-services');
+              const { error: signInError } = await authService.signIn(user?.email || '', currentPassword);
+              if (signInError) { toast({ title: t('settings.currentPasswordWrong'), variant: 'destructive' }); return; }
+              const { error } = await authService.updatePassword(newPassword);
+              if (error) { toast({ title: error.message, variant: 'destructive' }); return; }
+              toast({ title: t('settings.passwordChanged') });
+              setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+            } catch {
+              toast({ title: t('settings.passwordChangeError'), variant: 'destructive' });
+            }
           }}>
             <Key className="h-4 w-4 mr-2" />
             {t('settings.changePassword')}
