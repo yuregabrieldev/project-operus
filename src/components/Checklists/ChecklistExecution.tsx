@@ -13,6 +13,7 @@ import { Camera, Save, ChevronLeft, ChevronRight, CheckCircle, Clock, Upload, Wi
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChecklist } from '@/contexts/ChecklistContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
 interface ChecklistExecution {
@@ -71,6 +72,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     getTemplateById,
     getExecutionById
   } = useChecklist();
+  const { t } = useLanguage();
 
   const [selectedStore, setSelectedStore] = useState<string>('');
   const [currentExecution, setCurrentExecution] = useState<ChecklistExecution | null>(null);
@@ -110,8 +112,8 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
   const startChecklist = (templateId: string) => {
     if (!selectedStore) {
       toast({
-        title: "Erro",
-        description: "Selecione uma loja antes de iniciar o checklist.",
+        title: t('checklists.error'),
+        description: t('checklists.selectStoreFirst'),
         variant: "destructive"
       });
       return;
@@ -228,8 +230,8 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     const currentItem = getCurrentItem();
     if (!currentItem || !currentItem.isOptional) {
       toast({
-        title: "Item obrigatório",
-        description: "Este item não pode ser pulado.",
+        title: t('checklists.requiredItem'),
+        description: t('checklists.cannotSkip'),
         variant: "destructive"
       });
       return;
@@ -247,8 +249,8 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     setCurrentExecution(null);
 
     toast({
-      title: "Rascunho salvo",
-      description: "Checklist salvo como rascunho.",
+      title: t('checklists.draftSaved'),
+      description: t('checklists.draftSavedDesc'),
     });
 
     // Call onCancel callback to go back
@@ -272,8 +274,8 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     setCurrentExecution(null);
 
     toast({
-      title: "Checklist concluído",
-      description: `${completedExecution.templateName} foi concluído com sucesso.`,
+      title: t('checklists.checklistCompleted'),
+      description: `${completedExecution.templateName} ${t('checklists.checklistCompletedDesc')}`,
     });
 
     // Call onComplete callback
@@ -295,8 +297,8 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
     setTimeout(() => {
       setSyncQueue([]);
       toast({
-        title: "Sincronização concluída",
-        description: `${syncQueue.length} checklist(s) sincronizado(s).`,
+        title: t('checklists.syncCompleted'),
+        description: `${syncQueue.length} ${t('checklists.syncCompletedDesc')}`,
       });
     }, 2000);
   };
@@ -349,8 +351,8 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
           <CardContent className="p-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Item {currentExecution.currentItemIndex + 1} de {template.items.length}</span>
-                <span>{progress}% concluído</span>
+                <span>{t('checklists.itemOf')} {currentExecution.currentItemIndex + 1} {t('checklists.of')} {template.items.length}</span>
+                <span>{progress}% {t('checklists.completed')}</span>
               </div>
               <Progress value={progress} />
             </div>
@@ -368,21 +370,21 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
           <CardContent className="space-y-4">
             {/* Response */}
             <div>
-              <Label className="text-base">Resposta</Label>
+              <Label className="text-base">{t('checklists.response')}</Label>
               <div className="flex gap-4 mt-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     checked={currentResponse.response === true}
                     onCheckedChange={() => updateResponse({ response: true })}
                   />
-                  <Label>Sim / OK</Label>
+                  <Label>{t('checklists.yesOk')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     checked={currentResponse.response === false}
                     onCheckedChange={() => updateResponse({ response: false })}
                   />
-                  <Label>Não / Problema</Label>
+                  <Label>{t('checklists.noProblem')}</Label>
                 </div>
               </div>
             </div>
@@ -390,11 +392,11 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
             {/* Comment */}
             {currentItem.requiresComment && (
               <div>
-                <Label>Comentário *</Label>
+                <Label>{t('checklists.commentRequired')}</Label>
                 <Textarea
                   value={currentResponse.comment || ''}
                   onChange={(e) => updateResponse({ comment: e.target.value })}
-                  placeholder="Descreva detalhes ou observações..."
+                  placeholder={t('checklists.commentPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -403,7 +405,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
             {/* Image Upload */}
             {currentItem.requiresImage && (
               <div>
-                <Label>Imagem *</Label>
+                <Label>{t('checklists.imageRequired')}</Label>
                 <div className="mt-2">
                   {currentResponse.imageUrl ? (
                     <div className="space-y-2">
@@ -418,14 +420,14 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
                         size="sm"
                         onClick={() => updateResponse({ imageUrl: undefined })}
                       >
-                        Trocar imagem
+                        {t('checklists.changeImage')}
                       </Button>
                     </div>
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                       <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-4">
-                        Adicione uma foto como evidência
+                        {t('checklists.addPhoto')}
                       </p>
                       <Input
                         type="file"
@@ -441,7 +443,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
                         <Button type="button" asChild>
                           <span>
                             <Upload className="h-4 w-4 mr-2" />
-                            Escolher arquivo
+                            {t('checklists.chooseFile')}
                           </span>
                         </Button>
                       </Label>
@@ -458,7 +460,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
           <div className="space-x-2">
             <Button variant="outline" onClick={onCancel}>
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Voltar
+              {t('checklists.back')}
             </Button>
 
             <Button
@@ -467,12 +469,12 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
               disabled={currentExecution.currentItemIndex === 0}
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Anterior
+              {t('checklists.previous')}
             </Button>
 
             {currentItem && !currentItem.isOptional && (
               <Button variant="outline" onClick={skipItem}>
-                Pular
+                {t('checklists.skip')}
               </Button>
             )}
           </div>
@@ -480,7 +482,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
           <div className="space-x-2">
             <Button variant="outline" onClick={saveAsDraft}>
               <Save className="h-4 w-4 mr-2" />
-              Salvar Rascunho
+              {t('checklists.saveDraft')}
             </Button>
 
             <Button
@@ -493,11 +495,11 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
               {currentExecution.currentItemIndex === template.items.length - 1 ? (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Concluir
+                  {t('checklists.finish')}
                 </>
               ) : (
                 <>
-                  Próximo
+                  {t('checklists.next')}
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </>
               )}
@@ -514,17 +516,17 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">
-            {createNew ? 'Novo Checklist' : 'Checklists Pendentes'}
+            {createNew ? t('checklists.newChecklistTitle') : t('checklists.pendingTitle')}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {createNew ? 'Selecione um template para criar um novo checklist' : 'Execute checklists e mantenha a qualidade operacional'}
+            {createNew ? t('checklists.selectTemplateDesc') : t('checklists.pendingDesc')}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onCancel}>
             <ChevronLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {t('checklists.back')}
           </Button>
           {!isOnline && (
             <Badge variant="outline" className="text-orange-600">
@@ -534,7 +536,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
           )}
           {syncQueue.length > 0 && (
             <Badge variant="outline" className="text-blue-600">
-              {syncQueue.length} para sincronizar
+              {syncQueue.length} {t('checklists.toSync')}
             </Badge>
           )}
         </div>
@@ -543,12 +545,12 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
       {/* Store Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>Selecionar Loja</CardTitle>
+          <CardTitle>{t('checklists.selectStore')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Select value={selectedStore} onValueChange={setSelectedStore}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Escolha uma loja" />
+              <SelectValue placeholder={t('checklists.choosePlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               {stores.map(store => (
@@ -564,7 +566,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
       {/* Available Templates */}
       <Card>
         <CardHeader>
-          <CardTitle>Checklists Disponíveis</CardTitle>
+          <CardTitle>{t('checklists.availableChecklists')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -578,12 +580,12 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
                         template.type === 'closing' ? 'bg-red-100 text-red-800' :
                           'bg-blue-100 text-blue-800'
                     }>
-                      {template.type === 'opening' ? 'Abertura' :
-                        template.type === 'closing' ? 'Fechamento' : 'Qualidade'}
+                      {template.type === 'opening' ? t('checklists.opening') :
+                        template.type === 'closing' ? t('checklists.closing') : t('checklists.quality')}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {template.items.length} itens para verificar
+                    {template.items.length} {t('checklists.itemsToCheck')}
                   </p>
                   <Button
                     onClick={() => startChecklist(template.id)}
@@ -591,7 +593,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
                     className="w-full"
                   >
                     <Clock className="h-4 w-4 mr-2" />
-                    Iniciar Checklist
+                    {t('checklists.startChecklist')}
                   </Button>
                 </CardContent>
               </Card>
@@ -604,7 +606,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
       {executions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Rascunhos Salvos</CardTitle>
+            <CardTitle>{t('checklists.savedDrafts')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -614,11 +616,11 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
                     <h4 className="font-medium">{execution.templateName}</h4>
                     <p className="text-sm text-muted-foreground">
                       {stores.find(s => s.id === execution.storeId)?.name} •
-                      Iniciado em {new Date(execution.startTime).toLocaleString('pt-BR')}
+                      {t('checklists.startedAt')} {new Date(execution.startTime).toLocaleString('pt-BR')}
                     </p>
                   </div>
                   <Button size="sm" onClick={() => resumeChecklist(execution)}>
-                    Continuar
+                    {t('checklists.continue')}
                   </Button>
                 </div>
               ))}

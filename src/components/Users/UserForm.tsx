@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUsers } from '@/contexts/UsersContext';
 import { useBrand } from '@/contexts/BrandContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
 interface UserFormProps {
@@ -18,6 +19,7 @@ interface UserFormProps {
 export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
   const { addUser } = useUsers();
   const { stores } = useBrand();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,16 +38,16 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
     try {
       // Validações
       if (!formData.name.trim()) {
-        throw new Error('Nome é obrigatório');
+        throw new Error(t('users.nameRequired'));
       }
       if (!formData.email.trim()) {
-        throw new Error('Email é obrigatório');
+        throw new Error(t('users.emailRequired'));
       }
       if (!formData.email.includes('@')) {
-        throw new Error('Email inválido');
+        throw new Error(t('users.emailInvalid'));
       }
       if (formData.selectedStores.length === 0) {
-        throw new Error('Selecione pelo menos uma loja');
+        throw new Error(t('users.selectAtLeastOneStore'));
       }
 
       // Convert selected store IDs to store objects
@@ -69,8 +71,8 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
       const tempPassword = addUser(userData);
 
       toast({
-        title: "Usuário criado com sucesso!",
-        description: `Senha temporária: ${tempPassword}`,
+        title: t('users.userCreated'),
+        description: t('users.tempPassword', { password: tempPassword }),
         duration: 10000,
       });
 
@@ -86,8 +88,8 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
       onClose();
     } catch (error) {
       toast({
-        title: "Erro ao criar usuário",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        title: t('users.createError'),
+        description: error instanceof Error ? error.message : t('users.unknownError'),
         variant: "destructive",
       });
     } finally {
@@ -119,49 +121,49 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Novo Usuário</DialogTitle>
+          <DialogTitle>{t('users.newUser')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome Completo</Label>
+            <Label htmlFor="name">{t('users.fullName')}</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Digite o nome completo"
+              placeholder={t('users.fullNamePlaceholder')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('users.email')}</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="usuario@empresa.com"
+              placeholder={t('users.emailPlaceholder')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Tipo de Usuário</Label>
+            <Label htmlFor="role">{t('users.userRole')}</Label>
             <Select value={formData.role} onValueChange={(value: any) => setFormData(prev => ({ ...prev, role: value }))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="employee">Funcionário</SelectItem>
-                <SelectItem value="manager">Gerente</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="employee">{t('users.roleEmployee')}</SelectItem>
+                <SelectItem value="manager">{t('users.roleManager')}</SelectItem>
+                <SelectItem value="admin">{t('users.roleAdmin')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Lojas Vinculadas</Label>
+            <Label>{t('users.linkedStores')}</Label>
             <Card>
               <CardContent className="pt-4">
                 <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -179,7 +181,7 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
                   ))}
                 </div>
                 {allStores.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Nenhuma loja disponível</p>
+                  <p className="text-sm text-muted-foreground">{t('users.noStoresAvailable')}</p>
                 )}
               </CardContent>
             </Card>
@@ -192,16 +194,16 @@ export const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose }) => {
               onCheckedChange={(checked) => setFormData(prev => ({ ...prev, sendWelcomeEmail: !!checked }))}
             />
             <Label htmlFor="welcome-email" className="text-sm">
-              Enviar email de boas-vindas
+              {t('users.sendWelcomeEmail')}
             </Label>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
+              {t('users.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Criando...' : 'Criar Usuário'}
+              {isSubmitting ? t('users.creating') : t('users.createUser')}
             </Button>
           </div>
         </form>

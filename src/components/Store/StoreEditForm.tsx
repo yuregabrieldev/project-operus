@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { ImagePlus } from 'lucide-react';
 
@@ -19,6 +20,7 @@ interface StoreEditFormProps {
 export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onClose }) => {
   const { userBrands, updateStore } = useBrand();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -67,16 +69,16 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
       await updateStore(updatedStore);
 
       toast({
-        title: "Loja atualizada com sucesso!",
-        description: `As informações da loja ${formData.name} foram atualizadas.`,
+        title: t('stores.storeUpdated'),
+        description: t('stores.storeUpdatedDesc', { name: formData.name }),
       });
 
       onClose();
     } catch (error) {
       console.error('Erro ao atualizar loja:', error);
       toast({
-        title: "Erro ao atualizar loja",
-        description: "Tente novamente em alguns instantes.",
+        title: t('stores.updateError'),
+        description: t('stores.tryAgainLater'),
         variant: "destructive"
       });
     } finally {
@@ -94,35 +96,35 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Editar Loja - {store?.name}</DialogTitle>
+          <DialogTitle>{t('stores.editStore')} - {store?.name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome da Loja</Label>
+            <Label htmlFor="name">{t('stores.storeName')}</Label>
             <Input
               id="name"
               type="text"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              placeholder="Digite o nome da loja"
+              placeholder={t('stores.storeNamePlaceholder')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Endereço</Label>
+            <Label htmlFor="address">{t('stores.addressLabel')}</Label>
             <Input
               id="address"
               type="text"
               value={formData.address}
               onChange={(e) => handleChange('address', e.target.value)}
-              placeholder="Endereço completo da loja"
+              placeholder={t('stores.addressPlaceholder')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="contact">Telefone de Contato</Label>
+            <Label htmlFor="contact">{t('stores.contactPhone')}</Label>
             <Input
               id="contact"
               type="tel"
@@ -134,22 +136,22 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="manager">Gerente Responsável</Label>
+            <Label htmlFor="manager">{t('stores.managerLabel')}</Label>
             <Input
               id="manager"
               type="text"
               value={formData.manager}
               onChange={(e) => handleChange('manager', e.target.value)}
-              placeholder="Nome do gerente da loja"
+              placeholder={t('stores.managerPlaceholder')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="brand">Marca</Label>
+            <Label htmlFor="brand">{t('stores.brand')}</Label>
             <Select value={formData.brandId} onValueChange={(value) => handleChange('brandId', value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione a marca" />
+                <SelectValue placeholder={t('stores.selectBrand')} />
               </SelectTrigger>
               <SelectContent>
                 {userBrands.map(brand => (
@@ -162,7 +164,7 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
           </div>
 
           <div className="space-y-2">
-            <Label>Imagem da Loja</Label>
+            <Label>{t('stores.storeImage')}</Label>
             {formData.imagePreview ? (
               <div className="relative w-full h-32 rounded-lg overflow-hidden border">
                 <img src={formData.imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -171,7 +173,7 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
             ) : (
               <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors">
                 <ImagePlus className="h-6 w-6 text-gray-400 mb-1" />
-                <span className="text-xs text-gray-500">Clique para adicionar imagem</span>
+                <span className="text-xs text-gray-500">{t('stores.clickToAddImage')}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { setFormData(p => ({ ...p, image: f, imagePreview: URL.createObjectURL(f) })); } }} />
               </label>
             )}
@@ -185,15 +187,15 @@ export const StoreEditForm: React.FC<StoreEditFormProps> = ({ store, isOpen, onC
               onChange={(e) => handleChange('isActive', e.target.checked)}
               className="rounded border-gray-300"
             />
-            <Label htmlFor="isActive">Loja ativa</Label>
+            <Label htmlFor="isActive">{t('stores.storeActive')}</Label>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
+              {t('stores.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Salvando...' : 'Salvar Alterações'}
+              {isLoading ? t('stores.saving') : t('stores.saveChanges')}
             </Button>
           </div>
         </form>

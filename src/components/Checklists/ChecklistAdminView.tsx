@@ -23,6 +23,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import ChecklistTemplateBuilder from './ChecklistTemplateBuilder';
 
@@ -42,6 +43,7 @@ interface ChecklistTemplate {
 const ChecklistAdminView: React.FC = () => {
   const { user } = useAuth();
   const { stores } = useData();
+  const { t } = useLanguage();
 
   // Mock data - replace with real data
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([
@@ -111,15 +113,15 @@ const ChecklistAdminView: React.FC = () => {
     const duplicated = {
       ...template,
       id: Date.now().toString(),
-      name: `${template.name} (Cópia)`,
+      name: `${template.name} (${t('checklists.copy')})`,
       createdAt: new Date(),
       lastEditedAt: new Date(),
       usageCount: 0
     };
     setTemplates(prev => [...prev, duplicated]);
     toast({
-      title: "Template duplicado",
-      description: "Uma cópia do template foi criada com sucesso.",
+      title: t('checklists.templateDuplicated'),
+      description: t('checklists.templateDuplicatedDesc'),
     });
   };
 
@@ -132,8 +134,8 @@ const ChecklistAdminView: React.FC = () => {
     if (templateToDelete) {
       setTemplates(prev => prev.filter(t => t.id !== templateToDelete));
       toast({
-        title: "Template removido",
-        description: "Template foi removido com sucesso.",
+        title: t('checklists.templateRemoved'),
+        description: t('checklists.templateRemovedDesc'),
       });
     }
     setIsDeleteConfirmOpen(false);
@@ -154,8 +156,8 @@ const ChecklistAdminView: React.FC = () => {
           : t
       ));
       toast({
-        title: "Template atualizado",
-        description: "Template foi atualizado com sucesso.",
+        title: t('checklists.templateUpdated'),
+        description: t('checklists.templateUpdatedDesc'),
       });
     } else {
       // Create new
@@ -173,8 +175,8 @@ const ChecklistAdminView: React.FC = () => {
       };
       setTemplates(prev => [...prev, newTemplate]);
       toast({
-        title: "Template criado",
-        description: "Novo template foi criado com sucesso.",
+        title: t('checklists.templateCreated'),
+        description: t('checklists.templateCreatedDesc'),
       });
     }
     setIsBuilderOpen(false);
@@ -190,10 +192,10 @@ const ChecklistAdminView: React.FC = () => {
 
   const getFrequencyLabel = (frequency: string) => {
     switch (frequency) {
-      case 'daily': return 'Diário';
-      case 'weekly': return 'Semanal';
-      case 'monthly': return 'Mensal';
-      default: return 'Personalizado';
+      case 'daily': return t('checklists.daily');
+      case 'weekly': return t('checklists.weekly');
+      case 'monthly': return t('checklists.monthly');
+      default: return t('checklists.custom');
     }
   };
 
@@ -207,11 +209,11 @@ const ChecklistAdminView: React.FC = () => {
   };
 
   const getStoreNames = (storeIds: string[]) => {
-    if (storeIds.includes('all')) return 'Todas as lojas';
+    if (storeIds.includes('all')) return t('checklists.allStores');
     return storeIds
       .map(id => stores.find(s => s.id === id)?.name)
       .filter(Boolean)
-      .join(', ') || 'Nenhuma loja';
+      .join(', ') || t('checklists.noStores');
   };
 
   return (
@@ -219,7 +221,7 @@ const ChecklistAdminView: React.FC = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatsCard
-          title="Total"
+          title={t('checklists.total')}
           value={templates.length}
           icon={CheckCircle}
           variant="purple"
@@ -227,7 +229,7 @@ const ChecklistAdminView: React.FC = () => {
         />
 
         <StatsCard
-          title="Ativos"
+          title={t('checklists.active')}
           value={activeTemplates}
           icon={Store}
           variant="success"
@@ -235,7 +237,7 @@ const ChecklistAdminView: React.FC = () => {
         />
 
         <StatsCard
-          title="Uso Total"
+          title={t('checklists.totalUsage')}
           value={totalUsage}
           icon={Calendar}
           variant="default"
@@ -243,7 +245,7 @@ const ChecklistAdminView: React.FC = () => {
         />
 
         <StatsCard
-          title="Mais Usado"
+          title={t('checklists.mostUsed')}
           value={templates.reduce((max, t) => t.usageCount > max.usageCount ? t : max, templates[0])?.name || 'N/A'}
           icon={Eye}
           variant="purple"
@@ -259,7 +261,7 @@ const ChecklistAdminView: React.FC = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Buscar templates..."
+                placeholder={t('checklists.searchTemplates')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -268,11 +270,11 @@ const ChecklistAdminView: React.FC = () => {
             <div className="flex gap-2">
               <Button variant="outline" className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
-                Filtros
+                {t('checklists.filters')}
               </Button>
               <Button onClick={handleCreateNew} className="bg-primary hover:bg-primary/90">
                 <Plus className="h-4 w-4 mr-2" />
-                Novo Template
+                {t('checklists.newTemplate')}
               </Button>
             </div>
           </div>
@@ -282,21 +284,21 @@ const ChecklistAdminView: React.FC = () => {
       {/* Templates Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Templates ({filteredTemplates.length})</CardTitle>
+          <CardTitle>{t('checklists.templates')} ({filteredTemplates.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Frequência</TableHead>
-                  <TableHead>Itens</TableHead>
-                  <TableHead>Lojas</TableHead>
-                  <TableHead>Uso</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Última Edição</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
+                  <TableHead>{t('checklists.name')}</TableHead>
+                  <TableHead>{t('checklists.frequency')}</TableHead>
+                  <TableHead>{t('checklists.items')}</TableHead>
+                  <TableHead>{t('checklists.stores')}</TableHead>
+                  <TableHead>{t('checklists.usage')}</TableHead>
+                  <TableHead>{t('checklists.status')}</TableHead>
+                  <TableHead>{t('checklists.lastEdit')}</TableHead>
+                  <TableHead className="w-[100px]">{t('checklists.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -316,7 +318,7 @@ const ChecklistAdminView: React.FC = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">{template.itemsCount}</span> itens
+                      <span className="font-medium">{template.itemsCount}</span> {t('checklists.itemsCount')}
                     </TableCell>
                     <TableCell className="max-w-[150px] truncate">
                       {getStoreNames(template.associatedStores)}
@@ -326,7 +328,7 @@ const ChecklistAdminView: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant={template.isActive ? "default" : "secondary"}>
-                        {template.isActive ? "Ativo" : "Inativo"}
+                        {template.isActive ? t('checklists.activeStatus') : t('checklists.inactiveStatus')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -342,22 +344,22 @@ const ChecklistAdminView: React.FC = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(template)}>
                             <Edit className="h-4 w-4 mr-2" />
-                            Editar
+                            {t('checklists.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDuplicate(template)}>
                             <Copy className="h-4 w-4 mr-2" />
-                            Duplicar
+                            {t('checklists.duplicate')}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => toggleTemplateStatus(template.id)}>
                             <Eye className="h-4 w-4 mr-2" />
-                            {template.isActive ? 'Desativar' : 'Ativar'}
+                            {template.isActive ? t('checklists.deactivate') : t('checklists.activate')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(template.id)}
                             className="text-destructive"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
+                            {t('checklists.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -371,14 +373,14 @@ const ChecklistAdminView: React.FC = () => {
           {filteredTemplates.length === 0 && (
             <div className="text-center py-8">
               <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum template encontrado</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('checklists.noTemplateFound')}</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm ? 'Tente ajustar sua busca' : 'Crie seu primeiro template de checklist'}
+                {searchTerm ? t('checklists.adjustSearch') : t('checklists.createFirstTemplate')}
               </p>
               {!searchTerm && (
                 <Button onClick={handleCreateNew}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Criar Template
+                  {t('checklists.createTemplate')}
                 </Button>
               )}
             </div>
@@ -391,7 +393,7 @@ const ChecklistAdminView: React.FC = () => {
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedTemplate ? 'Editar Template' : 'Novo Template'}
+              {selectedTemplate ? t('checklists.editTemplate') : t('checklists.newTemplate')}
             </DialogTitle>
           </DialogHeader>
           <ChecklistTemplateBuilder
@@ -414,16 +416,16 @@ const ChecklistAdminView: React.FC = () => {
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogTitle>{t('checklists.confirmDelete')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p>Tem certeza que deseja excluir este template? Esta ação não pode ser desfeita.</p>
+            <p>{t('checklists.confirmDeleteDesc')}</p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
-                Cancelar
+                {t('checklists.cancel')}
               </Button>
               <Button variant="destructive" onClick={confirmDelete}>
-                Excluir
+                {t('checklists.delete')}
               </Button>
             </div>
           </div>

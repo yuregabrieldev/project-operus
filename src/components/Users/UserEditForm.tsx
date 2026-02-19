@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useUsers } from '@/contexts/UsersContext';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Shield, Lock } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -24,6 +25,7 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
   const { updateUser } = useUsers();
   const { stores } = useBrand();
   const { user: currentUser } = useAuth();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -76,16 +78,16 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
     try {
       // Validações
       if (!formData.name.trim()) {
-        throw new Error('Nome é obrigatório');
+        throw new Error(t('users.nameRequired'));
       }
       if (!formData.email.trim()) {
-        throw new Error('Email é obrigatório');
+        throw new Error(t('users.emailRequired'));
       }
       if (!formData.email.includes('@')) {
-        throw new Error('Email inválido');
+        throw new Error(t('users.emailInvalid'));
       }
       if (formData.selectedStores.length === 0) {
-        throw new Error('Selecione pelo menos uma loja');
+        throw new Error(t('users.selectAtLeastOneStore'));
       }
 
       // Convert selected store IDs to store objects
@@ -109,15 +111,15 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
       updateUser(userData);
 
       toast({
-        title: "Usuário atualizado com sucesso!",
-        description: "As informações foram salvas.",
+        title: t('users.userUpdatedSuccess'),
+        description: t('users.infoSaved'),
       });
 
       onClose();
     } catch (error) {
       toast({
-        title: "Erro ao atualizar usuário",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        title: t('users.updateError'),
+        description: error instanceof Error ? error.message : t('users.unknownError'),
         variant: "destructive",
       });
     } finally {
@@ -138,49 +140,49 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Editar Usuário</DialogTitle>
+          <DialogTitle>{t('users.editUser')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome Completo</Label>
+            <Label htmlFor="name">{t('users.fullName')}</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Digite o nome completo"
+              placeholder={t('users.fullNamePlaceholder')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('users.email')}</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="usuario@empresa.com"
+              placeholder={t('users.emailPlaceholder')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Tipo de Usuário</Label>
+            <Label htmlFor="role">{t('users.userRole')}</Label>
             <Select value={formData.role} onValueChange={(value: any) => setFormData(prev => ({ ...prev, role: value }))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="assistant">Assistente</SelectItem>
-                <SelectItem value="manager">Gerente</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="assistant">{t('users.roleAssistant')}</SelectItem>
+                <SelectItem value="manager">{t('users.roleManager')}</SelectItem>
+                <SelectItem value="admin">{t('users.roleAdmin')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Lojas Vinculadas</Label>
+            <Label>{t('users.linkedStores')}</Label>
             <Card>
               <CardContent className="pt-4">
                 <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -198,7 +200,7 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
                   ))}
                 </div>
                 {allStores.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Nenhuma loja disponível</p>
+                  <p className="text-sm text-muted-foreground">{t('users.noStoresAvailable')}</p>
                 )}
               </CardContent>
             </Card>
@@ -207,22 +209,22 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
           {/* Page Permissions */}
           {canEditPermissions && (
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Shield className="h-4 w-4 text-blue-600" /> Permissões de Acesso</Label>
+              <Label className="flex items-center gap-2"><Shield className="h-4 w-4 text-blue-600" /> {t('users.accessPermissions')}</Label>
               <Card>
                 <CardContent className="pt-4">
                   <div className="grid grid-cols-2 gap-3">
                     {([
-                      { key: 'dashboard', label: 'Dashboard' },
-                      { key: 'inventory', label: 'Estoque' },
-                      { key: 'operations', label: 'Operações' },
-                      { key: 'cash', label: 'Caixa' },
-                      { key: 'transit', label: 'Trânsito' },
-                      { key: 'invoices', label: 'Faturas' },
-                      { key: 'production', label: 'Produção' },
-                      { key: 'waste', label: 'Desperdício' },
-                      { key: 'checklist', label: 'Checklist' },
-                      { key: 'reports', label: 'Relatórios' },
-                      { key: 'users', label: 'Usuários' },
+                      { key: 'dashboard', label: t('users.permDashboard') },
+                      { key: 'inventory', label: t('users.permInventory') },
+                      { key: 'operations', label: t('users.permOperations') },
+                      { key: 'cash', label: t('users.permCash') },
+                      { key: 'transit', label: t('users.permTransit') },
+                      { key: 'invoices', label: t('users.permInvoices') },
+                      { key: 'production', label: t('users.permProduction') },
+                      { key: 'waste', label: t('users.permWaste') },
+                      { key: 'checklist', label: t('users.permChecklist') },
+                      { key: 'reports', label: t('users.permReports') },
+                      { key: 'users', label: t('users.permUsers') },
                     ] as const).map(p => (
                       <div key={p.key} className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">{p.label}</span>
@@ -238,7 +240,7 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
           {/* PIN Management */}
           {canViewPin && (
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Lock className="h-4 w-4 text-amber-600" /> PIN de Acesso</Label>
+              <Label className="flex items-center gap-2"><Lock className="h-4 w-4 text-amber-600" /> {t('users.accessPin')}</Label>
               <div className="flex items-center gap-2">
                 <Input
                   type={showPin ? 'text' : 'password'}
@@ -253,16 +255,16 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
                   {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-xs text-gray-400">PIN numérico de 4-6 dígitos para acesso rápido</p>
+              <p className="text-xs text-gray-400">{t('users.pinDescription')}</p>
             </div>
           )}
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
+              {t('users.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+              {isSubmitting ? t('users.saving') : t('users.saveChanges')}
             </Button>
           </div>
         </form>

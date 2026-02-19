@@ -215,7 +215,7 @@ const CashManager: React.FC = () => {
                             <th className="text-center p-2 font-semibold text-muted-foreground">{t('cash.cash')}</th>
                             <th className="text-center p-2 font-semibold text-muted-foreground">{t('cash.card')}</th>
                             <th className="text-center p-2 font-semibold text-muted-foreground">{t('cash.delivery')}</th>
-                            <th className="text-center p-2 font-semibold text-muted-foreground">Total</th>
+                            <th className="text-center p-2 font-semibold text-muted-foreground">{t('common.total')}</th>
                           </tr></thead>
                           <tbody>
                             <tr className="border-b">
@@ -237,7 +237,7 @@ const CashManager: React.FC = () => {
                         </table>
                       </div>
                       <div className="bg-muted/30 rounded-xl p-4 space-y-2 border">
-                        <h4 className="font-bold text-foreground text-center mb-3">Caixa</h4>
+                        <h4 className="font-bold text-foreground text-center mb-3">{t('cash.register')}</h4>
                         <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t('cash.opening')}</span><span className="font-semibold">{fmt(entry.openingValue)}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t('cash.closing')}</span><span className="font-semibold">{fmt(entry.closingTotal)}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground text-sm">(-) {t('cash.deposit')}</span><span className="font-semibold">{fmt(entry.depositValue)}</span></div>
@@ -337,7 +337,7 @@ const CashManager: React.FC = () => {
                   </React.Fragment>
                 ))}
                 <tr className="bg-muted/50 font-bold">
-                  <td className="p-4">TOTAL</td>
+                  <td className="p-4">{t('common.total')}</td>
                   <td className="p-4 text-center">-</td>
                   <td className="p-4 text-center">{fmt(totalMedia)}</td>
                   <td className="p-4 text-center"><Badge variant="outline" className="pointer-events-none bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">{fmt(totalAcumulado)}</Badge></td>
@@ -401,8 +401,8 @@ const CashManager: React.FC = () => {
                       <td className="p-3"><Link to={`/${lang}/caixa/${e.id}`}><Button size="sm" variant="ghost" className="h-6 w-6 p-0"><Eye className="h-3.5 w-3.5" /></Button></Link></td>
                     </tr>
                   ))}
-                  <tr className="bg-gray-50 font-bold">
-                    <td className="p-3">Total</td>
+                    <tr className="bg-gray-50 font-bold">
+                    <td className="p-3">{t('common.total')}</td>
                     <td className="p-3"><Badge variant="outline" className="pointer-events-none bg-green-100 text-green-700 border-green-200">{fmt(storeAcumulado)}</Badge></td>
                     <td></td>
                   </tr>
@@ -475,11 +475,11 @@ const CashManager: React.FC = () => {
     const totalTotal = resumoEntries.reduce((s, e) => s + e.closingTotal, 0);
 
     const exportXLSX = () => {
-      let csv = 'Data;Espécie;Cartão;Delivery;Total\n';
+      let csv = `${t('waste.date')};${t('cash.cash')};${t('cash.card')};${t('cash.delivery')};${t('common.total')}\n`;
       resumoEntries.forEach(e => {
         csv += `${new Date(e.date + 'T12:00:00').toLocaleDateString('pt-PT')};${e.closingEspecie};${e.closingCartao};${e.closingDelivery};${e.closingTotal}\n`;
       });
-      csv += `Total;${totalEspecie};${totalCartao};${totalDelivery};${totalTotal}\n`;
+      csv += `${t('common.total')};${totalEspecie};${totalCartao};${totalDelivery};${totalTotal}\n`;
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -526,14 +526,14 @@ const CashManager: React.FC = () => {
         {/* Summary badges */}
         <div className="flex flex-wrap gap-3">
           {[
-            { label: t('cash.summaryBadgeCash'), value: totalEspecie, color: 'blue' },
-            { label: t('cash.summaryBadgeCard'), value: totalCartao, color: 'purple' },
-            { label: t('cash.summaryBadgeDelivery'), value: totalDelivery, color: 'orange' },
-            { label: t('cash.summaryBadgeTotal'), value: totalTotal, color: 'green' },
+            { key: 'cash', label: t('cash.summaryBadgeCash'), value: totalEspecie, color: 'blue' },
+            { key: 'card', label: t('cash.summaryBadgeCard'), value: totalCartao, color: 'purple' },
+            { key: 'delivery', label: t('cash.summaryBadgeDelivery'), value: totalDelivery, color: 'orange' },
+            { key: 'total', label: t('cash.summaryBadgeTotal'), value: totalTotal, color: 'green' },
           ].map(b => (
-            <div key={b.label} className={`px-5 py-3 rounded-xl border-2 bg-muted/30 text-center ${b.label === 'TOTAL' ? 'border-primary/20 bg-primary/5' : 'border-muted'}`}>
+            <div key={b.key} className={`px-5 py-3 rounded-xl border-2 bg-muted/30 text-center ${b.key === 'total' ? 'border-primary/20 bg-primary/5' : 'border-muted'}`}>
               <p className="text-xs font-bold text-muted-foreground uppercase">{b.label}</p>
-              <p className={`text-lg font-bold ${b.label === 'TOTAL' ? 'text-primary' : 'text-foreground'}`}>{fmt(b.value)}</p>
+              <p className={`text-lg font-bold ${b.key === 'total' ? 'text-primary' : 'text-foreground'}`}>{fmt(b.value)}</p>
             </div>
           ))}
         </div>
@@ -566,7 +566,7 @@ const CashManager: React.FC = () => {
                 <RechartsTooltip
                   contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#2563EB', fontWeight: 'bold' }}
-                  formatter={(value: number) => [`€ ${value.toFixed(2)}`, 'Total']}
+                  formatter={(value: number) => [`€ ${value.toFixed(2)}`, t('common.total')]}
                   labelStyle={{ color: '#64748b' }}
                 />
                 <Area type="monotone" dataKey="total" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
@@ -588,7 +588,7 @@ const CashManager: React.FC = () => {
                 <th className="text-right p-3 font-semibold text-muted-foreground">{t('cash.cash')}</th>
                 <th className="text-right p-3 font-semibold text-muted-foreground">{t('cash.card')}</th>
                 <th className="text-right p-3 font-semibold text-muted-foreground">{t('cash.delivery')}</th>
-                <th className="text-right p-3 font-semibold text-muted-foreground">Total</th>
+                <th className="text-right p-3 font-semibold text-muted-foreground">{t('common.total')}</th>
               </tr></thead>
               <tbody>
                 {resumoEntries.map(e => (
@@ -603,7 +603,7 @@ const CashManager: React.FC = () => {
                 {resumoEntries.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500">{t('cash.noClosingsPeriod')}</td></tr>}
                 {resumoEntries.length > 0 && (
                   <tr className="bg-muted/50 font-bold border-t-2">
-                    <td className="p-3">Total</td>
+                    <td className="p-3">{t('common.total')}</td>
                     <td className="p-3 text-right text-foreground">{fmt(totalEspecie)}</td>
                     <td className="p-3 text-right text-foreground">{fmt(totalCartao)}</td>
                     <td className="p-3 text-right text-foreground">{fmt(totalDelivery)}</td>

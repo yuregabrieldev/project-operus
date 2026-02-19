@@ -43,7 +43,7 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
   const pendingChecklists: ChecklistItem[] = executions.map(execution => ({
     id: execution.id,
     name: execution.templateName,
-    storeNames: 'Loja', // Would come from store context
+    storeNames: t('checklists.store'), // Would come from store context
     progress: {
       completed: execution.responses.filter(r => r.response !== null || r.skipped).length,
       total: execution.responses.length
@@ -87,21 +87,21 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
-          title="Pendentes"
+          title={t('checklists.pending')}
           value={pendingChecklists.length}
           icon={Clock}
           variant="default"
         />
 
         <StatsCard
-          title="Em Progresso"
+          title={t('checklists.inProgress')}
           value={incompleteTasks.length}
           icon={CheckCircle}
           variant="warning"
         />
 
         <StatsCard
-          title="Completos Hoje"
+          title={t('checklists.completedToday')}
           value={historyChecklists.filter(c =>
             c.completedAt &&
             c.completedAt.toDateString() === new Date().toDateString()
@@ -113,11 +113,11 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
 
       {/* Main Content Actions */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Checklists Pendentes</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('checklists.pendingChecklists')}</h2>
         {isAdmin && (
           <Button onClick={handleCreateNew} className="gap-2">
             <Plus className="h-4 w-4" />
-            Novo Checklist
+            {t('checklists.new_checklist')}
           </Button>
         )}
       </div>
@@ -128,7 +128,7 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-600 text-base">
               <Clock className="h-5 w-5" />
-              Em Andamento
+              {t('checklists.ongoing')}
               <Badge variant="secondary" className="bg-amber-100 text-amber-800 ml-auto">{incompleteTasks.length}</Badge>
             </CardTitle>
           </CardHeader>
@@ -151,7 +151,7 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground text-base">
               <CheckCircle className="h-5 w-5 text-primary" />
-              Disponíveis
+              {t('checklists.available')}
               <Badge variant="secondary" className="ml-auto">{notStartedTasks.length}</Badge>
             </CardTitle>
           </CardHeader>
@@ -174,14 +174,14 @@ const ChecklistDashboard: React.FC<ChecklistDashboardProps> = ({
             <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">Tudo em dia!</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">{t('checklists.allDone')}</h3>
             <p className="text-muted-foreground max-w-sm mx-auto">
-              Você completou todos os checklists pendentes. Aproveite o dia!
+              {t('checklists.allDoneDesc')}
             </p>
             {isAdmin && (
               <Button onClick={handleCreateNew} variant="outline" className="mt-6 gap-2">
                 <Plus className="h-4 w-4" />
-                Iniciar Novo Checklist
+                {t('checklists.startNew')}
               </Button>
             )}
           </CardContent>

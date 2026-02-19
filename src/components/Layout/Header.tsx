@@ -20,7 +20,7 @@ const Header: React.FC = () => {
   const location = useLocation();
   const { selectedBrand } = useBrand();
   const { user, logout } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
 
   const [showStoreForm, setShowStoreForm] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
@@ -54,8 +54,8 @@ const Header: React.FC = () => {
   const handleLogout = () => {
     logout();
     toast({
-      title: "Desconectado",
-      description: "Você foi desconectado com sucesso.",
+      title: t('header.loggedOut'),
+      description: t('header.loggedOutDesc'),
     });
   };
 
@@ -72,8 +72,8 @@ const Header: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
     toast({
-      title: newMode ? "Modo Noturno" : "Modo Claro",
-      description: newMode ? "Tema noturno ativado." : "Tema claro ativado.",
+      title: newMode ? t('header.darkMode') : t('header.lightMode'),
+      description: newMode ? t('header.darkModeEnabled') : t('header.lightModeEnabled'),
     });
   };
 
@@ -84,7 +84,7 @@ const Header: React.FC = () => {
   };
 
   const languageFlags: Record<string, string> = {
-    pt: '🇧🇷',
+    pt: '🇵🇹',
     en: '🇺🇸',
     es: '🇪🇸'
   };
@@ -114,15 +114,27 @@ const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           {selectedBrand && (
             <div className="flex items-center space-x-3">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-                style={{ backgroundColor: selectedBrand.primaryColor }}
-              >
-                {selectedBrand.name.charAt(0)}
-              </div>
+              {selectedBrand.logoUrl && selectedBrand.logoUrl !== '/placeholder.svg' ? (
+                <img
+                  src={selectedBrand.logoUrl}
+                  alt={selectedBrand.name}
+                  className="w-8 h-8 rounded-lg object-cover"
+                />
+              ) : (
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                  style={{ backgroundColor: selectedBrand.primaryColor }}
+                >
+                  {selectedBrand.name.charAt(0)}
+                </div>
+              )}
               <div>
                 <h2 className="font-semibold text-gray-900 text-sm leading-tight">{selectedBrand.name}</h2>
-                <p className="text-xs text-gray-500">{selectedBrand.storesCount} lojas</p>
+                <p className="text-xs text-gray-500">
+                  {selectedBrand.storesCount === 1
+                    ? t('header.storeCount', { count: selectedBrand.storesCount })
+                    : t('header.storesCount', { count: selectedBrand.storesCount })}
+                </p>
               </div>
             </div>
           )}
@@ -135,7 +147,7 @@ const Header: React.FC = () => {
           <button
             onClick={toggleDarkMode}
             className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            title={darkMode ? "Modo Claro" : "Modo Noturno"}
+            title={darkMode ? t('header.lightMode') : t('header.darkMode')}
           >
             {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
@@ -149,7 +161,7 @@ const Header: React.FC = () => {
                 setShowNotifications(false);
               }}
               className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              title="Idioma"
+              title={t('header.language')}
             >
               <Globe className="h-5 w-5" />
             </button>
@@ -168,7 +180,7 @@ const Header: React.FC = () => {
                       setShowLangMenu(false);
                       toast({
                         title: languageLabels[newLang],
-                        description: `Idioma alterado para ${languageLabels[newLang]}.`,
+                        description: t('header.languageChanged', { lang: languageLabels[newLang] }),
                       });
                     }}
                     className={cn(
@@ -193,7 +205,7 @@ const Header: React.FC = () => {
                 setShowLangMenu(false);
               }}
               className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors relative"
-              title="Notificações"
+              title={t('header.notifications')}
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
@@ -206,10 +218,10 @@ const Header: React.FC = () => {
             {showNotifications && (
               <div className="absolute right-0 top-full mt-2 w-80 bg-popover rounded-xl shadow-xl border border-border py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="px-4 py-2 border-b border-border flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Notificações</h3>
+                  <h3 className="text-sm font-semibold text-foreground">{t('header.notifications')}</h3>
                   {unreadCount > 0 && (
                     <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-xs">
-                      {unreadCount} novas
+                      {t('header.newNotifications', { count: unreadCount })}
                     </Badge>
                   )}
                 </div>
@@ -236,7 +248,7 @@ const Header: React.FC = () => {
                 </div>
                 <div className="px-4 py-2 border-t border-border">
                   <button className="text-xs text-primary hover:text-primary/80 font-medium w-full text-center">
-                    Ver todas as notificações
+                    {t('header.viewAll')}
                   </button>
                 </div>
               </div>
@@ -294,7 +306,7 @@ const Header: React.FC = () => {
                     }}
                   >
                     <User className="h-4 w-4 text-muted-foreground" />
-                    Perfil
+                    {t('header.profile')}
                   </button>
                   <button
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -304,7 +316,7 @@ const Header: React.FC = () => {
                     }}
                   >
                     <Settings className="h-4 w-4 text-muted-foreground" />
-                    Configurações
+                    {t('header.settings')}
                   </button>
                 </div>
 
@@ -318,7 +330,7 @@ const Header: React.FC = () => {
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sair
+                    {t('header.logout')}
                   </button>
                 </div>
               </div>

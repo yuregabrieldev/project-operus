@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -33,6 +34,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
   onAction,
   variant = 'pending'
 }) => {
+  const { t } = useLanguage();
   const getStatusColor = () => {
     switch (status) {
       case 'not_started': return 'bg-muted text-muted-foreground border-border';
@@ -45,10 +47,10 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
 
   const getStatusText = () => {
     switch (status) {
-      case 'not_started': return 'Não Iniciado';
-      case 'in_progress': return 'Em Progresso';
-      case 'paused': return 'Pausado';
-      case 'completed': return 'Completo';
+      case 'not_started': return t('checklists.notStarted');
+      case 'in_progress': return t('checklists.inProgress');
+      case 'paused': return t('checklists.paused');
+      case 'completed': return t('checklists.complete');
       default: return '';
     }
   };
@@ -56,7 +58,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
   const getActionButton = () => {
     if (variant === 'history') return null;
 
-    const buttonText = status === 'not_started' ? 'INICIAR' : 'CONTINUAR';
+    const buttonText = status === 'not_started' ? t('checklists.start') : t('checklists.continue');
     const Icon = status === 'not_started' ? Play : RotateCcw;
 
     return (
@@ -86,13 +88,13 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
         <div className="space-y-2 mb-3">
           <div className="flex items-center text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 mr-1" />
-            <span>Lojas: {storeNames}</span>
+            <span>{t('checklists.storesLabel')} {storeNames}</span>
           </div>
 
           {variant === 'pending' && (
             <>
               <div className="flex items-center justify-between text-sm">
-                <span>Progresso: {progress.completed}/{progress.total} itens</span>
+                <span>{t('checklists.progress')} {progress.completed}/{progress.total} {t('checklists.itemsCount')}</span>
                 <span className="font-medium">{Math.round(progressPercentage)}%</span>
               </div>
               <Progress value={progressPercentage} className="h-2" />
@@ -102,7 +104,7 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
           {startedAt && variant === 'pending' && (
             <div className="flex items-center text-sm text-muted-foreground">
               <Clock className="h-4 w-4 mr-1" />
-              <span>Iniciado: {new Date(startedAt).toLocaleDateString('pt-BR')} {new Date(startedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>{t('checklists.started')} {new Date(startedAt).toLocaleDateString('pt-BR')} {new Date(startedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           )}
 
@@ -110,17 +112,17 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-1 text-emerald-600" />
-                <span>Completo em {new Date(completedAt).toLocaleDateString('pt-BR')} {new Date(completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>{t('checklists.completedIn')} {new Date(completedAt).toLocaleDateString('pt-BR')} {new Date(completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               {duration && (
-                <span>{duration} minutos</span>
+                <span>{duration} {t('checklists.minutes')}</span>
               )}
             </div>
           )}
 
           {variant === 'history' && (
             <div className="text-sm font-medium text-emerald-600">
-              {progress.completed}/{progress.total} itens
+              {progress.completed}/{progress.total} {t('checklists.itemsCount')}
             </div>
           )}
         </div>

@@ -162,7 +162,7 @@ const WasteManager: React.FC = () => {
     // XLSX Export (simple CSV with .xlsx extension + structured data)
     const exportXLSX = () => {
         const BOM = '\uFEFF';
-        const headers = [t('waste.product'), t('waste.sku'), t('waste.variant'), t('waste.store'), t('waste.category'), t('waste.user'), t('waste.date'), 'Horário', t('waste.quantity'), t('waste.reason'), t('waste.comment')];
+        const headers = [t('waste.product'), t('waste.sku'), t('waste.variant'), t('waste.store'), t('waste.category'), t('waste.user'), t('waste.date'), t('waste.time'), t('waste.quantity'), t('waste.reason'), t('waste.comment')];
         const rows = filteredReportRecords.map(r => {
             const product = getProductById(r.productId);
             const variant = wasteVariants.find(v => v.id === r.variantId);
@@ -363,7 +363,7 @@ const WasteManager: React.FC = () => {
             <div className="min-h-screen bg-background p-6">
                 <Button variant="ghost" onClick={() => setSelectedVariant(null)} className="mb-4 text-muted-foreground hover:text-foreground">
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Voltar
+                    {t('waste.back')}
                 </Button>
                 <Card className="max-w-lg mx-auto border-border shadow-sm">
                     <CardContent className="p-8">
@@ -463,7 +463,7 @@ const WasteManager: React.FC = () => {
                                                             onClick={() => handleUndoWaste(record.id)}
                                                         >
                                                             <Undo2 className="h-3 w-3 mr-1" />
-                                                            Desfazer
+                                                            {t('waste.undoAction')}
                                                         </Button>
                                                     )}
                                                 </div>
@@ -575,7 +575,7 @@ const WasteManager: React.FC = () => {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="outline">
-                                                    Qtd: {record.quantity}
+                                                    {t('waste.qty')} {record.quantity}
                                                 </Badge>
                                                 {canUndoRecord(record) && (
                                                     <Button variant="ghost" size="sm" className="text-destructive h-7 px-2 hover:bg-destructive/10 hover:text-destructive" onClick={() => handleUndoWaste(record.id)}>
@@ -933,7 +933,7 @@ const WasteManager: React.FC = () => {
                             </div>
                             <Select value={assignCategoryFilter || '__all__'} onValueChange={(v) => setAssignCategoryFilter(v === '__all__' ? '' : v)}>
                                 <SelectTrigger className="w-[160px] h-9">
-                                    <SelectValue placeholder="Categoria" />
+                                    <SelectValue placeholder={t('waste.category')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="__all__">{t('waste.all')}</SelectItem>

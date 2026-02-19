@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Eye, Download, Filter, Calendar, Clock, User, Store } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ChecklistHistory {
   id: string;
@@ -34,6 +35,7 @@ interface ChecklistResponse {
 
 const ChecklistHistory: React.FC = () => {
   const { stores } = useData();
+  const { t } = useLanguage();
 
   // Mock data - em produção viria da API
   const [historyData] = useState<ChecklistHistory[]>([
@@ -145,10 +147,10 @@ const ChecklistHistory: React.FC = () => {
 
   const getTypeName = (type: string) => {
     switch (type) {
-      case 'opening': return 'Abertura';
-      case 'closing': return 'Fechamento';
-      case 'quality': return 'Qualidade';
-      default: return 'Personalizado';
+      case 'opening': return t('checklists.opening');
+      case 'closing': return t('checklists.closing');
+      case 'quality': return t('checklists.quality');
+      default: return t('checklists.custom');
     }
   };
 
@@ -183,7 +185,7 @@ const ChecklistHistory: React.FC = () => {
 
   const exportToCSV = () => {
     const csvData = [
-      ['Data', 'Hora Início', 'Hora Fim', 'Duração', 'Checklist', 'Tipo', 'Loja', 'Usuário', 'Itens Concluídos', 'Total Itens'],
+      [t('checklists.csvDate'), t('checklists.csvStartTime'), t('checklists.csvEndTime'), t('checklists.csvDuration'), 'Checklist', t('checklists.csvType'), t('checklists.csvStore'), t('checklists.csvUser'), t('checklists.csvCompletedItems'), t('checklists.csvTotalItems')],
       ...filteredHistory.map(h => [
         formatDate(h.startTime),
         formatTime(h.startTime),
@@ -234,7 +236,7 @@ const ChecklistHistory: React.FC = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
-          title="Total Realizados"
+          title={t('checklists.totalCompleted')}
           value={stats.total}
           icon={Calendar}
           variant="default"
@@ -242,7 +244,7 @@ const ChecklistHistory: React.FC = () => {
         />
 
         <StatsCard
-          title="Duração Média"
+          title={t('checklists.avgDuration')}
           value={formatDuration(stats.avgDuration)}
           icon={Clock}
           variant="default"
@@ -250,7 +252,7 @@ const ChecklistHistory: React.FC = () => {
         />
 
         <StatsCard
-          title="Taxa de Conclusão"
+          title={t('checklists.completionRate')}
           value={`${stats.completionRate}%`}
           icon={User}
           variant="success"
@@ -263,23 +265,23 @@ const ChecklistHistory: React.FC = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filtros
+            {t('checklists.filters')}
           </CardTitle>
           <Button onClick={exportToCSV} className="bg-primary hover:bg-primary/90">
             <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
+            {t('checklists.exportCSV')}
           </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
-              <label className="text-sm font-medium">Loja</label>
+              <label className="text-sm font-medium">{t('checklists.store')}</label>
               <Select value={filters.store} onValueChange={(value) => setFilters(prev => ({ ...prev, store: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as lojas</SelectItem>
+                  <SelectItem value="all">{t('checklists.allStores')}</SelectItem>
                   {Array.from(new Set(historyData.map(h => h.storeName))).map(store => (
                     <SelectItem key={store} value={store}>{store}</SelectItem>
                   ))}
@@ -288,22 +290,22 @@ const ChecklistHistory: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Tipo</label>
+              <label className="text-sm font-medium">{t('checklists.type')}</label>
               <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="opening">Abertura</SelectItem>
-                  <SelectItem value="closing">Fechamento</SelectItem>
-                  <SelectItem value="quality">Qualidade</SelectItem>
+                  <SelectItem value="all">{t('checklists.all_types')}</SelectItem>
+                  <SelectItem value="opening">{t('checklists.opening')}</SelectItem>
+                  <SelectItem value="closing">{t('checklists.closing')}</SelectItem>
+                  <SelectItem value="quality">{t('checklists.quality')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <label className="text-sm font-medium">Data Início</label>
+              <label className="text-sm font-medium">{t('checklists.startDate')}</label>
               <Input
                 type="date"
                 value={filters.dateFrom}
@@ -312,7 +314,7 @@ const ChecklistHistory: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Data Fim</label>
+              <label className="text-sm font-medium">{t('checklists.endDate')}</label>
               <Input
                 type="date"
                 value={filters.dateTo}
@@ -321,9 +323,9 @@ const ChecklistHistory: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Usuário</label>
+              <label className="text-sm font-medium">{t('checklists.user')}</label>
               <Input
-                placeholder="Nome do usuário"
+                placeholder={t('checklists.userPlaceholder')}
                 value={filters.user}
                 onChange={(e) => setFilters(prev => ({ ...prev, user: e.target.value }))}
               />
@@ -335,20 +337,20 @@ const ChecklistHistory: React.FC = () => {
       {/* History Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Histórico ({filteredHistory.length} registros)</CardTitle>
+          <CardTitle>{t('checklists.historyTitle')} ({filteredHistory.length} {t('checklists.records')})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Checklist</TableHead>
-                  <TableHead>Loja</TableHead>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>Duração</TableHead>
-                  <TableHead>Conclusão</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>{t('checklists.checklist')}</TableHead>
+                  <TableHead>{t('checklists.store')}</TableHead>
+                  <TableHead>{t('checklists.user')}</TableHead>
+                  <TableHead>{t('checklists.dateTime')}</TableHead>
+                  <TableHead>{t('checklists.duration')}</TableHead>
+                  <TableHead>{t('checklists.conclusion')}</TableHead>
+                  <TableHead>{t('checklists.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -390,9 +392,9 @@ const ChecklistHistory: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {history.completedItems}/{history.totalItems} itens
+                        {history.completedItems}/{history.totalItems} {t('checklists.itemsCount')}
                         <div className="text-xs text-muted-foreground">
-                          {getCompletionRate(history)}% concluído
+                          {getCompletionRate(history)}% {t('checklists.completed')}
                         </div>
                       </div>
                     </TableCell>
@@ -414,7 +416,7 @@ const ChecklistHistory: React.FC = () => {
           {filteredHistory.length === 0 && (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum registro encontrado</p>
+              <p className="text-muted-foreground">{t('checklists.noRecordsFound')}</p>
             </div>
           )}
         </CardContent>
@@ -424,7 +426,7 @@ const ChecklistHistory: React.FC = () => {
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Checklist</DialogTitle>
+            <DialogTitle>{t('checklists.checklistDetails')}</DialogTitle>
           </DialogHeader>
 
           {selectedHistory && (
@@ -441,24 +443,24 @@ const ChecklistHistory: React.FC = () => {
                   <p className="text-sm text-muted-foreground">
                     {formatDate(selectedHistory.startTime)} • {formatTime(selectedHistory.startTime)} - {formatTime(selectedHistory.endTime)}
                   </p>
-                  <p className="text-sm">Duração: {formatDuration(selectedHistory.duration)}</p>
+                  <p className="text-sm">{t('checklists.durationLabel')} {formatDuration(selectedHistory.duration)}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Loja</p>
+                  <p className="text-sm text-muted-foreground">{t('checklists.store')}</p>
                   <p className="font-medium">{selectedHistory.storeName}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Usuário</p>
+                  <p className="text-sm text-muted-foreground">{t('checklists.user')}</p>
                   <p className="font-medium">{selectedHistory.userName}</p>
                 </div>
               </div>
 
               {/* Responses */}
               <div>
-                <h4 className="font-semibold mb-4">Respostas ({selectedHistory.responses.length} itens)</h4>
+                <h4 className="font-semibold mb-4">{t('checklists.responses')} ({selectedHistory.responses.length} {t('checklists.itemsCount')})</h4>
                 <div className="space-y-4">
                   {selectedHistory.responses.map((response, index) => (
                     <Card key={index}>
@@ -471,25 +473,25 @@ const ChecklistHistory: React.FC = () => {
                                 response.response === true ? "default" :
                                   response.response === false ? "destructive" : "outline"
                             }>
-                              {response.skipped ? "Pulado" :
-                                response.response === true ? "Sim" :
-                                  response.response === false ? "Não" : "Sem resposta"}
+                              {response.skipped ? t('checklists.skipped') :
+                                response.response === true ? t('checklists.yes') :
+                                  response.response === false ? t('checklists.no') : t('checklists.noResponse')}
                             </Badge>
                           </div>
 
                           {response.comment && (
                             <div>
-                              <p className="text-sm text-muted-foreground">Comentário:</p>
+                              <p className="text-sm text-muted-foreground">{t('checklists.comment')}</p>
                               <p className="text-sm">{response.comment}</p>
                             </div>
                           )}
 
                           {response.imageUrl && (
                             <div>
-                              <p className="text-sm text-muted-foreground">Evidência:</p>
+                              <p className="text-sm text-muted-foreground">{t('checklists.evidence')}</p>
                               <img
                                 src={response.imageUrl}
-                                alt="Evidência"
+                                alt={t('checklists.evidence')}
                                 className="max-w-xs rounded-lg mt-1"
                               />
                             </div>

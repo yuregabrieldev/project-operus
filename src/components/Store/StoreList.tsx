@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Edit, ToggleLeft, ToggleRight, Search } from 'lucide-react';
 import { useBrand } from '@/contexts/BrandContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
 interface StoreListProps {
@@ -16,6 +17,7 @@ interface StoreListProps {
 
 export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
   const { stores, userBrands, toggleStoreStatus } = useBrand();
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [brandFilter, setBrandFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -35,7 +37,7 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
 
   const getBrandName = (brandId: string) => {
     const brand = userBrands.find(b => b.id === brandId);
-    return brand?.name || 'Marca não encontrada';
+    return brand?.name || t('stores.brandNotFound');
   };
 
   const handleToggleStatus = async (store: any) => {
@@ -45,8 +47,8 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
         const hasStock = Math.random() > 0.7; // 30% chance de ter estoque
         if (hasStock) {
           toast({
-            title: "Não é possível desativar a loja",
-            description: "Transfira os produtos primeiro antes de desativar esta loja.",
+            title: t('stores.cannotDeactivate'),
+            description: t('stores.transferFirst'),
             variant: "destructive"
           });
           return;
@@ -56,13 +58,13 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
       await toggleStoreStatus(store.id);
 
       toast({
-        title: store.isActive ? "Loja desativada" : "Loja ativada",
-        description: `A loja ${store.name} foi ${store.isActive ? 'desativada' : 'ativada'} com sucesso.`,
+        title: store.isActive ? t('stores.storeDeactivated') : t('stores.storeActivated'),
+        description: t('stores.storeStatusChanged', { name: store.name, status: store.isActive ? t('stores.deactivated') : t('stores.activated') }),
       });
     } catch (error) {
       toast({
-        title: "Erro ao alterar status",
-        description: "Tente novamente em alguns instantes.",
+        title: t('stores.statusChangeError'),
+        description: t('stores.tryAgainLater'),
         variant: "destructive"
       });
     }
@@ -71,13 +73,13 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lista de Lojas</CardTitle>
+        <CardTitle>{t('stores.storeList')}</CardTitle>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Buscar por nome ou endereço..."
+              placeholder={t('stores.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -86,10 +88,10 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
 
           <Select value={brandFilter} onValueChange={setBrandFilter}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filtrar por marca" />
+              <SelectValue placeholder={t('stores.filterByBrand')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as marcas</SelectItem>
+              <SelectItem value="all">{t('stores.allBrands')}</SelectItem>
               {userBrands.map(brand => (
                 <SelectItem key={brand.id} value={brand.id}>
                   {brand.name}
@@ -100,12 +102,12 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filtrar por status" />
+              <SelectValue placeholder={t('stores.filterByStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="active">Ativas</SelectItem>
-              <SelectItem value="inactive">Inativas</SelectItem>
+              <SelectItem value="all">{t('stores.allStatuses')}</SelectItem>
+              <SelectItem value="active">{t('stores.activeFilter')}</SelectItem>
+              <SelectItem value="inactive">{t('stores.inactiveFilter')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -116,8 +118,8 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
           <div className="text-center py-8">
             <p className="text-muted-foreground">
               {searchTerm || brandFilter !== 'all' || statusFilter !== 'all'
-                ? 'Nenhuma loja encontrada com os filtros aplicados.'
-                : 'Nenhuma loja cadastrada ainda.'
+                ? t('stores.noStoresFiltered')
+                : t('stores.noStoresYet')
               }
             </p>
           </div>
@@ -126,12 +128,12 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Endereço</TableHead>
-                  <TableHead>Marca</TableHead>
-                  <TableHead>Gerente</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('stores.name')}</TableHead>
+                  <TableHead>{t('stores.address')}</TableHead>
+                  <TableHead>{t('stores.brand')}</TableHead>
+                  <TableHead>{t('stores.manager')}</TableHead>
+                  <TableHead>{t('stores.status')}</TableHead>
+                  <TableHead className="text-right">{t('stores.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -147,7 +149,7 @@ export const StoreList: React.FC<StoreListProps> = ({ onEditStore }) => {
                     <TableCell>{store.manager}</TableCell>
                     <TableCell>
                       <Badge variant={store.isActive ? "default" : "secondary"}>
-                        {store.isActive ? "Ativa" : "Inativa"}
+                        {store.isActive ? t('stores.active') : t('stores.inactive')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

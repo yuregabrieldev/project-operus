@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, ToggleLeft, ToggleRight, Search, Key } from 'lucide-react';
 import { useUsers } from '@/contexts/UsersContext';
 import { useBrand } from '@/contexts/BrandContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
 interface UserListProps {
@@ -18,6 +19,7 @@ interface UserListProps {
 export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
   const { users, toggleUserStatus, generateTempPassword } = useUsers();
   const { stores } = useBrand();
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -42,14 +44,14 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
     const user = users.find(u => u.id === userId);
     if (!user) return;
 
-    const action = user.isActive ? 'desativar' : 'ativar';
-    const confirmed = window.confirm(`Tem certeza que deseja ${action} este usuário?`);
+    const action = user.isActive ? t('users.actionDeactivate') : t('users.actionActivate');
+    const confirmed = window.confirm(t('users.confirmToggleStatus', { action }));
     
     if (confirmed) {
       toggleUserStatus(userId);
       toast({
-        title: "Usuário atualizado",
-        description: `Usuário ${user.isActive ? 'desativado' : 'ativado'} com sucesso.`,
+        title: t('users.userUpdated'),
+        description: t('users.userStatusChanged', { status: user.isActive ? t('users.userDeactivated') : t('users.userActivated') }),
       });
     }
   };
@@ -58,13 +60,13 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
     const user = users.find(u => u.id === userId);
     if (!user) return;
 
-    const confirmed = window.confirm(`Gerar nova senha temporária para ${user.name}?`);
+    const confirmed = window.confirm(t('users.confirmGeneratePassword', { name: user.name }));
     
     if (confirmed) {
       const tempPassword = generateTempPassword(userId);
       toast({
-        title: "Senha temporária gerada",
-        description: `Nova senha: ${tempPassword}`,
+        title: t('users.tempPasswordGenerated'),
+        description: t('users.newPassword', { password: tempPassword }),
         duration: 10000,
       });
     }
@@ -78,9 +80,9 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
     };
     
     const labels = {
-      admin: 'Administrador',
-      manager: 'Gerente',
-      employee: 'Funcionário'
+      admin: t('users.roleAdmin'),
+      manager: t('users.roleManager'),
+      employee: t('users.roleEmployee')
     };
 
     return <Badge variant={variants[role] || 'default'}>{labels[role as keyof typeof labels]}</Badge>;
@@ -97,7 +99,7 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome ou email..."
+              placeholder={t('users.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -106,33 +108,33 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
           
           <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Filtrar por tipo" />
+              <SelectValue placeholder={t('users.filterByRole')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os tipos</SelectItem>
-              <SelectItem value="admin">Administrador</SelectItem>
-              <SelectItem value="manager">Gerente</SelectItem>
-              <SelectItem value="employee">Funcionário</SelectItem>
+              <SelectItem value="all">{t('users.allRoles')}</SelectItem>
+              <SelectItem value="admin">{t('users.roleAdmin')}</SelectItem>
+              <SelectItem value="manager">{t('users.roleManager')}</SelectItem>
+              <SelectItem value="employee">{t('users.roleEmployee')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Filtrar por status" />
+              <SelectValue placeholder={t('users.filterByStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="active">Ativo</SelectItem>
-              <SelectItem value="inactive">Inativo</SelectItem>
+              <SelectItem value="all">{t('users.allStatuses')}</SelectItem>
+              <SelectItem value="active">{t('users.activeFilter')}</SelectItem>
+              <SelectItem value="inactive">{t('users.inactiveFilter')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={storeFilter} onValueChange={setStoreFilter}>
             <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Filtrar por loja" />
+              <SelectValue placeholder={t('users.filterByStore')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as lojas</SelectItem>
+              <SelectItem value="all">{t('users.allStores')}</SelectItem>
               {allStores.map((store) => (
                 <SelectItem key={store.id} value={store.id.toString()}>
                   {store.name}
@@ -147,12 +149,12 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Lojas</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('users.name')}</TableHead>
+                <TableHead>{t('users.email')}</TableHead>
+                <TableHead>{t('users.role')}</TableHead>
+                <TableHead>{t('users.storesColumn')}</TableHead>
+                <TableHead>{t('users.status')}</TableHead>
+                <TableHead className="text-right">{t('users.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -172,7 +174,7 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
                   </TableCell>
                   <TableCell>
                     <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                      {user.isActive ? 'Ativo' : 'Inativo'}
+                      {user.isActive ? t('users.active') : t('users.inactive')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -209,7 +211,7 @@ export const UserList: React.FC<UserListProps> = ({ onEditUser }) => {
               {filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Nenhum usuário encontrado
+                    {t('users.noUsersFound')}
                   </TableCell>
                 </TableRow>
               )}
