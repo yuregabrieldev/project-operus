@@ -1417,6 +1417,8 @@
     "notifications": "Notificaciones",
     "newNotifications": "{{count}} nuevas",
     "viewAll": "Ver todas las notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "noNotifications": "Ninguna notificación.",
     "profile": "Perfil",
     "settings": "Configuración",
     "logout": "Salir",

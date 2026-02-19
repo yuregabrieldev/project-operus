@@ -1356,6 +1356,8 @@
     "notifications": "Notificações",
     "newNotifications": "{{count}} novas",
     "viewAll": "Ver todas as notificações",
+    "markAllRead": "Marcar todas como lidas",
+    "noNotifications": "Nenhuma notificação.",
     "profile": "Perfil",
     "settings": "Configurações",
     "logout": "Sair",

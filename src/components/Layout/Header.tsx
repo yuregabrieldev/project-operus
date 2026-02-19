@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { StoreForm } from '../Store/StoreForm';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { isDeveloper } from '@/lib/developer-access';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -97,13 +99,107 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       .slice(0, 2);
   };
 
-  const notifications = [
-    { id: '1', text: 'Estoque baixo: Açaí 10L', time: 'há 5 min', read: false },
-    { id: '2', text: 'Checklist pendente: Abertura Loja', time: 'há 15 min', read: false },
-    { id: '3', text: 'Licença expirando: Alvará Sanitário', time: 'há 1h', read: true },
-  ];
-
+  const [notifications, setNotifications] = useState<{ id: string; text: string; time: string; read: boolean }[]>([]);
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  function formatTimeAgo(iso: string) {
+    const d = new Date(iso);
+    const min = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (min < 60) return min <= 1 ? 'agora' : `há ${min} min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `há ${h}h`;
+    return `há ${Math.floor(h / 24)} dia(s)`;
+  }
+
+  const fetchNotifications = React.useCallback(async () => {
+    if (!user || !isDeveloper(user)) return;
+    try {
+      let reqs: any[] | null = null;
+      const { data, error } = await supabase
+        .from('registration_requests')
+        .select('id, name, email, created_at, status')
+        .order('created_at', { ascending: false })
+        .limit(15);
+      if (error) {
+        const rpc = await supabase.rpc('get_registration_requests');
+        reqs = (rpc.data ?? []).slice(0, 15);
+      } else {
+        reqs = data ?? [];
+      }
+      const readIds = new Set<string>();
+      const { data: readRows } = await supabase
+        .from('developer_notification_reads')
+        .select('registration_request_id')
+        .eq('developer_id', user.id);
+      (readRows ?? []).forEach((row: { registration_request_id: string }) => readIds.add(row.registration_request_id));
+      const list = (reqs ?? []).map((r: any) => ({
+        id: r.id,
+        text: `Nova solicitação: ${r.name || 'Sem nome'} (${r.email || ''})`,
+        time: formatTimeAgo(r.created_at || new Date().toISOString()),
+        read: readIds.has(r.id),
+      }));
+      setNotifications(list);
+    } catch {
+      setNotifications([]);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user || !isDeveloper(user)) return;
+    let mounted = true;
+    fetchNotifications();
+    const channel = supabase
+      .channel('registration_requests_changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'registration_requests' },
+        (payload: any) => {
+          if (!mounted) return;
+          const row = payload.new;
+          setNotifications(prev => [
+            {
+              id: row.id,
+              text: `Nova solicitação: ${row.name || 'Sem nome'} (${row.email || ''})`,
+              time: 'agora',
+              read: false,
+            },
+            ...prev.slice(0, 14),
+          ]);
+        }
+      )
+      .subscribe();
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, fetchNotifications]);
+
+  const handleOpenNotifications = () => {
+    const next = !showNotifications;
+    setShowNotifications(next);
+    if (next && user && isDeveloper(user)) fetchNotifications();
+  }
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await supabase.rpc('mark_all_notifications_read');
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (_) {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    }
+    setShowNotifications(false);
+  };
+
+  const handleNotificationClick = async (notif: { id: string; text: string; time: string; read: boolean }) => {
+    try {
+      await supabase.rpc('mark_notification_read', { p_request_id: notif.id });
+    } catch (_) {}
+    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    setShowNotifications(false);
+    if (user && isDeveloper(user)) {
+      navigate(`/${lang}/dev-users?tab=interessados`);
+    }
+  };
 
   return (
     <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 md:px-6 h-14 md:h-16 flex items-center shadow-sm relative z-40">
@@ -205,7 +301,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           <div className="relative" ref={notifMenuRef}>
             <button
               onClick={() => {
-                setShowNotifications(!showNotifications);
+                handleOpenNotifications();
                 setShowUserMenu(false);
                 setShowLangMenu(false);
               }}
@@ -231,9 +327,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                   )}
                 </div>
                 <div className="max-h-64 overflow-y-auto">
+                  {notifications.length === 0 && (
+                    <p className="px-4 py-4 text-sm text-muted-foreground text-center">{t('header.noNotifications')}</p>
+                  )}
                   {notifications.map(notif => (
                     <div
                       key={notif.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleNotificationClick(notif)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleNotificationClick(notif)}
                       className={cn(
                         "px-4 py-3 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer border-b border-border last:border-b-0",
                         !notif.read && "bg-accent/30"
@@ -252,8 +355,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                   ))}
                 </div>
                 <div className="px-4 py-2 border-t border-border">
-                  <button className="text-xs text-primary hover:text-primary/80 font-medium w-full text-center">
-                    {t('header.viewAll')}
+                  <button
+                    type="button"
+                    onClick={handleMarkAllNotificationsRead}
+                    className="text-xs text-primary hover:text-primary/80 font-medium w-full text-center"
+                  >
+                    {t('header.markAllRead')}
                   </button>
                 </div>
               </div>

@@ -1,36 +1,90 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-    Users, Building2, TrendingUp, TrendingDown, Clock, DollarSign,
+    Users, Building2, TrendingUp, TrendingDown, DollarSign,
     AlertTriangle, CalendarDays
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface ExpirationRow {
+    id: string;
+    brand: string;
+    store: string;
+    plan: string;
+    dueDate: string;
+    value: number;
+}
 
 const DevDashboard: React.FC = () => {
     const { user } = useAuth();
+    const [stats, setStats] = useState({ pendingUsers: 0, pendingBrands: 0, activeBrands: 0, monthlyRevenue: 0, revenueChange: 0 });
+    const [upcomingExpirations, setUpcomingExpirations] = useState<ExpirationRow[]>([]);
+    const [loading, setLoading] = useState(true);
 
     const today = new Date().toLocaleDateString('pt-PT', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    // Demo data
-    const stats = {
-        pendingUsers: 5,
-        pendingBrands: 3,
-        activeBrands: 12,
-        monthlyRevenue: 18750,
-        revenueChange: 12.5,
-    };
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const [reqRes, brandsRes, licensesRes, invoicesRes] = await Promise.all([
+                    supabase.from('registration_requests').select('id', { count: 'exact', head: true }),
+                    supabase.from('brands').select('id, stores_count'),
+                    supabase.from('licenses').select('id, brand_id, name, status, periodicity, renewals, store_ids, created_at').eq('status', 'ativa'),
+                    supabase.from('invoices').select('amount').gte('issue_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)),
+                ]);
+                if (cancelled) return;
+                const pendingUsers = reqRes.count ?? 0;
+                const brands = brandsRes.data ?? [];
+                const activeBrands = brands.length;
+                const monthlyRevenue = (invoicesRes.data ?? []).reduce((s, i) => s + (i.amount ?? 0), 0);
+                setStats({
+                    pendingUsers,
+                    pendingBrands: 0,
+                    activeBrands,
+                    monthlyRevenue,
+                    revenueChange: 0,
+                });
 
-    const upcomingExpirations = [
-        { id: '1', brand: 'Oakberry', store: 'Alvalade', plan: 'Business', dueDate: '2026-03-01', value: 149.90 },
-        { id: '2', brand: 'Spike', store: 'Saldanha', plan: 'Starter', dueDate: '2026-02-28', value: 49.90 },
-        { id: '3', brand: 'Green Bowl', store: 'Rossio', plan: 'Business', dueDate: '2026-03-05', value: 149.90 },
-        { id: '4', brand: 'Oakberry', store: 'Rossio', plan: 'Business', dueDate: '2026-03-10', value: 149.90 },
-        { id: '5', brand: 'Green Bowl', store: 'Colombo', plan: 'Starter', dueDate: '2026-03-15', value: 49.90 },
-    ];
+                const licenses = licensesRes.data ?? [];
+                const brandIds = [...new Set(licenses.map((l: any) => l.brand_id))];
+                const { data: brandsData } = await supabase.from('brands').select('id, name').in('id', brandIds);
+                const { data: storesData } = await supabase.from('stores').select('id, name, brand_id');
+                const brandsMap = new Map((brandsData ?? []).map((b: any) => [b.id, b.name]));
+                const storesMap = new Map((storesData ?? []).map((s: any) => [s.id, { name: s.name, brand_id: s.brand_id }]));
+
+                const rows: ExpirationRow[] = [];
+                for (const lic of licenses) {
+                    const renewals = (lic.renewals as any[]) ?? [];
+                    const nextRenewal = renewals.filter((r: any) => r.renewalDate).sort((a: any, b: any) => (a.renewalDate || '').localeCompare(b.renewalDate || ''))[0];
+                    const dueDate = nextRenewal?.renewalDate || (lic as any).created_at?.slice(0, 10) || '';
+                    const value = nextRenewal?.value ?? 0;
+                    const storeIds = (lic.store_ids as string[]) ?? [];
+                    const storeName = storeIds.length && storesMap.get(storeIds[0]) ? storesMap.get(storeIds[0])!.name : '-';
+                    const periodicity = (lic as any).periodicity;
+                    rows.push({
+                        id: lic.id,
+                        brand: brandsMap.get(lic.brand_id) ?? '-',
+                        store: storeName,
+                        plan: periodicity === 'anual' ? 'Anual' : periodicity === 'mensal' ? 'Mensal' : periodicity || 'Outro',
+                        dueDate,
+                        value,
+                    });
+                }
+                rows.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+                setUpcomingExpirations(rows.slice(0, 20));
+            } catch (_) {
+                if (!cancelled) setStats(s => ({ ...s }));
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
 
     const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
@@ -47,13 +101,17 @@ const DevDashboard: React.FC = () => {
                 </p>
             </div>
 
+            {loading && (
+                <p className="text-gray-500">A carregar dados...</p>
+            )}
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="shadow-lg border-0 bg-gradient-to-br from-amber-50 to-orange-50">
                     <CardContent className="p-5">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Usuários Pendentes</p>
+                                <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Solicitações de Registo</p>
                                 <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pendingUsers}</p>
                             </div>
                             <div className="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center">
@@ -69,6 +127,7 @@ const DevDashboard: React.FC = () => {
                             <div>
                                 <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Marcas Pendentes</p>
                                 <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pendingBrands}</p>
+                                <p className="text-[10px] text-gray-400 mt-0.5">(reservado)</p>
                             </div>
                             <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center">
                                 <Building2 className="h-6 w-6 text-blue-600" />
@@ -137,6 +196,9 @@ const DevDashboard: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
+                            {upcomingExpirations.length === 0 && !loading && (
+                                <tr><td colSpan={5} className="p-4 text-center text-gray-500">Nenhum vencimento próximo</td></tr>
+                            )}
                             {upcomingExpirations.map(item => {
                                 const dueDate = new Date(item.dueDate + 'T12:00:00');
                                 const daysUntil = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -145,21 +207,21 @@ const DevDashboard: React.FC = () => {
                                         <td className="p-3 font-medium">{item.brand}</td>
                                         <td className="p-3 text-gray-600">{item.store}</td>
                                         <td className="p-3 text-center">
-                                            <Badge variant="outline" className={item.plan === 'Business' ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200'}>
+                                            <Badge variant="outline" className={item.plan === 'Anual' ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200'}>
                                                 {item.plan}
                                             </Badge>
                                         </td>
                                         <td className="p-3 text-center">
                                             <div className="flex items-center justify-center gap-2">
-                                                <span>{dueDate.toLocaleDateString('pt-PT')}</span>
-                                                {daysUntil <= 7 && (
+                                                <span>{item.dueDate ? dueDate.toLocaleDateString('pt-PT') : '-'}</span>
+                                                {item.dueDate && daysUntil <= 30 && (
                                                     <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 text-[10px]">
                                                         {daysUntil <= 0 ? 'Vencido' : `${daysUntil}d`}
                                                     </Badge>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="p-3 text-right font-semibold">{fmt(item.value)}</td>
+                                        <td className="p-3 text-right font-semibold">{item.value ? fmt(item.value) : '-'}</td>
                                     </tr>
                                 );
                             })}

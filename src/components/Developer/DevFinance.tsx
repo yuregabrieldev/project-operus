@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import {
     DollarSign, TrendingUp, TrendingDown, CreditCard, AlertTriangle, Clock,
     Search, Eye, Mail, Bell, BarChart3, ArrowUpRight, Users, Repeat
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 type PaymentStatus = 'late' | 'pending' | 'paid';
 type FinanceTab = 'financas' | 'receitas';
@@ -26,6 +27,8 @@ interface DemoPayment {
     status: PaymentStatus;
 }
 
+const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
 const DevFinance: React.FC = () => {
     const [activeTab, setActiveTab] = useState<FinanceTab>('financas');
     const [searchTerm, setSearchTerm] = useState('');
@@ -34,48 +37,137 @@ const DevFinance: React.FC = () => {
     const [dateTo, setDateTo] = useState('');
     const [showEmailDialog, setShowEmailDialog] = useState(false);
     const [emailTarget, setEmailTarget] = useState<DemoPayment | null>(null);
+    const [payments, setPayments] = useState<DemoPayment[]>([]);
+    const [revenueMonthly, setRevenueMonthly] = useState<{ month: string; value: number }[]>([]);
+    const [stats, setStats] = useState({
+        revenue: 0,
+        revenueChange: 0,
+        recurringRevenue: 0,
+        recurringChange: 0,
+        avgTicket: 0,
+        avgTicketChange: 0,
+        pendingPayments: 0,
+        latePayments: 0,
+        activeSubscriptions: 0,
+        churnRate: 0,
+        arpu: 0,
+        arpuChange: 0,
+    });
+    const [loading, setLoading] = useState(true);
 
     const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
-    const stats = {
-        revenue: 18750,
-        revenueChange: 12.5,
-        recurringRevenue: 15200,
-        recurringChange: 8.3,
-        avgTicket: 112.50,
-        avgTicketChange: -2.1,
-        pendingPayments: 4,
-        latePayments: 2,
-        activeSubscriptions: 18,
-        churnRate: 2.1,
-        arpu: 1041.67,
-        arpuChange: 5.4,
-    };
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const [licensesRes, invoicesRes, brandsRes, storesRes] = await Promise.all([
+                    supabase.from('licenses').select('id, brand_id, name, periodicity, status, renewals, store_ids, created_at').eq('status', 'ativa'),
+                    supabase.from('invoices').select('amount, issue_date').order('issue_date', { ascending: true }),
+                    supabase.from('brands').select('id, name'),
+                    supabase.from('stores').select('id, name, brand_id'),
+                ]);
+                if (cancelled) return;
+                const brands = new Map((brandsRes.data ?? []).map((b: any) => [b.id, b.name]));
+                const stores = new Map((storesRes.data ?? []).map((s: any) => [s.id, { name: s.name, brand_id: s.brand_id }]));
 
-    const payments: DemoPayment[] = [
-        { id: '1', storeName: 'Alvalade', brandName: 'Oakberry', plan: 'Business', value: 149.90, dueDate: '2026-01-15', responsible: 'João Silva', status: 'late' },
-        { id: '2', storeName: 'Saldanha', brandName: 'Spike', plan: 'Business', value: 149.90, dueDate: '2026-02-01', responsible: 'Carlos Mendes', status: 'late' },
-        { id: '3', storeName: 'Colombo', brandName: 'Oakberry', plan: 'Starter', value: 49.90, dueDate: '2026-02-15', responsible: 'João Silva', status: 'pending' },
-        { id: '4', storeName: 'Amoreiras', brandName: 'Green Bowl', plan: 'Starter', value: 49.90, dueDate: '2026-02-20', responsible: 'Sofia Oliveira', status: 'pending' },
-        { id: '5', storeName: 'Rossio', brandName: 'Oakberry', plan: 'Business', value: 149.90, dueDate: '2026-02-10', responsible: 'João Silva', status: 'paid' },
-        { id: '6', storeName: 'Benfica', brandName: 'Spike', plan: 'Starter', value: 49.90, dueDate: '2026-02-05', responsible: 'Carlos Mendes', status: 'paid' },
-    ];
+                const paymentsList: DemoPayment[] = [];
+                const licenses = licensesRes.data ?? [];
+                const today = new Date().toISOString().slice(0, 10);
+                for (const lic of licenses) {
+                    const renewals = (lic.renewals as any[]) ?? [];
+                    const storeIds = (lic.store_ids as string[]) ?? [];
+                    const storeName = storeIds.length && stores.get(storeIds[0]) ? stores.get(storeIds[0])!.name : lic.name || '-';
+                    const brandName = brands.get(lic.brand_id) ?? '-';
+                    const plan = lic.periodicity === 'anual' ? 'Anual' : lic.periodicity === 'mensal' ? 'Mensal' : lic.periodicity ?? 'Outro';
+                    for (const r of renewals) {
+                        const dueDate = (r.renewalDate || r.due_date || '').toString().slice(0, 10);
+                        if (!dueDate) continue;
+                        const value = Number(r.value ?? r.amount ?? 0);
+                        const status: PaymentStatus = dueDate < today ? 'late' : 'pending';
+                        paymentsList.push({
+                            id: `${lic.id}-${dueDate}-${r.id ?? paymentsList.length}`,
+                            storeName,
+                            brandName,
+                            plan,
+                            value,
+                            dueDate,
+                            responsible: (r.contact || r.responsible || '-') as string,
+                            status,
+                        });
+                    }
+                    if (renewals.length === 0 && lic.created_at) {
+                        const dueDate = (lic.created_at as string).slice(0, 10);
+                        const status: PaymentStatus = dueDate < today ? 'late' : 'pending';
+                        paymentsList.push({
+                            id: `${lic.id}-${dueDate}`,
+                            storeName,
+                            brandName,
+                            plan,
+                            value: 0,
+                            dueDate,
+                            responsible: '-',
+                            status,
+                        });
+                    }
+                }
+                setPayments(paymentsList);
 
-    const revenueMonthly = [
-        { month: 'Set', value: 12400 },
-        { month: 'Out', value: 13800 },
-        { month: 'Nov', value: 14500 },
-        { month: 'Dez', value: 16200 },
-        { month: 'Jan', value: 16900 },
-        { month: 'Fev', value: 18750 },
-    ];
-    const maxRevenue = Math.max(...revenueMonthly.map(r => r.value));
+                const invoices = invoicesRes.data ?? [];
+                const now = new Date();
+                const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+                const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
+                let revenueThisMonth = 0;
+                let revenueLastMonth = 0;
+                const byMonth: Record<string, number> = {};
+                for (const inv of invoices) {
+                    const d = (inv.issue_date as string)?.slice(0, 10) ?? '';
+                    const amount = Number(inv.amount ?? 0);
+                    if (d >= thisMonthStart) revenueThisMonth += amount;
+                    if (d >= lastMonthStart && d < thisMonthStart) revenueLastMonth += amount;
+                    if (d) {
+                        const key = d.slice(0, 7);
+                        byMonth[key] = (byMonth[key] ?? 0) + amount;
+                    }
+                }
+                const last6 = [];
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const key = d.toISOString().slice(0, 7);
+                    last6.push({ month: MONTH_NAMES[d.getMonth()], value: byMonth[key] ?? 0 });
+                }
+                setRevenueMonthly(last6);
+                const revenueChange = revenueLastMonth > 0 ? Math.round(((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 1000) / 10 : 0;
+                const latePayments = paymentsList.filter(p => p.status === 'late').length;
+                const pendingPayments = paymentsList.filter(p => p.status === 'pending').length;
+                setStats({
+                    revenue: revenueThisMonth,
+                    revenueChange,
+                    recurringRevenue: revenueThisMonth,
+                    recurringChange: revenueChange,
+                    avgTicket: paymentsList.length ? Math.round((paymentsList.reduce((s, p) => s + p.value, 0) / paymentsList.length) * 100) / 100 : 0,
+                    avgTicketChange: 0,
+                    pendingPayments,
+                    latePayments,
+                    activeSubscriptions: licenses.length,
+                    churnRate: 0,
+                    arpu: licenses.length ? Math.round((revenueThisMonth / licenses.length) * 100) / 100 : 0,
+                    arpuChange: 0,
+                });
+            } catch (_) {
+                if (!cancelled) setPayments([]);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
 
+    const maxRevenue = Math.max(1, ...revenueMonthly.map(r => r.value));
     const sortedPayments = [...payments].sort((a, b) => {
         const order: Record<PaymentStatus, number> = { late: 0, pending: 1, paid: 2 };
-        return order[a.status] - order[b.status];
+        return order[a.status] - order[b.status] || a.dueDate.localeCompare(b.dueDate);
     });
-
     const filtered = sortedPayments.filter(p => {
         const matchSearch = !searchTerm || p.storeName.toLowerCase().includes(searchTerm.toLowerCase()) || p.brandName.toLowerCase().includes(searchTerm.toLowerCase()) || p.responsible.toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = statusFilter === 'all' || p.status === statusFilter;
@@ -336,47 +428,53 @@ const DevFinance: React.FC = () => {
             </Card>
 
             {/* Revenue by Plan */}
-            <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-                <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                        <CreditCard className="h-5 w-5 text-purple-600" /> Receita por Plano
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200">Business</Badge>
-                                    <span className="text-sm text-gray-500">12 lojas</span>
-                                </div>
-                                <span className="text-sm font-bold">{fmt(14400)}</span>
+            {(() => {
+                const byPlan: Record<string, { value: number; count: number }> = {};
+                for (const p of payments) {
+                    if (!byPlan[p.plan]) byPlan[p.plan] = { value: 0, count: 0 };
+                    byPlan[p.plan].value += p.value;
+                    byPlan[p.plan].count += 1;
+                }
+                const totalPlan = Object.values(byPlan).reduce((s, x) => s + x.value, 0) || 1;
+                const planColors: Record<string, string> = { Anual: 'from-purple-500 to-violet-500', Mensal: 'from-blue-500 to-indigo-500', Starter: 'from-blue-500 to-indigo-500', Business: 'from-purple-500 to-violet-500', Outro: 'from-gray-500 to-slate-500' };
+                const planBadge: Record<string, string> = { Anual: 'bg-purple-100 text-purple-700 border-purple-200', Mensal: 'bg-blue-100 text-blue-700 border-blue-200', Starter: 'bg-blue-100 text-blue-700 border-blue-200', Business: 'bg-purple-100 text-purple-700 border-purple-200', Outro: 'bg-gray-100 text-gray-600 border-gray-200' };
+                const entries = Object.entries(byPlan).sort((a, b) => b[1].value - a[1].value);
+                return (
+                    <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <CreditCard className="h-5 w-5 text-purple-600" /> Receita por Plano
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {entries.length === 0 && <p className="text-sm text-muted-foreground">Sem dados de planos.</p>}
+                                {entries.map(([plan, { value, count }]) => (
+                                    <div key={plan}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="outline" className={planBadge[plan] ?? 'bg-gray-100 text-gray-600 border-gray-200'}>{plan}</Badge>
+                                                <span className="text-sm text-gray-500">{count} {count === 1 ? 'item' : 'itens'}</span>
+                                            </div>
+                                            <span className="text-sm font-bold">{fmt(value)}</span>
+                                        </div>
+                                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                                            <div className={`h-full bg-gradient-to-r rounded-full ${planColors[plan] ?? 'from-gray-500 to-slate-500'}`} style={{ width: `${(value / totalPlan) * 100}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-purple-500 to-violet-500 rounded-full" style={{ width: '77%' }} />
-                            </div>
-                        </div>
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">Starter</Badge>
-                                    <span className="text-sm text-gray-500">6 lojas</span>
-                                </div>
-                                <span className="text-sm font-bold">{fmt(4350)}</span>
-                            </div>
-                            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style={{ width: '23%' }} />
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                        </CardContent>
+                    </Card>
+                );
+            })()}
         </>
     );
 
     return (
         <div className="p-6 space-y-6">
             <h1 className="text-2xl font-bold text-gray-900">Finanças & Receitas</h1>
+            {loading && <p className="text-gray-500">A carregar dados...</p>}
 
             {/* Tab Switch */}
             <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit">

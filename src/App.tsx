@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,6 +40,7 @@ import DevFinance from './components/Developer/DevFinance';
 import DevUsers from './components/Developer/DevUsers';
 import DevSettings from './components/Developer/DevSettings';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import { isDeveloper } from './lib/developer-access';
 
 const queryClient = new QueryClient();
 
@@ -58,7 +59,21 @@ const LanguageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) 
 const AuthGate: React.FC = () => {
   const { isAuthenticated, loading, needsBrandSelection, user } = useAuth();
   const { selectedBrand } = useBrand();
-  const isDev = user?.role === 'developer';
+  const navigate = useNavigate();
+  const wasAuthenticatedRef = useRef(false);
+  const isDev = isDeveloper(user);
+  const defaultPath = isDev ? '/pt/dev-dashboard' : '/pt/dashboard';
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (!wasAuthenticatedRef.current) {
+        wasAuthenticatedRef.current = true;
+        navigate(defaultPath, { replace: true });
+      }
+    } else {
+      wasAuthenticatedRef.current = false;
+    }
+  }, [isAuthenticated, user, defaultPath, navigate]);
 
   if (loading) {
     return (
@@ -78,8 +93,6 @@ const AuthGate: React.FC = () => {
   if (!isDev && (needsBrandSelection || !selectedBrand)) {
     return <BrandSelector />;
   }
-
-  const defaultPath = isDev ? '/pt/dev-dashboard' : '/pt/dashboard';
 
   return (
     <Routes>

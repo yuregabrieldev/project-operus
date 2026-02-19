@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from '@/hooks/use-toast';
 import {
     Users, UserPlus, Search, Eye, Power, Trash2, AlertTriangle,
-    Shield, Clock, Mail, Building2, Store
+    Shield, Clock, Mail, Building2, Store, UserCheck, Copy, KeyRound
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { authService } from '@/lib/supabase-services';
 
 type UserStatus = 'active' | 'pending' | 'inactive';
 type UserRole = 'admin' | 'manager' | 'assistant';
@@ -29,6 +32,7 @@ interface DemoUser {
 }
 
 const DevUsers: React.FC = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [searchTerm, setSearchTerm] = useState('');
     const [brandFilter, setBrandFilter] = useState('all');
     const [roleFilter, setRoleFilter] = useState('all');
@@ -38,16 +42,116 @@ const DevUsers: React.FC = () => {
     const [showCreate, setShowCreate] = useState(false);
     const [selectedUser, setSelectedUser] = useState<DemoUser | null>(null);
     const [newUser, setNewUser] = useState({ name: '', email: '', brand: '', store: '', role: 'assistant' as UserRole });
+    const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
+    const [brands, setBrands] = useState<string[]>([]);
+    const [brandStores, setBrandStores] = useState<Record<string, string[]>>({});
+    const [loading, setLoading] = useState(true);
+    const [interessados, setInteressados] = useState<{ id: string; name: string; email: string; phone: string; brand_name: string; stores_range: string; created_at: string; status?: string; temp_password?: string | null }[]>([]);
+    const [interessadosError, setInteressadosError] = useState<string | null>(null);
+    const [approvingId, setApprovingId] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'usuarios' | 'interessados'>('usuarios');
+    const [passwordDialog, setPasswordDialog] = useState<{ open: boolean; name: string; email: string; password: string }>({ open: false, name: '', email: '', password: '' });
 
-    const demoUsers: DemoUser[] = [
-        { id: '1', name: 'João Silva', email: 'joao@oakberry.com', brand: 'Oakberry', stores: ['Alvalade', 'Rossio', 'Colombo'], status: 'active', role: 'admin', createdAt: '2025-01-15', lastLogin: '2026-02-14' },
-        { id: '2', name: 'Maria Santos', email: 'maria@oakberry.com', brand: 'Oakberry', stores: ['Alvalade'], status: 'active', role: 'manager', createdAt: '2025-03-10', lastLogin: '2026-02-13' },
-        { id: '3', name: 'Pedro Costa', email: 'pedro@spike.com', brand: 'Spike', stores: ['Saldanha'], status: 'active', role: 'manager', createdAt: '2025-06-01', lastLogin: '2026-02-12' },
-        { id: '4', name: 'Ana Lima', email: 'ana@oakberry.com', brand: 'Oakberry', stores: ['Colombo'], status: 'pending', role: 'assistant', createdAt: '2026-02-10', lastLogin: '-' },
-        { id: '5', name: 'Carlos Mendes', email: 'carlos@spike.com', brand: 'Spike', stores: ['Saldanha', 'Benfica'], status: 'active', role: 'admin', createdAt: '2025-02-20', lastLogin: '2026-02-14' },
-        { id: '6', name: 'Sofia Oliveira', email: 'sofia@greenbowl.com', brand: 'Green Bowl', stores: ['Amoreiras'], status: 'pending', role: 'admin', createdAt: '2026-02-01', lastLogin: '-' },
-        { id: '7', name: 'Rita Ferreira', email: 'rita@spike.com', brand: 'Spike', stores: ['Saldanha'], status: 'inactive', role: 'assistant', createdAt: '2025-04-15', lastLogin: '2025-12-20' },
-    ];
+    const tabFromUrl = searchParams.get('tab');
+    useEffect(() => {
+        if (tabFromUrl === 'interessados') setActiveTab('interessados');
+    }, [tabFromUrl]);
+
+    const randomPassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let s = '';
+        for (let i = 0; i < 12; i++) s += chars[Math.floor(Math.random() * chars.length)];
+        return s;
+    };
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const [profilesRes, userBrandsRes, brandsRes, storesRes, requestsRes] = await Promise.all([
+                    supabase.from('profiles').select('id, name, email, role, is_active, created_at').neq('role', 'developer'),
+                    supabase.from('user_brands').select('user_id, brand_id, role'),
+                    supabase.from('brands').select('id, name').order('name'),
+                    supabase.from('stores').select('id, name, brand_id').order('name'),
+                    supabase.from('registration_requests').select('id, name, email, phone, created_at, status, temp_password').order('created_at', { ascending: false }),
+                ]);
+                if (profilesRes.error) {
+                    console.error('DevUsers profiles:', profilesRes.error.message);
+                }
+                const profiles = profilesRes.data ?? [];
+                const userBrands = userBrandsRes.data ?? [];
+                const brandsList = brandsRes.data ?? [];
+                const storesList = storesRes.data ?? [];
+                const brandNames = new Map(brandsList.map((b: any) => [b.id, b.name]));
+                const storesByBrand = new Map<string, string[]>();
+                for (const s of storesList) {
+                    const list = storesByBrand.get(s.brand_id) ?? [];
+                    list.push(s.name);
+                    storesByBrand.set(s.brand_id, list);
+                }
+                setBrands(brandsList.map((b: any) => b.name));
+                const brandStoresFlat: Record<string, string[]> = {};
+                brandsList.forEach((b: any) => { brandStoresFlat[b.name] = storesByBrand.get(b.id) ?? []; });
+                setBrandStores(brandStoresFlat);
+
+                const ubByUser = new Map<string, { brand_id: string; role: string }[]>();
+                for (const ub of userBrands) {
+                    const list = ubByUser.get(ub.user_id) ?? [];
+                    list.push({ brand_id: ub.brand_id, role: ub.role });
+                    ubByUser.set(ub.user_id, list);
+                }
+                const users: DemoUser[] = profiles.map((p: any) => {
+                    const ubs = ubByUser.get(p.id) ?? [];
+                    const brandIds = ubs.map(ub => ub.brand_id);
+                    const brandNamesList = brandIds.map(id => brandNames.get(id) ?? '-').filter(Boolean);
+                    const storesListForUser = brandIds.flatMap(id => storesByBrand.get(id) ?? []);
+                    const role = (p.role === 'developer' ? 'admin' : p.role) as UserRole;
+                    const status: UserStatus = p.is_active === false ? 'inactive' : (ubs.length === 0 ? 'pending' : 'active');
+                    return {
+                        id: p.id,
+                        name: p.name || p.email || '-',
+                        email: p.email || '',
+                        brand: brandNamesList[0] ?? '-',
+                        stores: [...new Set(storesListForUser)],
+                        status,
+                        role: role in { admin: 1, manager: 1, assistant: 1 } ? role : 'assistant',
+                        createdAt: (p.created_at as string)?.slice(0, 10) ?? '-',
+                        lastLogin: '-',
+                    };
+                });
+                setDemoUsers(users);
+                setInteressadosError(null);
+                let allReqs: any[] = requestsRes.data ?? [];
+                if (requestsRes.error) {
+                    console.error('Interessados (registration_requests):', requestsRes.error.message);
+                    const rpcRes = await supabase.rpc('get_registration_requests');
+                    if (rpcRes.error) {
+                        setInteressadosError(requestsRes.error.message || 'Erro ao carregar interessados.');
+                    } else {
+                        allReqs = rpcRes.data ?? [];
+                    }
+                }
+                const reqs = allReqs.filter((r: any) => (r.status ?? 'pendente') !== 'aprovado');
+                setInteressados(reqs.map((r: any) => ({
+                    id: r.id,
+                    name: r.name || '',
+                    email: r.email || '',
+                    phone: r.phone || '',
+                    brand_name: (r as any).brand_name || '',
+                    stores_range: (r as any).stores_range || '',
+                    created_at: (r.created_at || '').slice(0, 10),
+                    status: r.status ?? 'pendente',
+                    temp_password: (r as any).temp_password ?? null,
+                })));
+            } catch (e) {
+                setDemoUsers([]);
+                setInteressados([]);
+                setInteressadosError(e instanceof Error ? e.message : 'Erro ao carregar.');
+                console.error('DevUsers load error:', e);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
 
     const filtered = demoUsers.filter(u => {
         const matchSearch = !searchTerm || u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -62,14 +166,6 @@ const DevUsers: React.FC = () => {
         pending: demoUsers.filter(u => u.status === 'pending').length,
         inactive: demoUsers.filter(u => u.status === 'inactive').length,
         admins: demoUsers.filter(u => u.role === 'admin').length,
-    };
-
-    const brands = [...new Set(demoUsers.map(u => u.brand))];
-
-    const brandStores: Record<string, string[]> = {
-        'Oakberry': ['Alvalade', 'Rossio', 'Colombo'],
-        'Spike': ['Saldanha', 'Benfica'],
-        'Green Bowl': ['Amoreiras'],
     };
 
     const statusBadge = (status: UserStatus) => {
@@ -90,15 +186,176 @@ const DevUsers: React.FC = () => {
         setNewUser({ name: '', email: '', brand: '', store: '', role: 'assistant' });
     };
 
+    const handleApproveInteressado = async (req: typeof interessados[0]) => {
+        setApprovingId(req.id);
+        const password = randomPassword();
+        try {
+            const { error } = await authService.signUp(req.email, password, { name: req.name, role: 'assistant' });
+            if (error) throw error;
+            try {
+                await supabase.from('registration_requests').update({ status: 'conta_criada', temp_password: password }).eq('id', req.id);
+            } catch (_) {
+                // Coluna status/temp_password ou policy pode não existir; conta já foi criada
+            }
+            setInteressados(prev => prev.map(r => r.id === req.id ? { ...r, status: 'conta_criada', temp_password: password } : r));
+            await navigator.clipboard.writeText(password);
+            setPasswordDialog({ open: true, name: req.name, email: req.email, password });
+            toast({
+                title: 'Conta criada',
+                description: 'O interessado fica na lista até confirmar o email. Senha copiada.',
+            });
+        } catch (e: any) {
+            toast({
+                title: 'Erro ao aprovar',
+                description: e?.message || 'Email já registado ou erro de rede.',
+                variant: 'destructive',
+            });
+        } finally {
+            setApprovingId(null);
+        }
+    };
+
+    const handleVerSenha = (req: typeof interessados[0]) => {
+        if (req.temp_password) setPasswordDialog({ open: true, name: req.name, email: req.email, password: req.temp_password });
+        else toast({ title: 'Senha não guardada', description: 'Esta solicitação foi aprovada antes de guardarmos a senha. Peça ao cliente para redefinir a senha.', variant: 'destructive' });
+    };
+
+    const handleExcluirInteressado = async (req: typeof interessados[0]) => {
+        if (!confirm(`Excluir a solicitação de ${req.name} (${req.email})? A conta na plataforma não será apagada.`)) return;
+        try {
+            const { error } = await supabase.from('registration_requests').delete().eq('id', req.id);
+            if (error) throw error;
+            setInteressados(prev => prev.filter(r => r.id !== req.id));
+            toast({ title: 'Solicitação excluída' });
+        } catch (e: any) {
+            toast({ title: 'Erro ao excluir', description: e?.message, variant: 'destructive' });
+        }
+    };
+
     return (
         <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Usuários</h1>
-                <Button className="gap-2" onClick={() => setShowCreate(true)}>
-                    <UserPlus className="h-4 w-4" /> Criar Usuário
-                </Button>
+                {activeTab === 'usuarios' && (
+                    <Button className="gap-2 w-fit" onClick={() => setShowCreate(true)}>
+                        <UserPlus className="h-4 w-4" /> Criar Usuário
+                    </Button>
+                )}
+            </div>
+            {loading && <p className="text-gray-500">A carregar dados...</p>}
+
+            {/* Tab menu horizontal (igual Finanças & Receitas) */}
+            <div className="flex items-center gap-1 bg-muted p-1 rounded-lg w-fit">
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('usuarios'); setSearchParams({}); }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'usuarios' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    <Users className="h-4 w-4" />
+                    Usuários
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('interessados'); setSearchParams({ tab: 'interessados' }); }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'interessados' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    <UserCheck className="h-4 w-4" />
+                    Interessados
+                    {interessados.length > 0 && (
+                        <span className="ml-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold px-1.5 py-0.5">
+                            {interessados.length}
+                        </span>
+                    )}
+                </button>
             </div>
 
+            {activeTab === 'interessados' && (
+                <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <UserCheck className="h-5 w-5 text-blue-600" /> Interessados
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            Solicitações de acesso enviadas pelo formulário &quot;Criar Conta&quot;. Aprove para criar a conta e copiar a senha para enviar ao cliente.
+                        </p>
+                    </CardHeader>
+                    <CardContent className="p-0 overflow-x-auto">
+                        {interessadosError && (
+                            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3 mx-4 mt-2">
+                                {interessadosError} Executa no Supabase a migração <code className="text-xs bg-amber-100 px-1 rounded">migration-developer-emails-registration-read.sql</code> e adiciona o teu email à tabela <code className="text-xs bg-amber-100 px-1 rounded">developer_emails</code>.
+                            </p>
+                        )}
+                        {interessados.length === 0 && !interessadosError ? (
+                            <p className="text-sm text-muted-foreground p-4">Nenhuma solicitação pendente.</p>
+                        ) : interessados.length > 0 ? (
+                            <table className="w-full text-sm min-w-[640px]">
+                                <thead>
+                                    <tr className="border-b bg-gray-50/80">
+                                        <th className="text-left p-3 font-semibold text-gray-600">Nome</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Email</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Telefone</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Marca</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Lojas</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Data</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Estado</th>
+                                        <th className="text-center p-3 font-semibold text-gray-600">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {interessados.map(req => (
+                                        <tr key={req.id} className="border-b hover:bg-gray-50/50">
+                                            <td className="p-3 font-medium">{req.name}</td>
+                                            <td className="p-3 text-gray-600">{req.email}</td>
+                                            <td className="p-3 text-gray-600">{req.phone || '-'}</td>
+                                            <td className="p-3">{req.brand_name || '-'}</td>
+                                            <td className="p-3">{req.stores_range || '-'}</td>
+                                            <td className="p-3 text-gray-600">{req.created_at}</td>
+                                            <td className="p-3">
+                                                {req.status === 'conta_criada' ? (
+                                                    <Badge variant="secondary" className="bg-amber-100 text-amber-800">Aguardando confirmação</Badge>
+                                                ) : (
+                                                    <Badge variant="outline">Pendente</Badge>
+                                                )}
+                                            </td>
+                                            <td className="p-3 text-center">
+                                                {req.status === 'conta_criada' ? (
+                                                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                                                        <Button size="sm" variant="outline" className="gap-1" onClick={() => handleVerSenha(req)}>
+                                                            <KeyRound className="h-3.5 w-3.5" /> Ver senha
+                                                        </Button>
+                                                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleExcluirInteressado(req)}>
+                                                            <Trash2 className="h-3.5 w-3.5" /> Excluir
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        className="gap-1.5"
+                                                        disabled={approvingId === req.id}
+                                                        onClick={() => handleApproveInteressado(req)}
+                                                    >
+                                                        {approvingId === req.id ? (
+                                                            <>A aprovar...</>
+                                                        ) : (
+                                                            <>
+                                                                <UserCheck className="h-3.5 w-3.5" />
+                                                                Aprovar e copiar senha
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : null}
+                    </CardContent>
+                </Card>
+            )}
+
+            {activeTab === 'usuarios' && (
+            <>
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="shadow border-0 bg-gradient-to-br from-emerald-50 to-green-50">
@@ -203,6 +460,8 @@ const DevUsers: React.FC = () => {
                     </table>
                 </CardContent>
             </Card>
+            </>
+            )}
 
             {/* User Detail Dialog */}
             <Dialog open={showDetail} onOpenChange={setShowDetail}>
@@ -324,6 +583,40 @@ const DevUsers: React.FC = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
                         <Button onClick={handleCreate} className="gap-2"><UserPlus className="h-4 w-4" /> Criar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Popup com a senha após aprovar interessado */}
+            <Dialog open={passwordDialog.open} onOpenChange={(open) => setPasswordDialog(p => ({ ...p, open }))}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Conta criada – senha do utilizador</DialogTitle>
+                        <DialogDescription>
+                            Envie esta senha ao cliente. O interessado permanece na lista até confirmar a conta por email; depois passará a aparecer em Usuários.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-3 py-2">
+                        <p className="text-sm text-muted-foreground"><strong>{passwordDialog.name}</strong> ({passwordDialog.email})</p>
+                        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
+                            <code className="flex-1 font-mono text-sm break-all">{passwordDialog.password}</code>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="shrink-0 gap-1"
+                                onClick={async () => {
+                                    if (passwordDialog.password) {
+                                        await navigator.clipboard.writeText(passwordDialog.password);
+                                        toast({ title: 'Senha copiada', description: 'Copiada para a área de transferência.' });
+                                    }
+                                }}
+                            >
+                                <Copy className="h-4 w-4" /> Copiar
+                            </Button>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setPasswordDialog(p => ({ ...p, open: false }))}>Fechar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

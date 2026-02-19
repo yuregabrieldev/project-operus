@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,9 @@ import {
     Lock, Database, Download, Clock, Edit, RefreshCw, HardDrive,
     Settings
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+const DEFAULT_EMAIL_TEMPLATE = `Olá {responsavel},\n\nGostaríamos de informar que a fatura referente à loja {loja} do plano {plano} no valor de {valor} encontra-se em atraso desde {data_vencimento}.\n\nPor favor, regularize o pagamento o mais breve possível.\n\nAtenciosamente,\nEquipa Operus`;
 
 interface ApiKey {
     id: string;
@@ -31,21 +34,28 @@ interface Integration {
     webhookUrl?: string;
 }
 
+interface BackupEntry {
+    id: string;
+    date: string;
+    size: string;
+    status: string;
+}
+
+interface StoredSettings {
+    apiKeys?: ApiKey[];
+    integrations?: Integration[];
+    emailTemplate?: string;
+    notifications?: { email?: boolean; push?: boolean; payment?: boolean; newBrand?: boolean; newUser?: boolean; system?: boolean };
+    security?: { twoFA?: boolean; sessionTimeout?: string; forcePasswordChange?: boolean; minPasswordLength?: string };
+    backup?: { autoBackup?: boolean; backupFrequency?: string; history?: BackupEntry[] };
+}
+
 const DevSettings: React.FC = () => {
     const [activeTab, setActiveTab] = useState('apikeys');
+    const [loading, setLoading] = useState(true);
 
-    const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-        { id: '1', name: 'API principal', keyMasked: 'dk_live••••••••7a2f', active: true, createdAt: '2025-10-15' },
-        { id: '2', name: 'Webhook secret', keyMasked: 'whsec_••••••••3b4c', active: true, createdAt: '2025-11-01' },
-        { id: '3', name: 'API teste', keyMasked: 'dk_test••••••••9d1e', active: false, createdAt: '2026-01-20' },
-    ]);
-
-    const [integrations, setIntegrations] = useState<Integration[]>([
-        { id: '1', name: 'Stripe', description: 'Processamento de pagamentos', connected: true, webhookUrl: 'https://api.operus.com/webhooks/stripe' },
-        { id: '2', name: 'SendGrid', description: 'Envio de emails transacionais', connected: true },
-        { id: '3', name: 'AWS S3', description: 'Armazenamento de ficheiros', connected: false },
-        { id: '4', name: 'Slack', description: 'Notificações da equipa', connected: false },
-    ]);
+    const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+    const [integrations, setIntegrations] = useState<Integration[]>([]);
 
     const [showAddKey, setShowAddKey] = useState(false);
     const [showEditKey, setShowEditKey] = useState(false);
@@ -57,11 +67,8 @@ const DevSettings: React.FC = () => {
     const [newIntDesc, setNewIntDesc] = useState('');
     const [newIntWebhook, setNewIntWebhook] = useState('');
 
-    const [emailTemplate, setEmailTemplate] = useState(
-        `Olá {responsavel},\n\nGostaríamos de informar que a fatura referente à loja {loja} do plano {plano} no valor de {valor} encontra-se em atraso desde {data_vencimento}.\n\nPor favor, regularize o pagamento o mais breve possível.\n\nAtenciosamente,\nEquipa Operus`
-    );
+    const [emailTemplate, setEmailTemplate] = useState(DEFAULT_EMAIL_TEMPLATE);
 
-    // Notification settings
     const [notifEmail, setNotifEmail] = useState(true);
     const [notifPush, setNotifPush] = useState(true);
     const [notifPayment, setNotifPayment] = useState(true);
@@ -69,40 +76,103 @@ const DevSettings: React.FC = () => {
     const [notifNewUser, setNotifNewUser] = useState(false);
     const [notifSystem, setNotifSystem] = useState(true);
 
-    // Security settings
     const [twoFA, setTwoFA] = useState(false);
     const [sessionTimeout, setSessionTimeout] = useState('30');
     const [forcePasswordChange, setForcePasswordChange] = useState(false);
     const [minPasswordLength, setMinPasswordLength] = useState('8');
 
-    // Backup settings
     const [autoBackup, setAutoBackup] = useState(true);
     const [backupFrequency, setBackupFrequency] = useState('daily');
+    const [backupHistory, setBackupHistory] = useState<BackupEntry[]>([]);
 
-    const backupHistory = [
-        { id: '1', date: '14/02/2026 08:00', size: '245 MB', status: 'success' },
-        { id: '2', date: '13/02/2026 08:00', size: '243 MB', status: 'success' },
-        { id: '3', date: '12/02/2026 08:00', size: '241 MB', status: 'success' },
-        { id: '4', date: '11/02/2026 08:00', size: '240 MB', status: 'failed' },
-    ];
+    const persist = useCallback(async (data: StoredSettings) => {
+        try {
+            await supabase.from('developer_settings').upsert(
+                { key: 'settings', value: data as any, updated_at: new Date().toISOString() },
+                { onConflict: 'key' }
+            );
+        } catch (e) {
+            console.error(e);
+        }
+    }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const { data } = await supabase.from('developer_settings').select('value').eq('key', 'settings').single();
+                const v = (data?.value as StoredSettings) || {};
+                if (v.apiKeys?.length) setApiKeys(v.apiKeys);
+                if (v.integrations?.length) setIntegrations(v.integrations);
+                if (v.emailTemplate) setEmailTemplate(v.emailTemplate);
+                const n = v.notifications;
+                if (n) {
+                    if (n.email !== undefined) setNotifEmail(n.email);
+                    if (n.push !== undefined) setNotifPush(n.push);
+                    if (n.payment !== undefined) setNotifPayment(n.payment);
+                    if (n.newBrand !== undefined) setNotifNewBrand(n.newBrand);
+                    if (n.newUser !== undefined) setNotifNewUser(n.newUser);
+                    if (n.system !== undefined) setNotifSystem(n.system);
+                }
+                const s = v.security;
+                if (s) {
+                    if (s.twoFA !== undefined) setTwoFA(s.twoFA);
+                    if (s.sessionTimeout !== undefined) setSessionTimeout(s.sessionTimeout);
+                    if (s.forcePasswordChange !== undefined) setForcePasswordChange(s.forcePasswordChange);
+                    if (s.minPasswordLength !== undefined) setMinPasswordLength(s.minPasswordLength);
+                }
+                const b = v.backup;
+                if (b) {
+                    if (b.autoBackup !== undefined) setAutoBackup(b.autoBackup);
+                    if (b.backupFrequency !== undefined) setBackupFrequency(b.backupFrequency);
+                    if (b.history?.length) setBackupHistory(b.history);
+                }
+            } catch (_) {}
+            setLoading(false);
+        })();
+    }, []);
+
+    const buildSettings = useCallback((overrides: Partial<StoredSettings>): StoredSettings => ({
+        apiKeys,
+        integrations,
+        emailTemplate,
+        notifications: { email: notifEmail, push: notifPush, payment: notifPayment, newBrand: notifNewBrand, newUser: notifNewUser, system: notifSystem },
+        security: { twoFA, sessionTimeout, forcePasswordChange, minPasswordLength },
+        backup: { autoBackup, backupFrequency, history: backupHistory },
+        ...overrides,
+    }), [apiKeys, integrations, emailTemplate, notifEmail, notifPush, notifPayment, notifNewBrand, notifNewUser, notifSystem, twoFA, sessionTimeout, forcePasswordChange, minPasswordLength, autoBackup, backupFrequency, backupHistory]);
+
+    const saveToDb = useCallback(() => {
+        persist(buildSettings({}));
+    }, [persist, buildSettings]);
 
     const toggleKeyActive = (id: string) => {
-        setApiKeys(prev => prev.map(k => k.id === id ? { ...k, active: !k.active } : k));
+        setApiKeys(prev => {
+            const next = prev.map(k => k.id === id ? { ...k, active: !k.active } : k);
+            persist(buildSettings({ apiKeys: next }));
+            return next;
+        });
     };
 
     const toggleIntegration = (id: string) => {
-        setIntegrations(prev => prev.map(i => i.id === id ? { ...i, connected: !i.connected } : i));
+        setIntegrations(prev => {
+            const next = prev.map(i => i.id === id ? { ...i, connected: !i.connected } : i);
+            persist(buildSettings({ integrations: next }));
+            return next;
+        });
     };
 
     const handleSave = () => {
-        toast({ title: 'Configurações salvas!', description: 'Todas as alterações foram aplicadas.' });
+        saveToDb();
+        toast({ title: 'Configurações salvas!', description: 'As alterações foram guardadas na base de dados.' });
     };
 
     const handleAddKey = () => {
         if (newKeyName && newKeyValue) {
             const masked = newKeyValue.slice(0, 6) + '••••••••' + newKeyValue.slice(-4);
-            setApiKeys(prev => [...prev, { id: Date.now().toString(), name: newKeyName, keyMasked: masked, active: true, createdAt: new Date().toISOString().split('T')[0] }]);
-            toast({ title: 'Chave adicionada!', description: `${newKeyName} foi adicionada com sucesso.` });
+            const next = [...apiKeys, { id: Date.now().toString(), name: newKeyName, keyMasked: masked, active: true, createdAt: new Date().toISOString().split('T')[0] }];
+            setApiKeys(next);
+            persist(buildSettings({ apiKeys: next }));
+            toast({ title: 'Chave adicionada!', description: `${newKeyName} foi adicionada.` });
         }
         setNewKeyName('');
         setNewKeyValue('');
@@ -111,8 +181,10 @@ const DevSettings: React.FC = () => {
 
     const handleEditKey = () => {
         if (editingKey) {
-            setApiKeys(prev => prev.map(k => k.id === editingKey.id ? { ...k, name: newKeyName || k.name } : k));
-            toast({ title: 'Chave atualizada!', description: 'As alterações foram salvas.' });
+            const next = apiKeys.map(k => k.id === editingKey.id ? { ...k, name: newKeyName || k.name } : k);
+            setApiKeys(next);
+            persist(buildSettings({ apiKeys: next }));
+            toast({ title: 'Chave atualizada!', description: 'Alterações guardadas.' });
         }
         setEditingKey(null);
         setNewKeyName('');
@@ -122,7 +194,9 @@ const DevSettings: React.FC = () => {
 
     const handleAddIntegration = () => {
         if (newIntName) {
-            setIntegrations(prev => [...prev, { id: Date.now().toString(), name: newIntName, description: newIntDesc, connected: false, webhookUrl: newIntWebhook || undefined }]);
+            const next = [...integrations, { id: Date.now().toString(), name: newIntName, description: newIntDesc, connected: false, webhookUrl: newIntWebhook || undefined }];
+            setIntegrations(next);
+            persist(buildSettings({ integrations: next }));
             toast({ title: 'Integração adicionada!', description: `${newIntName} foi adicionada.` });
         }
         setNewIntName('');
@@ -157,6 +231,7 @@ const DevSettings: React.FC = () => {
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 space-y-3">
+                            {apiKeys.length === 0 && <p className="text-sm text-muted-foreground py-4">Nenhuma chave de API. Adicione uma com o botão acima.</p>}
                             {apiKeys.map(apiKey => (
                                 <div key={apiKey.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                                     <div className="flex-1">
@@ -192,6 +267,7 @@ const DevSettings: React.FC = () => {
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 space-y-3">
+                            {integrations.length === 0 && <p className="text-sm text-muted-foreground py-4">Nenhuma integração. Adicione uma com o botão acima.</p>}
                             {integrations.map(integration => (
                                 <div key={integration.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                                     <div className="h-10 w-10 rounded-lg bg-background border flex items-center justify-center">
@@ -471,6 +547,7 @@ const DevSettings: React.FC = () => {
                     <Save className="h-4 w-4" /> Salvar Alterações
                 </Button>
             </div>
+            {loading && <p className="text-sm text-muted-foreground">A carregar configurações...</p>}
 
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Sidebar */}

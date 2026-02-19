@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '@/lib/supabase-services';
+import { isDeveloperEmail } from '@/lib/developer-access';
 import type { DbProfile } from '@/types/database';
 import type { Session } from '@supabase/supabase-js';
 
@@ -65,6 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const profile = await authService.getProfile(session.user.id);
       if (profile) {
         const u = profileToUser(profile);
+        if (isDeveloperEmail(u.email)) u.role = 'developer';
         setUser(u);
 
         const selectedBrand = localStorage.getItem('selected_brand');
@@ -72,17 +74,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setNeedsBrandSelection(true);
         }
       } else {
+        const role = isDeveloperEmail(session.user.email) ? 'developer' : (session.user.app_metadata?.role === 'developer' ? 'developer' : 'assistant');
         setUser({
           id: session.user.id,
           name: session.user.user_metadata?.name || session.user.email || '',
           email: session.user.email || '',
-          role: 'assistant',
+          role,
           permissions: [],
         });
       }
     } catch (err) {
       console.error('Error loading profile:', err?.message);
-      setUser(null);
+      const role = session?.user && isDeveloperEmail(session.user.email) ? 'developer' : (session?.user?.app_metadata?.role === 'developer' ? 'developer' : 'assistant');
+      setUser(session?.user ? {
+        id: session.user.id,
+        name: session.user.user_metadata?.name || session.user.email || '',
+        email: session.user.email || '',
+        role,
+        permissions: [],
+      } : null);
     } finally {
       setLoading(false);
     }

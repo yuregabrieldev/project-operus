@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +10,7 @@ import {
     Building2, Store, DollarSign, Search, Edit, CheckCircle, Trash2,
     ArrowLeft, Upload, X, Power, AlertTriangle, Plus, UserPlus, Image as ImageIcon
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 type BrandStatus = 'active' | 'pending' | 'inactive';
 
@@ -53,6 +53,9 @@ const DevBrands: React.FC = () => {
     const [deleteTarget, setDeleteTarget] = useState<{ type: 'brand' | 'store'; id: string } | null>(null);
     const [showCreateBrand, setShowCreateBrand] = useState(false);
     const [showAddStore, setShowAddStore] = useState(false);
+    const [demoBrands, setDemoBrands] = useState<DemoBrand[]>([]);
+    const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
+    const [loading, setLoading] = useState(true);
 
     // Create Brand form state
     const [newBrandName, setNewBrandName] = useState('');
@@ -70,49 +73,55 @@ const DevBrands: React.FC = () => {
 
     const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
-    // System users for admin assignment
-    const systemUsers: SystemUser[] = [
-        { id: 'u1', name: 'João Silva', email: 'joao@operus.com', role: 'admin' },
-        { id: 'u2', name: 'Maria Santos', email: 'maria@operus.com', role: 'manager' },
-        { id: 'u3', name: 'Pedro Costa', email: 'pedro@operus.com', role: 'admin' },
-        { id: 'u4', name: 'Ana Lima', email: 'ana@operus.com', role: 'manager' },
-        { id: 'u5', name: 'Carlos Mendes', email: 'carlos@operus.com', role: 'admin' },
-        { id: 'u6', name: 'Sofia Oliveira', email: 'sofia@operus.com', role: 'admin' },
-        { id: 'u7', name: 'Rita Ferreira', email: 'rita@operus.com', role: 'manager' },
-        { id: 'u8', name: 'Miguel Sousa', email: 'miguel@operus.com', role: 'assistant' },
-    ];
+    useEffect(() => {
+        (async () => {
+            try {
+                const [brandsRes, storesRes, profilesRes] = await Promise.all([
+                    supabase.from('brands').select('*').order('name'),
+                    supabase.from('stores').select('*').order('name'),
+                    supabase.from('profiles').select('id, name, email, role').eq('is_active', true),
+                ]);
+                const brands = brandsRes.data ?? [];
+                const stores = storesRes.data ?? [];
+                const profiles = profilesRes.data ?? [];
+                setSystemUsers(profiles.map((p: any) => ({ id: p.id, name: p.name || p.email, email: p.email, role: p.role || 'assistant' })));
 
-    const demoBrands: DemoBrand[] = [
-        {
-            id: '1', name: 'Oakberry', storesCount: 3, responsible: 'João Silva',
-            monthlyRevenue: 8500, status: 'active', totalRevenue: 102000,
-            stores: [
-                { id: 's1', name: 'Alvalade', address: 'Av. da Igreja 42, Lisboa', responsible: 'Maria Santos', contact: '+351 912 345 678', plan: 'Business', planValue: 149.90, status: 'active' },
-                { id: 's2', name: 'Rossio', address: 'Praça Dom Pedro IV, Lisboa', responsible: 'Pedro Costa', contact: '+351 913 456 789', plan: 'Business', planValue: 149.90, status: 'active' },
-                { id: 's3', name: 'Colombo', address: 'Centro Colombo, Lisboa', responsible: 'Ana Lima', contact: '+351 914 567 890', plan: 'Starter', planValue: 49.90, status: 'pending' },
-            ]
-        },
-        {
-            id: '2', name: 'Spike', storesCount: 2, responsible: 'Carlos Mendes',
-            monthlyRevenue: 3200, status: 'active', totalRevenue: 38400,
-            stores: [
-                { id: 's4', name: 'Saldanha', address: 'Av. da República, Lisboa', responsible: 'Rita Ferreira', contact: '+351 915 678 901', plan: 'Business', planValue: 149.90, status: 'active' },
-                { id: 's5', name: 'Benfica', address: 'Estrada de Benfica, Lisboa', responsible: 'Miguel Sousa', contact: '+351 916 789 012', plan: 'Starter', planValue: 49.90, status: 'inactive' },
-            ]
-        },
-        {
-            id: '3', name: 'Green Bowl', storesCount: 1, responsible: 'Sofia Oliveira',
-            monthlyRevenue: 1500, status: 'pending', totalRevenue: 0,
-            stores: [
-                { id: 's6', name: 'Amoreiras', address: 'Centro Amoreiras, Lisboa', responsible: 'Sofia Oliveira', contact: '+351 917 890 123', plan: 'Starter', planValue: 49.90, status: 'pending' },
-            ]
-        },
-        {
-            id: '4', name: 'Bao Bao', storesCount: 0, responsible: 'Paulo Rodrigues',
-            monthlyRevenue: 0, status: 'inactive', totalRevenue: 4800,
-            stores: []
-        },
-    ];
+                const brandsMap = new Map<string, DemoBrand>();
+                for (const b of brands) {
+                    brandsMap.set(b.id, {
+                        id: b.id,
+                        name: b.name,
+                        storesCount: b.stores_count ?? 0,
+                        responsible: '-',
+                        monthlyRevenue: 0,
+                        totalRevenue: 0,
+                        status: 'active',
+                        stores: [],
+                    });
+                }
+                for (const s of stores) {
+                    const brand = brandsMap.get(s.brand_id);
+                    if (brand) {
+                        brand.stores.push({
+                            id: s.id,
+                            name: s.name,
+                            address: s.address || '',
+                            responsible: s.manager || '-',
+                            contact: s.contact || '',
+                            plan: 'Starter',
+                            planValue: 0,
+                            status: s.is_active ? 'active' : 'inactive',
+                        });
+                    }
+                }
+                setDemoBrands(Array.from(brandsMap.values()));
+            } catch (_) {
+                setDemoBrands([]);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
 
     const filtered = demoBrands.filter(b => {
         const matchSearch = !searchTerm || b.name.toLowerCase().includes(searchTerm.toLowerCase()) || b.responsible.toLowerCase().includes(searchTerm.toLowerCase());
@@ -406,6 +415,8 @@ const DevBrands: React.FC = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            {loading && <p className="text-gray-500">A carregar marcas...</p>}
 
             {/* Filters */}
             <div className="flex gap-3">

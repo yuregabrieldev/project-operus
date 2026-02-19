@@ -101,17 +101,18 @@ const LandingPage: React.FC = () => {
       const { error } = await supabase.from('registration_requests').insert({
         name: registerForm.name.trim(),
         email: registerForm.email.trim().toLowerCase(),
-        phone: (registerForm.phone || '').trim(),
-        brand_name: (registerForm.brandName || '').trim(),
+        phone: (registerForm.phone || '').trim() || null,
+        brand_name: registerForm.brandName.trim(),
         stores_range: registerForm.storesRange || null,
       });
       if (error) throw error;
       setRegisterRequestSent(true);
       setRegisterForm({ name: '', email: '', phone: '', brandName: '', storesRange: '' });
-    } catch {
+    } catch (err: any) {
+      const msg = err?.message || err?.error_description || t('landing.sendErrorDesc');
       toast({
         title: t('landing.sendErrorTitle'),
-        description: t('landing.sendErrorDesc'),
+        description: msg,
         variant: "destructive",
       });
     } finally {
@@ -240,9 +241,11 @@ const LandingPage: React.FC = () => {
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>{t('landing.createAccountTitle')}</DialogTitle>
-                    <DialogDescription>
-                      {t('landing.createAccountDescription')}
-                    </DialogDescription>
+                    {!registerRequestSent && (
+                      <DialogDescription>
+                        {t('landing.createAccountDescription')}
+                      </DialogDescription>
+                    )}
                   </DialogHeader>
                   {registerRequestSent ? (
                     <div className="py-6 text-center space-y-4">

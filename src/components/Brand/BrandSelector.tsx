@@ -1,16 +1,22 @@
 import React, { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { isDeveloper } from '@/lib/developer-access';
 import { Store, Crown, LogOut, AlertTriangle } from 'lucide-react';
 
 const BrandSelector: React.FC = () => {
   const { userBrands, setSelectedBrand, loadUserBrands, isLoading, brandsLoaded } = useBrand();
   const { user, setNeedsBrandSelection, logout } = useAuth();
   const { t } = useLanguage();
+
+  if (isDeveloper(user)) {
+    return <Navigate to="/pt/dev-dashboard" replace />;
+  }
 
   useEffect(() => {
     if (user && !brandsLoaded && !isLoading) {
@@ -38,8 +44,6 @@ const BrandSelector: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="text-center max-w-md">
-          <img src="/operus-logo.png" alt="OPERUS" className="w-14 h-14 rounded-lg mx-auto mb-6 object-contain" />
-
           <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
           </div>

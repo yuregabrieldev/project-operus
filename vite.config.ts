@@ -1,11 +1,11 @@
 import path from "path";
 
-// Simplified Vite config without React plugins (works around local
-// plugin resolution issues on this machine).
 export default () => ({
+  base: "/",
   server: {
     host: "::",
     port: 8080,
+    strictPort: false,
   },
   resolve: {
     alias: {

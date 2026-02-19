@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { isDeveloper } from '@/lib/developer-access';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
@@ -55,14 +56,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, mode = 'deskto
   ];
 
   const getMenuItems = () => {
-    if (user?.role === 'developer') return devMenuItems;
+    if (isDeveloper(user)) return devMenuItems;
     const userPermissions = user?.permissions || [];
     if (userPermissions.includes('*')) return allMenuItems;
     return allMenuItems.filter(item => userPermissions.includes(item.id!));
   };
 
   const menuItems = getMenuItems();
-  const isDev = user?.role === 'developer';
+  const isDev = isDeveloper(user);
   const isMobile = mode === 'mobile';
 
   const languageLabels: Record<string, string> = {
