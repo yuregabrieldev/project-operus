@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from '@/hooks/use-toast';
 import {
     Users, UserPlus, Search, Eye, Power, Trash2, AlertTriangle,
-    Shield, Clock, Mail, Building2, Store, UserCheck, Copy, KeyRound
+    Shield, Clock, Mail, Building2, Store, UserCheck, Copy, KeyRound, Pencil
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { authService } from '@/lib/supabase-services';
@@ -38,12 +38,16 @@ const DevUsers: React.FC = () => {
     const [roleFilter, setRoleFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
     const [showDetail, setShowDetail] = useState(false);
+    const [showEdit, setShowEdit] = useState(false);
     const [showDelete, setShowDelete] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
     const [selectedUser, setSelectedUser] = useState<DemoUser | null>(null);
+    const [editUser, setEditUser] = useState<{ name: string; email: string; brand: string; role: UserRole; status: UserStatus } | null>(null);
+    const [savingEdit, setSavingEdit] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', email: '', brand: '', store: '', role: 'assistant' as UserRole });
     const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
     const [brands, setBrands] = useState<string[]>([]);
+    const [brandIdMap, setBrandIdMap] = useState<Record<string, string>>({});
     const [brandStores, setBrandStores] = useState<Record<string, string[]>>({});
     const [loading, setLoading] = useState(true);
     const [interessados, setInteressados] = useState<{ id: string; name: string; email: string; phone: string; brand_name: string; stores_range: string; created_at: string; status?: string; temp_password?: string | null }[]>([]);
@@ -67,8 +71,19 @@ const DevUsers: React.FC = () => {
     useEffect(() => {
         (async () => {
             try {
-                const [profilesRes, userBrandsRes, brandsRes, storesRes, requestsRes] = await Promise.all([
-                    supabase.from('profiles').select('id, name, email, role, is_active, created_at').neq('role', 'developer'),
+                // Try RPC function first (bypasses RLS), fall back to direct query
+                const rpcProfiles = await supabase.rpc('get_all_profiles_for_developer');
+                let profilesFallback = false;
+                let profilesRes: any;
+
+                if (!rpcProfiles.error && rpcProfiles.data && rpcProfiles.data.length > 0) {
+                    profilesRes = rpcProfiles;
+                } else {
+                    profilesFallback = true;
+                    profilesRes = await supabase.from('profiles').select('id, name, email, role, is_active, created_at');
+                }
+
+                const [userBrandsRes, brandsRes, storesRes, requestsRes] = await Promise.all([
                     supabase.from('user_brands').select('user_id, brand_id, role'),
                     supabase.from('brands').select('id, name').order('name'),
                     supabase.from('stores').select('id, name, brand_id').order('name'),
@@ -77,7 +92,10 @@ const DevUsers: React.FC = () => {
                 if (profilesRes.error) {
                     console.error('DevUsers profiles:', profilesRes.error.message);
                 }
-                const profiles = profilesRes.data ?? [];
+                if (profilesFallback) {
+                    console.warn('DevUsers: RPC get_all_profiles_for_developer failed or returned empty, using direct query. Run migration-developer-list-users.sql to fix.');
+                }
+                const profiles = (profilesRes.data ?? []).filter((p: any) => p.role !== 'developer');
                 const userBrands = userBrandsRes.data ?? [];
                 const brandsList = brandsRes.data ?? [];
                 const storesList = storesRes.data ?? [];
@@ -89,6 +107,9 @@ const DevUsers: React.FC = () => {
                     storesByBrand.set(s.brand_id, list);
                 }
                 setBrands(brandsList.map((b: any) => b.name));
+                const idMap: Record<string, string> = {};
+                brandsList.forEach((b: any) => { idMap[b.name] = b.id; });
+                setBrandIdMap(idMap);
                 const brandStoresFlat: Record<string, string[]> = {};
                 brandsList.forEach((b: any) => { brandStoresFlat[b.name] = storesByBrand.get(b.id) ?? []; });
                 setBrandStores(brandStoresFlat);
@@ -131,7 +152,10 @@ const DevUsers: React.FC = () => {
                     }
                 }
                 const reqs = allReqs.filter((r: any) => (r.status ?? 'pendente') !== 'aprovado');
-                setInteressados(reqs.map((r: any) => ({
+                // Auto-remove interessados whose email already exists in the profiles (users) list
+                const profileEmails = new Set(profiles.map((p: any) => (p.email || '').toLowerCase()));
+                const uniqueReqs = reqs.filter((r: any) => !profileEmails.has((r.email || '').toLowerCase()));
+                setInteressados(uniqueReqs.map((r: any) => ({
                     id: r.id,
                     name: r.name || '',
                     email: r.email || '',
@@ -184,6 +208,52 @@ const DevUsers: React.FC = () => {
         toast({ title: 'Usuário criado!', description: `${newUser.name} adicionado com sucesso` });
         setShowCreate(false);
         setNewUser({ name: '', email: '', brand: '', store: '', role: 'assistant' });
+    };
+
+    const handleOpenEdit = (user: DemoUser) => {
+        setSelectedUser(user);
+        setEditUser({ name: user.name, email: user.email, brand: user.brand, role: user.role, status: user.status });
+        setShowEdit(true);
+    };
+
+    const handleSaveUser = async () => {
+        if (!selectedUser || !editUser) return;
+        setSavingEdit(true);
+        try {
+            // Update profiles
+            const isActive = editUser.status !== 'inactive';
+            const { error: profileError } = await supabase.from('profiles').update({
+                name: editUser.name,
+                email: editUser.email,
+                role: editUser.role,
+                is_active: isActive,
+            }).eq('id', selectedUser.id);
+            if (profileError) throw profileError;
+
+            // Update brand association
+            const newBrandId = brandIdMap[editUser.brand];
+            if (newBrandId) {
+                // Remove old associations and add new one
+                await supabase.from('user_brands').delete().eq('user_id', selectedUser.id);
+                await supabase.from('user_brands').insert({ user_id: selectedUser.id, brand_id: newBrandId, role: editUser.role });
+            }
+
+            // Update local state
+            setDemoUsers(prev => prev.map(u => u.id === selectedUser.id ? {
+                ...u,
+                name: editUser.name,
+                email: editUser.email,
+                brand: editUser.brand,
+                role: editUser.role,
+                status: editUser.status,
+            } : u));
+            setShowEdit(false);
+            toast({ title: 'Usuário atualizado!', description: `${editUser.name} foi salvo com sucesso.` });
+        } catch (e: any) {
+            toast({ title: 'Erro ao salvar', description: e?.message || 'Erro de rede.', variant: 'destructive' });
+        } finally {
+            setSavingEdit(false);
+        }
     };
 
     const handleApproveInteressado = async (req: typeof interessados[0]) => {
@@ -318,32 +388,33 @@ const DevUsers: React.FC = () => {
                                                 )}
                                             </td>
                                             <td className="p-3 text-center">
-                                                {req.status === 'conta_criada' ? (
-                                                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                                                <div className="flex items-center justify-center gap-2 flex-wrap">
+                                                    {req.status !== 'conta_criada' && (
+                                                        <Button
+                                                            size="sm"
+                                                            className="gap-1.5"
+                                                            disabled={approvingId === req.id}
+                                                            onClick={() => handleApproveInteressado(req)}
+                                                        >
+                                                            {approvingId === req.id ? (
+                                                                <>A aprovar...</>
+                                                            ) : (
+                                                                <>
+                                                                    <UserCheck className="h-3.5 w-3.5" />
+                                                                    Aprovar
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    )}
+                                                    {req.temp_password && (
                                                         <Button size="sm" variant="outline" className="gap-1" onClick={() => handleVerSenha(req)}>
                                                             <KeyRound className="h-3.5 w-3.5" /> Ver senha
                                                         </Button>
-                                                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleExcluirInteressado(req)}>
-                                                            <Trash2 className="h-3.5 w-3.5" /> Excluir
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <Button
-                                                        size="sm"
-                                                        className="gap-1.5"
-                                                        disabled={approvingId === req.id}
-                                                        onClick={() => handleApproveInteressado(req)}
-                                                    >
-                                                        {approvingId === req.id ? (
-                                                            <>A aprovar...</>
-                                                        ) : (
-                                                            <>
-                                                                <UserCheck className="h-3.5 w-3.5" />
-                                                                Aprovar e copiar senha
-                                                            </>
-                                                        )}
+                                                    )}
+                                                    <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleExcluirInteressado(req)}>
+                                                        <Trash2 className="h-3.5 w-3.5" /> Excluir
                                                     </Button>
-                                                )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -355,112 +426,124 @@ const DevUsers: React.FC = () => {
             )}
 
             {activeTab === 'usuarios' && (
-            <>
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="shadow border-0 bg-gradient-to-br from-emerald-50 to-green-50">
-                    <CardContent className="p-4">
-                        <p className="text-xs font-semibold text-emerald-600 uppercase">Ativos</p>
-                        <p className="text-2xl font-bold mt-1">{stats.active}</p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow border-0 bg-gradient-to-br from-amber-50 to-orange-50">
-                    <CardContent className="p-4">
-                        <p className="text-xs font-semibold text-amber-600 uppercase">Pendentes</p>
-                        <p className="text-2xl font-bold mt-1">{stats.pending}</p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow border-0 bg-gradient-to-br from-gray-50 to-slate-100">
-                    <CardContent className="p-4">
-                        <p className="text-xs font-semibold text-gray-600 uppercase">Inativos</p>
-                        <p className="text-2xl font-bold mt-1">{stats.inactive}</p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow border-0 bg-gradient-to-br from-purple-50 to-violet-50">
-                    <CardContent className="p-4">
-                        <p className="text-xs font-semibold text-purple-600 uppercase">Administradores</p>
-                        <p className="text-2xl font-bold mt-1">{stats.admins}</p>
-                    </CardContent>
-                </Card>
-            </div>
+                <>
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Card className="shadow border-0 bg-gradient-to-br from-emerald-50 to-green-50">
+                            <CardContent className="p-4">
+                                <p className="text-xs font-semibold text-emerald-600 uppercase">Ativos</p>
+                                <p className="text-2xl font-bold mt-1">{stats.active}</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow border-0 bg-gradient-to-br from-amber-50 to-orange-50">
+                            <CardContent className="p-4">
+                                <p className="text-xs font-semibold text-amber-600 uppercase">Pendentes</p>
+                                <p className="text-2xl font-bold mt-1">{stats.pending}</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow border-0 bg-gradient-to-br from-gray-50 to-slate-100">
+                            <CardContent className="p-4">
+                                <p className="text-xs font-semibold text-gray-600 uppercase">Inativos</p>
+                                <p className="text-2xl font-bold mt-1">{stats.inactive}</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow border-0 bg-gradient-to-br from-purple-50 to-violet-50">
+                            <CardContent className="p-4">
+                                <p className="text-xs font-semibold text-purple-600 uppercase">Administradores</p>
+                                <p className="text-2xl font-bold mt-1">{stats.admins}</p>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-end">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input placeholder="Pesquisar nome ou email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
-                </div>
-                <Select value={brandFilter} onValueChange={setBrandFilter}>
-                    <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todas Marcas</SelectItem>
-                        {brands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos Tipos</SelectItem>
-                        <SelectItem value="admin">Administrador</SelectItem>
-                        <SelectItem value="manager">Gerente</SelectItem>
-                        <SelectItem value="assistant">Assistente</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos Status</SelectItem>
-                        <SelectItem value="active">Ativo</SelectItem>
-                        <SelectItem value="pending">Pendente</SelectItem>
-                        <SelectItem value="inactive">Inativo</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+                    {/* Filters */}
+                    <div className="flex flex-wrap gap-3 items-end">
+                        <div className="relative flex-1 min-w-[200px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input placeholder="Pesquisar nome ou email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+                        </div>
+                        <Select value={brandFilter} onValueChange={setBrandFilter}>
+                            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas Marcas</SelectItem>
+                                {brands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select value={roleFilter} onValueChange={setRoleFilter}>
+                            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos Tipos</SelectItem>
+                                <SelectItem value="admin">Administrador</SelectItem>
+                                <SelectItem value="manager">Gerente</SelectItem>
+                                <SelectItem value="assistant">Assistente</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos Status</SelectItem>
+                                <SelectItem value="active">Ativo</SelectItem>
+                                <SelectItem value="pending">Pendente</SelectItem>
+                                <SelectItem value="inactive">Inativo</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-            {/* Users Table */}
-            <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-                <CardContent className="p-0">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b bg-gray-50/80">
-                                <th className="text-left p-3 font-semibold text-gray-600">Nome</th>
-                                <th className="text-left p-3 font-semibold text-gray-600">Email</th>
-                                <th className="text-left p-3 font-semibold text-gray-600">Marca</th>
-                                <th className="text-left p-3 font-semibold text-gray-600">Loja</th>
-                                <th className="text-center p-3 font-semibold text-gray-600">Status</th>
-                                <th className="text-center p-3 font-semibold text-gray-600">Tipo</th>
-                                <th className="text-center p-3 font-semibold text-gray-600">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map(user => (
-                                <tr key={user.id} className="border-b hover:bg-gray-50/50">
-                                    <td className="p-3 font-medium">{user.name}</td>
-                                    <td className="p-3 text-gray-500 text-xs">{user.email}</td>
-                                    <td className="p-3">{user.brand}</td>
-                                    <td className="p-3 text-gray-500 text-xs">{user.stores.join(', ')}</td>
-                                    <td className="p-3 text-center">{statusBadge(user.status)}</td>
-                                    <td className="p-3 text-center">{roleBadge(user.role)}</td>
-                                    <td className="p-3 text-center">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Visualizar" onClick={() => { setSelectedUser(user); setShowDetail(true); }}>
-                                                <Eye className="h-3.5 w-3.5" />
-                                            </Button>
-                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title={user.status === 'active' ? 'Desativar' : 'Ativar'}>
-                                                <Power className={`h-3.5 w-3.5 ${user.status === 'active' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                                            </Button>
-                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Excluir" onClick={() => { setSelectedUser(user); setShowDelete(true); }}>
-                                                <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                                            </Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </CardContent>
-            </Card>
-            </>
+                    {/* Users Table */}
+                    <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+                        <CardContent className="p-0">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b bg-gray-50/80">
+                                        <th className="text-left p-3 font-semibold text-gray-600">Nome</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Email</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Marca</th>
+                                        <th className="text-left p-3 font-semibold text-gray-600">Loja</th>
+                                        <th className="text-center p-3 font-semibold text-gray-600">Status</th>
+                                        <th className="text-center p-3 font-semibold text-gray-600">Tipo</th>
+                                        <th className="text-center p-3 font-semibold text-gray-600">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filtered.map(user => (
+                                        <tr key={user.id} className="border-b hover:bg-gray-50/50">
+                                            <td className="p-3 font-medium">{user.name}</td>
+                                            <td className="p-3 text-gray-500 text-xs">{user.email}</td>
+                                            <td className="p-3">{user.brand}</td>
+                                            <td className="p-3 text-gray-500 text-xs">{user.stores.join(', ')}</td>
+                                            <td className="p-3 text-center">{statusBadge(user.status)}</td>
+                                            <td className="p-3 text-center">{roleBadge(user.role)}</td>
+                                            <td className="p-3 text-center">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Visualizar" onClick={() => { setSelectedUser(user); setShowDetail(true); }}>
+                                                        <Eye className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Editar" onClick={() => handleOpenEdit(user)}>
+                                                        <Pencil className="h-3.5 w-3.5 text-blue-600" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title={user.status === 'active' ? 'Desativar' : 'Ativar'}>
+                                                        <Power className={`h-3.5 w-3.5 ${user.status === 'active' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Excluir" onClick={() => { setSelectedUser(user); setShowDelete(true); }}>
+                                                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {!loading && filtered.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                                                {demoUsers.length === 0
+                                                    ? 'Nenhum usuário encontrado. Verifica se a migração migration-developer-list-users.sql foi executada no Supabase.'
+                                                    : 'Nenhum resultado com os filtros atuais.'}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
+                </>
             )}
 
             {/* User Detail Dialog */}
@@ -527,6 +610,82 @@ const DevUsers: React.FC = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowDelete(false)}>Cancelar</Button>
                         <Button variant="destructive" onClick={() => { setShowDelete(false); toast({ title: 'Usuário excluído!' }); }}>Excluir</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit User Dialog */}
+            <Dialog open={showEdit} onOpenChange={setShowEdit}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="h-5 w-5 text-blue-600" /> Editar Usuário
+                        </DialogTitle>
+                        <DialogDescription>
+                            Altere os dados do usuário e clique em Salvar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {editUser && (
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <Label className="text-xs font-semibold">Nome</Label>
+                                <Input value={editUser.name} onChange={e => setEditUser(p => p ? { ...p, name: e.target.value } : p)} placeholder="Nome completo" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-semibold">Email</Label>
+                                <Input type="email" value={editUser.email} onChange={e => setEditUser(p => p ? { ...p, email: e.target.value } : p)} placeholder="email@exemplo.com" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <Label className="text-xs font-semibold">Marca</Label>
+                                    <Select value={editUser.brand} onValueChange={v => setEditUser(p => p ? { ...p, brand: v } : p)}>
+                                        <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                                        <SelectContent>
+                                            {brands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs font-semibold">Tipo de Usuário</Label>
+                                    <Select value={editUser.role} onValueChange={v => setEditUser(p => p ? { ...p, role: v as UserRole } : p)}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="admin">Administrador</SelectItem>
+                                            <SelectItem value="manager">Gerente</SelectItem>
+                                            <SelectItem value="assistant">Assistente</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <Label className="text-xs font-semibold">Loja</Label>
+                                    <Select disabled={!editUser.brand}>
+                                        <SelectTrigger><SelectValue placeholder={editUser.brand ? 'Selecionar loja' : 'Selecione a marca'} /></SelectTrigger>
+                                        <SelectContent>
+                                            {(brandStores[editUser.brand] || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs font-semibold">Status</Label>
+                                    <Select value={editUser.status} onValueChange={v => setEditUser(p => p ? { ...p, status: v as UserStatus } : p)}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="active">Ativo</SelectItem>
+                                            <SelectItem value="pending">Pendente</SelectItem>
+                                            <SelectItem value="inactive">Inativo</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowEdit(false)}>Cancelar</Button>
+                        <Button onClick={handleSaveUser} disabled={savingEdit} className="gap-2">
+                            {savingEdit ? 'Salvando...' : <><Pencil className="h-4 w-4" /> Salvar</>}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -175,9 +175,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   }, [user?.id, fetchNotifications]);
 
   const handleOpenNotifications = () => {
-    const next = !showNotifications;
-    setShowNotifications(next);
-    if (next && user && isDeveloper(user)) fetchNotifications();
+    setShowNotifications(prev => !prev);
   }
 
   const handleMarkAllNotificationsRead = async () => {
@@ -187,13 +185,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
     } catch (_) {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     }
-    setShowNotifications(false);
   };
 
   const handleNotificationClick = async (notif: { id: string; text: string; time: string; read: boolean }) => {
     try {
       await supabase.rpc('mark_notification_read', { p_request_id: notif.id });
-    } catch (_) {}
+    } catch (_) { }
     setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
     setShowNotifications(false);
     if (user && isDeveloper(user)) {
