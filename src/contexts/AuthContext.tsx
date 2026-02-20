@@ -17,7 +17,7 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
@@ -116,18 +116,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     try {
-      const { error } = await authService.signIn(email, password);
+      const normalizedEmail = email.trim().toLowerCase();
+      const { error } = await authService.signIn(normalizedEmail, password);
       if (error) {
         setLoading(false);
-        return false;
+        return { success: false, error: error.message };
       }
-      return true;
-    } catch {
+      return { success: true };
+    } catch (err: any) {
       setLoading(false);
-      return false;
+      return { success: false, error: err?.message || 'Unknown login error' };
     }
   };
 

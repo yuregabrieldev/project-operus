@@ -68,9 +68,9 @@ const LandingPage: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(loginForm.email, loginForm.password);
+    const result = await login(loginForm.email, loginForm.password);
 
-    if (success) {
+    if (result.success) {
       toast({
         title: t('landing.loginSuccessTitle'),
         description: t('landing.loginSuccessDesc'),
@@ -79,7 +79,7 @@ const LandingPage: React.FC = () => {
     } else {
       toast({
         title: t('landing.loginErrorTitle'),
-        description: t('landing.loginErrorDesc'),
+        description: result.error || t('landing.loginErrorDesc'),
         variant: "destructive",
       });
     }

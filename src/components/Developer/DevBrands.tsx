@@ -253,7 +253,7 @@ const DevBrands: React.FC = () => {
     };
 
     const handleCreateBrand = async () => {
-        if (!newBrandName || !selectedAdmin) return;
+        if (!newBrandName) return;
         try {
             const { data: created, error } = await supabase.from('brands').insert({
                 name: newBrandName,
@@ -261,25 +261,35 @@ const DevBrands: React.FC = () => {
                 primary_color: '#6366f1',
             }).select().single();
             if (error) throw error;
-            // Link admin user to brand
-            await supabase.from('user_brands').insert({
-                user_id: selectedAdmin.id,
-                brand_id: created.id,
-                role: 'admin',
-                is_primary: true,
-            });
+            // Link admin user to brand only when one is selected.
+            if (selectedAdmin) {
+                const { error: linkError } = await supabase.from('user_brands').insert({
+                    user_id: selectedAdmin.id,
+                    brand_id: created.id,
+                    role: 'admin',
+                    is_primary: true,
+                });
+                if (linkError) {
+                    throw linkError;
+                }
+            }
             setDemoBrands(prev => [...prev, {
                 id: created.id,
                 name: created.name,
                 storesCount: 0,
-                responsible: selectedAdmin.name,
+                responsible: selectedAdmin?.name || '-',
                 monthlyRevenue: 0,
                 totalRevenue: 0,
                 status: 'active' as BrandStatus,
                 stores: [],
                 imageUrl: newBrandImage || undefined,
             }]);
-            toast({ title: 'Marca criada com sucesso!' });
+            toast({
+                title: 'Marca criada com sucesso!',
+                description: selectedAdmin
+                    ? `Marca criada e vinculada ao administrador ${selectedAdmin.name}.`
+                    : 'Marca criada sem administrador vinculado.',
+            });
             resetCreateBrand();
         } catch (e: any) {
             toast({ title: 'Erro ao criar marca', description: e?.message || 'Tente novamente.', variant: 'destructive' });
@@ -860,8 +870,8 @@ const DevBrands: React.FC = () => {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>Administrador da Marca *</Label>
-                            <p className="text-xs text-gray-500">Busque e selecione um utilizador existente no sistema</p>
+                            <Label>Administrador da Marca (opcional)</Label>
+                            <p className="text-xs text-gray-500">Se quiser, selecione um utilizador para já ficar vinculado como admin da marca.</p>
                             {selectedAdmin ? (
                                 <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                                     <div className="h-8 w-8 rounded-full bg-emerald-200 flex items-center justify-center text-sm font-bold text-emerald-700">
@@ -906,7 +916,7 @@ const DevBrands: React.FC = () => {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={resetCreateBrand}>Cancelar</Button>
-                        <Button disabled={!newBrandName || !selectedAdmin} onClick={handleCreateBrand} className="gap-2">
+                        <Button disabled={!newBrandName} onClick={handleCreateBrand} className="gap-2">
                             <Plus className="h-4 w-4" /> Criar Marca
                         </Button>
                     </DialogFooter>

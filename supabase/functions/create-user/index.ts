@@ -43,7 +43,7 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
-    // Check caller role — admin or developer only
+    // Check caller role — admin, manager, or developer
     const { data: callerProfile, error: profileError } = await adminClient
       .from('profiles')
       .select('role')
@@ -55,13 +55,20 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: `Could not verify permissions: ${profileError.message}` }, 403);
     }
 
-    if (!callerProfile || !['admin', 'developer'].includes(callerProfile.role)) {
+    if (!callerProfile || !['admin', 'manager', 'developer'].includes(callerProfile.role)) {
       console.error('[create-user] Insufficient role:', callerProfile?.role);
       return jsonResponse({ error: `Forbidden: your role (${callerProfile?.role ?? 'unknown'}) cannot create users` }, 403);
     }
 
     const body = await req.json();
     const { email, password, name, role, brandId, storeIds } = body;
+
+    const allowedTargetRoles = ['assistant', 'manager', 'admin'] as const;
+    if (!allowedTargetRoles.includes(role)) {
+      console.error('[create-user] Invalid target role:', role);
+      return jsonResponse({ error: `Invalid role: ${role}` }, 400);
+    }
+    const targetRole = role as (typeof allowedTargetRoles)[number];
 
     if (!email || !password || !name || !role || !brandId) {
       const missing = ['email', 'password', 'name', 'role', 'brandId'].filter(f => !body[f]);
@@ -74,7 +81,7 @@ Deno.serve(async (req: Request) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name, role },
+      user_metadata: { name, role: targetRole },
     });
 
     if (createError) {
@@ -90,7 +97,7 @@ Deno.serve(async (req: Request) => {
       id: userId,
       email,
       name,
-      role,
+      role: targetRole,
       is_active: true,
       needs_password_change: true,
       updated_at: new Date().toISOString(),
@@ -102,7 +109,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // user_brands.role uses 'operator' instead of 'assistant'
-    const brandRole = role === 'assistant' ? 'operator' : role;
+    const brandRole = targetRole === 'assistant' ? 'operator' : targetRole;
 
     // Try inserting with store_ids (requires migration-add-store-ids-to-user-brands.sql)
     const insertPayload: Record<string, unknown> = {

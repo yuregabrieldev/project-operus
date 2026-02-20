@@ -14,7 +14,7 @@ import {
     Shield, Clock, Mail, Building2, Store, UserCheck, Copy, KeyRound, Pencil
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { authService } from '@/lib/supabase-services';
+
 
 type UserStatus = 'active' | 'pending' | 'inactive';
 type UserRole = 'admin' | 'manager' | 'assistant';
@@ -69,6 +69,8 @@ const DevUsers: React.FC = () => {
         for (let i = 0; i < 12; i++) s += chars[Math.floor(Math.random() * chars.length)];
         return s;
     };
+
+
 
     useEffect(() => {
         (async () => {
@@ -216,10 +218,64 @@ const DevUsers: React.FC = () => {
         return <Badge variant="outline" className={s[role]}>{l[role]}</Badge>;
     };
 
-    const handleCreate = () => {
-        toast({ title: 'Usuário criado!', description: `${newUser.name} adicionado com sucesso` });
-        setShowCreate(false);
-        setNewUser({ name: '', email: '', brand: '', store: '', role: 'assistant' });
+    const handleCreate = async () => {
+        const name = newUser.name.trim();
+        const email = newUser.email.trim().toLowerCase();
+        const brandId = brandIdMap[newUser.brand];
+        const storeId = newUser.store ? storeIdMap[newUser.store] : undefined;
+
+        if (!name || !email || !brandId) {
+            toast({
+                title: 'Dados obrigatórios',
+                description: 'Preencha nome, email e marca para criar o usuário.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        setSavingEdit(true);
+        try {
+            const password = randomPassword();
+            const { data, error } = await supabase.rpc('create_user_for_developer', {
+                p_email: email,
+                p_password: password,
+                p_name: name,
+                p_role: newUser.role,
+                p_brand_id: brandId,
+                p_store_ids: storeId ? [storeId] : [],
+            });
+
+            if (error) throw new Error(error.message);
+            if (data?.error) throw new Error(data.error);
+
+            setDemoUsers(prev => [
+                {
+                    id: data?.userId || crypto.randomUUID(),
+                    name,
+                    email,
+                    brand: newUser.brand,
+                    stores: newUser.store ? [newUser.store] : [],
+                    status: 'active',
+                    role: newUser.role,
+                    createdAt: new Date().toISOString().slice(0, 10),
+                    lastLogin: '-',
+                },
+                ...prev,
+            ]);
+
+            setPasswordDialog({ open: true, name, email, password });
+            setShowCreate(false);
+            setNewUser({ name: '', email: '', brand: '', store: '', role: 'assistant' });
+            toast({ title: 'Usuário criado!', description: `${name} foi criado com sucesso.` });
+        } catch (e: any) {
+            toast({
+                title: 'Erro ao criar usuário',
+                description: e?.message || 'Tente novamente.',
+                variant: 'destructive',
+            });
+        } finally {
+            setSavingEdit(false);
+        }
     };
 
     const handleOpenEdit = (user: DemoUser) => {
@@ -236,8 +292,7 @@ const DevUsers: React.FC = () => {
             const newBrandId = brandIdMap[editUser.brand] || null;
             const newStoreId = storeIdMap[editUser.store] || null;
 
-            // Use RPC function (SECURITY DEFINER — bypasses RLS)
-            const { error } = await supabase.rpc('update_user_for_developer', {
+            const { data, error } = await supabase.rpc('update_user_for_developer', {
                 p_user_id: selectedUser.id,
                 p_name: editUser.name,
                 p_email: editUser.email,
@@ -246,7 +301,9 @@ const DevUsers: React.FC = () => {
                 p_brand_id: newBrandId,
                 p_store_id: newStoreId,
             });
-            if (error) throw error;
+
+            if (error) throw new Error(error.message);
+            if (data?.error) throw new Error(data.error);
 
             // Update local state
             setDemoUsers(prev => prev.map(u => u.id === selectedUser.id ? {
@@ -285,14 +342,22 @@ const DevUsers: React.FC = () => {
         }
         setApprovingId(req.id);
         try {
-            // Usar RPC do banco para criar usuário SEM afetar a sessão atual
+            const requestedBrandId = brandIdMap[req.brand_name];
+            const fallbackBrandId = Object.values(brandIdMap)[0];
+            const brandId = requestedBrandId || fallbackBrandId;
+            if (!brandId) {
+                throw new Error('Nenhuma marca disponível para vincular o usuário. Crie uma marca primeiro.');
+            }
+
             const { data, error } = await supabase.rpc('create_user_for_developer', {
-                p_email: req.email,
+                p_email: req.email.trim().toLowerCase(),
                 p_password: password,
-                p_name: req.name,
+                p_name: req.name.trim(),
                 p_role: 'assistant',
+                p_brand_id: brandId,
+                p_store_ids: [],
             });
-            if (error) throw error;
+            if (error) throw new Error(error.message);
             if (data?.error) throw new Error(data.error);
 
             try {
@@ -869,8 +934,8 @@ const DevUsers: React.FC = () => {
                         <Button variant="outline" onClick={() => setApproveDialog({ open: false, req: null, password: '' })}>
                             Cancelar
                         </Button>
-                        <Button 
-                            onClick={handleApproveInteressado} 
+                        <Button
+                            onClick={handleApproveInteressado}
                             disabled={approvingId !== null || approveDialog.password.trim().length < 6}
                             className="gap-2"
                         >

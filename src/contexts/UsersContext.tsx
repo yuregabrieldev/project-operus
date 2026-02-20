@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useBrand } from './BrandContext';
 import { usersService } from '@/lib/supabase-services';
 import { supabase } from '@/lib/supabase';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 
 interface Store {
   id: number;
@@ -101,8 +102,27 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addUser = async (userData: CreateUserData): Promise<void> => {
     if (!selectedBrand?.id) throw new Error('No brand selected');
+    const { data: sessionData } = await supabase.auth.getSession();
+    let accessToken = sessionData.session?.access_token?.trim();
+    if (accessToken) {
+      const { error: userError } = await supabase.auth.getUser(accessToken);
+      if (userError) accessToken = undefined;
+    }
+    if (!accessToken) {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        throw new Error(`Sessão inválida: ${refreshError.message}`);
+      }
+      accessToken = refreshData.session?.access_token?.trim();
+    }
+    if (!accessToken) {
+      throw new Error('Sessão expirada. Faça login novamente e tente criar o usuário.');
+    }
 
     const { data: fnData, error: fnError } = await supabase.functions.invoke('create-user', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
       body: {
         email: userData.email,
         password: userData.password,
@@ -114,11 +134,29 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
 
     if (fnError) {
-      let message = fnError.message;
-      try {
-        const body = await (fnError as any).context?.json?.();
-        if (body?.error) message = body.error;
-      } catch { /* ignore parse errors */ }
+      let message = fnError.message || 'Erro ao criar usuário';
+      if (fnError instanceof FunctionsHttpError) {
+        try {
+          const rawBody = await fnError.context.text();
+          if (rawBody) {
+            try {
+              const parsed = JSON.parse(rawBody);
+              if (parsed?.error) {
+                message = parsed.error;
+              } else if (typeof parsed?.message === 'string') {
+                message = parsed.message;
+              } else {
+                message = rawBody;
+              }
+            } catch {
+              // Plain text response from function
+              message = rawBody;
+            }
+          }
+        } catch {
+          // fallback to original message
+        }
+      }
       throw new Error(message);
     }
     if (fnData?.error) throw new Error(fnData.error);

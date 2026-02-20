@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-$projectRef = "lbwfcgjwhswresrhiehm"
+$projectRef = "yijfkgfrhloupiwagelb"
 
 Write-Host "1. A ligar o projeto ao Supabase..." -ForegroundColor Cyan
 npx supabase link --project-ref $projectRef

@@ -15,15 +15,18 @@ import {
   ChevronDown, ChevronUp, CreditCard, X, FileSpreadsheet
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { supabase } from '@/lib/supabase';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBrand } from '@/contexts/BrandContext';
 import { toast } from '@/hooks/use-toast';
 
 const SettingsManager: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
   const { user } = useAuth();
-  const { stores, categories, suppliers, addSupplier, deleteSupplier, addCategory, deleteCategory, products, addProduct } = useData();
+  const { selectedBrand } = useBrand();
+  const { stores, categories, suppliers, addSupplier, deleteSupplier, addCategory, deleteCategory, products, addProduct, reloadData } = useData();
 
   const [activeTab, setActiveTab] = useState('general');
 
@@ -68,6 +71,11 @@ const SettingsManager: React.FC = () => {
   const [showImportPreview, setShowImportPreview] = useState(false);
   const [importMapping, setImportMapping] = useState<Record<string, string>>({});
   const importFileRef = useRef<HTMLInputElement>(null);
+  const backupImportFileRef = useRef<HTMLInputElement>(null);
+  const [isExportingBackup, setIsExportingBackup] = useState(false);
+  const [isImportingBackup, setIsImportingBackup] = useState(false);
+  const [backupImportFileName, setBackupImportFileName] = useState('');
+  const [backupImportReport, setBackupImportReport] = useState<Record<string, { created: number; updated: number; skipped: number; errors: string[] }> | null>(null);
 
   // Subscription state
   const [expandedSubscription, setExpandedSubscription] = useState<string | null>(null);
@@ -578,24 +586,111 @@ const SettingsManager: React.FC = () => {
   );
 
   // ─── Backup Tab ───
-  const exportData = () => {
-    const data = {
-      stores,
-      categories,
-      suppliers,
-      exportDate: new Date().toISOString(),
-      version: '1.0.0'
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `operus-backup-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast({ title: t('settings.backup_created'), description: t('settings.backup_downloaded') });
+  const getAccessToken = async (): Promise<string> => {
+    const { data: currentSessionData } = await supabase.auth.getSession();
+    const currentToken = currentSessionData.session?.access_token?.trim();
+    if (currentToken) return currentToken;
+
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    const refreshedToken = refreshData.session?.access_token?.trim();
+    if (refreshError || !refreshedToken) {
+      throw new Error(refreshError?.message || 'Sessão expirada. Faça login novamente.');
+    }
+    return refreshedToken;
+  };
+
+  const exportData = async () => {
+    if (!selectedBrand?.id) {
+      toast({ title: 'Selecione uma marca para exportar.', variant: 'destructive' });
+      return;
+    }
+    setIsExportingBackup(true);
+    try {
+      const accessToken = await getAccessToken();
+      const { data, error } = await supabase.functions.invoke('export-brand-data', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: { brandId: selectedBrand.id },
+      });
+      if (error) {
+        let msg = error.message || 'Falha ao exportar backup';
+        try {
+          const raw = await (error as any)?.context?.text?.();
+          if (raw) msg = JSON.parse(raw)?.error || raw;
+        } catch {
+          // keep fallback message
+        }
+        throw new Error(msg);
+      }
+      if (!data?.backup) throw new Error('Resposta de exportação inválida.');
+
+      const blob = new Blob([JSON.stringify(data.backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `operus-backup-${selectedBrand.name.replace(/\s+/g, '_')}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({ title: t('settings.backup_created'), description: t('settings.backup_downloaded') });
+    } catch (err) {
+      toast({
+        title: 'Erro ao exportar backup',
+        description: err instanceof Error ? err.message : 'Falha inesperada no backup',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExportingBackup(false);
+    }
+  };
+
+  const handleImportBackupFile = async (file?: File) => {
+    if (!file) return;
+    if (!selectedBrand?.id) {
+      toast({ title: 'Selecione uma marca para importar.', variant: 'destructive' });
+      return;
+    }
+
+    setIsImportingBackup(true);
+    setBackupImportFileName(file.name);
+    setBackupImportReport(null);
+    try {
+      const raw = await file.text();
+      const backup = JSON.parse(raw);
+      const accessToken = await getAccessToken();
+      const { data, error } = await supabase.functions.invoke('import-brand-data', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: { brandId: selectedBrand.id, backup },
+      });
+      if (error) {
+        let msg = error.message || 'Falha ao importar backup';
+        try {
+          const rawError = await (error as any)?.context?.text?.();
+          if (rawError) msg = JSON.parse(rawError)?.error || rawError;
+        } catch {
+          // ignore parse
+        }
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+      if (!data?.report) throw new Error('Relatório de importação ausente.');
+
+      setBackupImportReport(data.report);
+      await reloadData();
+      toast({
+        title: 'Importação concluída',
+        description: `Backup ${file.name} importado com sucesso.`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Erro ao importar backup',
+        description: err instanceof Error ? err.message : 'Falha inesperada na importação',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsImportingBackup(false);
+    }
   };
 
   const renderBackupTab = () => (
@@ -610,11 +705,67 @@ const SettingsManager: React.FC = () => {
         <CardContent className="p-6 space-y-4">
           <p className="text-muted-foreground">{t('settings.export_description')}</p>
           <div className="flex gap-3">
-            <Button onClick={exportData}>
+            <Button onClick={exportData} disabled={isExportingBackup || !selectedBrand}>
               <Download className="h-4 w-4 mr-2" />
-              {t('settings.exportJSON')}
+              {isExportingBackup ? 'Exportando...' : t('settings.exportJSON')}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border bg-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5 text-primary" />
+            Importar Backup JSON
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <p className="text-muted-foreground">
+            Importe um arquivo de backup exportado pelo sistema para restaurar/atualizar dados da marca (modo upsert).
+          </p>
+          <div className="flex gap-3 flex-wrap">
+            <Button
+              variant="outline"
+              onClick={() => backupImportFileRef.current?.click()}
+              disabled={isImportingBackup || !selectedBrand}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {isImportingBackup ? 'Importando...' : 'Selecionar backup (.json)'}
+            </Button>
+            {backupImportFileName && (
+              <Badge variant="outline">{backupImportFileName}</Badge>
+            )}
+          </div>
+          <input
+            ref={backupImportFileRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              void handleImportBackupFile(file);
+              e.target.value = '';
+            }}
+          />
+          {backupImportReport && (
+            <div className="border rounded-lg p-4 space-y-2">
+              <h4 className="font-semibold text-sm">Relatório da importação</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                {Object.entries(backupImportReport).map(([table, tableReport]) => (
+                  <div key={table} className="rounded border p-2">
+                    <p className="font-medium">{table}</p>
+                    <p className="text-muted-foreground">
+                      criados: {tableReport.created} | atualizados: {tableReport.updated} | ignorados: {tableReport.skipped}
+                    </p>
+                    {tableReport.errors?.length > 0 && (
+                      <p className="text-destructive text-xs mt-1">erros: {tableReport.errors.length}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

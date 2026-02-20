@@ -268,6 +268,7 @@ interface DataContextType {
   wasteReasons: WasteReason[];
   wasteRecords: WasteRecord[];
   dataLoading: boolean;
+  reloadData: () => Promise<void>;
 
   addStore: (store: Omit<Store, 'id'>) => void;
   updateStore: (id: string, store: Partial<Store>) => void;
@@ -1014,7 +1015,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value: DataContextType = {
     stores, categories, suppliers, products, inventory, cashRegisters, invoices, checklists,
     movements, operationLogs, recipes, productionRecords, purchaseOrders, costCenters,
-    licenses, wasteVariants, wasteReasons, wasteRecords, dataLoading,
+    licenses, wasteVariants, wasteReasons, wasteRecords, dataLoading, reloadData: loadAllData,
     addStore, updateStore, deleteStore, addCategory, deleteCategory,
     addProduct, updateProduct, deleteProduct, addInventoryItem, updateInventoryItem,
     addCashRegister, updateCashRegister, addInvoice, updateInvoice,
