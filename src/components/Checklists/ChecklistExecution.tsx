@@ -31,6 +31,7 @@ interface ChecklistExecution {
 
 interface ChecklistResponse {
   itemId: string;
+  question?: string;
   response: boolean | null;
   comment?: string;
   imageUrl?: string;
@@ -132,6 +133,7 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
       currentItemIndex: 0,
       responses: template.items.map(item => ({
         itemId: item.id,
+        question: item.question,
         response: null,
         skipped: false
       }))
@@ -268,8 +270,12 @@ const ChecklistExecution: React.FC<ChecklistExecutionProps> = ({
       endTime: new Date()
     };
 
+    // Get store and user names for history
+    const storeName = stores.find(s => s.id === currentExecution.storeId)?.name || 'Loja desconhecida';
+    const userName = user?.name || user?.email || 'Usuário desconhecido';
+
     // Add to history and remove from executions
-    addToHistory(completedExecution);
+    addToHistory(completedExecution, storeName, userName);
     deleteExecution(completedExecution.id);
     setCurrentExecution(null);
 

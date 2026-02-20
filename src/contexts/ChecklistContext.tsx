@@ -44,6 +44,7 @@ export interface ChecklistExecution {
 
 export interface ChecklistResponse {
   itemId: string;
+  question?: string;
   response: boolean | null;
   comment?: string;
   imageUrl?: string;
@@ -78,7 +79,7 @@ interface ChecklistContextType {
   updateExecution: (id: string, updates: Partial<ChecklistExecution>) => void;
   deleteExecution: (id: string) => void;
   history: ChecklistHistory[];
-  addToHistory: (execution: ChecklistExecution) => void;
+  addToHistory: (execution: ChecklistExecution, storeName?: string, userName?: string) => void;
   getTemplateById: (id: string) => ChecklistTemplate | undefined;
   getExecutionById: (id: string) => ChecklistExecution | undefined;
   getPendingExecutions: () => ChecklistExecution[];
@@ -245,14 +246,14 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     })();
   };
 
-  const addToHistory = (execution: ChecklistExecution) => {
+  const addToHistory = (execution: ChecklistExecution, storeName?: string, userName?: string) => {
     if (execution.status !== 'completed' || !brandId) return;
     const historyItem: ChecklistHistory = {
       id: execution.id,
       templateName: execution.templateName,
       type: templates.find(t => t.id === execution.templateId)?.type || 'quality',
-      storeName: 'Loja',
-      userName: 'Usuário',
+      storeName: storeName || 'Loja desconhecida',
+      userName: userName || 'Usuário desconhecido',
       startTime: execution.startTime,
       endTime: execution.endTime || new Date(),
       duration: execution.endTime ? Math.round((execution.endTime.getTime() - execution.startTime.getTime()) / 60000) : 0,

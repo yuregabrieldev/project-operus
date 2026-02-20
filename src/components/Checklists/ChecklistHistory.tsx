@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
@@ -11,90 +11,16 @@ import { DateInput } from '@/components/ui/date-input';
 import { Eye, Download, Filter, Calendar, Clock, User, Store } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-
-interface ChecklistHistory {
-  id: string;
-  templateName: string;
-  type: 'opening' | 'closing' | 'quality';
-  storeName: string;
-  userName: string;
-  startTime: Date;
-  endTime: Date;
-  duration: number; // em minutos
-  totalItems: number;
-  completedItems: number;
-  responses: ChecklistResponse[];
-}
-
-interface ChecklistResponse {
-  question: string;
-  response: boolean | null;
-  comment?: string;
-  imageUrl?: string;
-  skipped: boolean;
-}
+import { useChecklist, ChecklistHistory as ChecklistHistoryType } from '@/contexts/ChecklistContext';
 
 const ChecklistHistory: React.FC = () => {
   const { stores } = useData();
   const { t } = useLanguage();
+  const { history } = useChecklist();
 
-  // Mock data - em produção viria da API
-  const [historyData] = useState<ChecklistHistory[]>([
-    {
-      id: '1',
-      templateName: 'Checklist Abertura',
-      type: 'opening',
-      storeName: 'Alvalade',
-      userName: 'João Silva',
-      startTime: new Date('2025-07-13T08:00:00'),
-      endTime: new Date('2025-07-13T08:15:00'),
-      duration: 15,
-      totalItems: 5,
-      completedItems: 5,
-      responses: [
-        {
-          question: 'Equipamentos ligados e funcionando?',
-          response: true,
-          comment: '',
-          skipped: false
-        },
-        {
-          question: 'Área de trabalho limpa?',
-          response: true,
-          comment: 'Tudo em ordem',
-          skipped: false
-        }
-      ]
-    },
-    {
-      id: '2',
-      templateName: 'Checklist Qualidade',
-      type: 'quality',
-      storeName: 'Rossio',
-      userName: 'Maria Santos',
-      startTime: new Date('2025-07-12T14:00:00'),
-      endTime: new Date('2025-07-12T14:30:00'),
-      duration: 30,
-      totalItems: 8,
-      completedItems: 7,
-      responses: []
-    },
-    {
-      id: '3',
-      templateName: 'Checklist Fechamento',
-      type: 'closing',
-      storeName: 'Alvalade',
-      userName: 'Carlos Lima',
-      startTime: new Date('2025-07-11T22:00:00'),
-      endTime: new Date('2025-07-11T22:20:00'),
-      duration: 20,
-      totalItems: 6,
-      completedItems: 6,
-      responses: []
-    }
-  ]);
+  const historyData = useMemo(() => history, [history]);
 
-  const [selectedHistory, setSelectedHistory] = useState<ChecklistHistory | null>(null);
+  const [selectedHistory, setSelectedHistory] = useState<ChecklistHistoryType | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [filters, setFilters] = useState({
     store: 'all',
@@ -179,8 +105,8 @@ const ChecklistHistory: React.FC = () => {
     return `${hours}h ${remainingMinutes}min`;
   };
 
-  const viewDetails = (history: ChecklistHistory) => {
-    setSelectedHistory(history);
+  const viewDetails = (historyItem: ChecklistHistoryType) => {
+    setSelectedHistory(historyItem);
     setIsDetailOpen(true);
   };
 
@@ -216,8 +142,9 @@ const ChecklistHistory: React.FC = () => {
     }
   };
 
-  const getCompletionRate = (history: ChecklistHistory) => {
-    return Math.round((history.completedItems / history.totalItems) * 100);
+  const getCompletionRate = (historyItem: ChecklistHistoryType) => {
+    if (historyItem.totalItems === 0) return 0;
+    return Math.round((historyItem.completedItems / historyItem.totalItems) * 100);
   };
 
   const getStats = () => {
@@ -466,7 +393,7 @@ const ChecklistHistory: React.FC = () => {
                       <CardContent className="p-4">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <h5 className="font-medium">{response.question}</h5>
+                            <h5 className="font-medium">{response.question || `${t('checklists.item')} ${index + 1}`}</h5>
                             <Badge variant={
                               response.skipped ? "secondary" :
                                 response.response === true ? "default" :

@@ -607,6 +607,7 @@
     "status": "Status",
     "lastEdit": "Last Edit",
     "actions": "Actions",
+    "item": "Item",
     "itemsCount": "items",
     "activeStatus": "Active",
     "inactiveStatus": "Inactive",

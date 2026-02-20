@@ -24,70 +24,19 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useChecklist, ChecklistTemplate as ContextChecklistTemplate } from '@/contexts/ChecklistContext';
 import { toast } from '@/hooks/use-toast';
 import ChecklistTemplateBuilder from './ChecklistTemplateBuilder';
-
-interface ChecklistTemplate {
-  id: string;
-  name: string;
-  description: string;
-  itemsCount: number;
-  associatedStores: string[];
-  frequency: 'daily' | 'weekly' | 'monthly' | 'custom';
-  isActive: boolean;
-  lastEditedAt: Date;
-  createdAt: Date;
-  usageCount: number;
-}
 
 const ChecklistAdminView: React.FC = () => {
   const { user } = useAuth();
   const { stores } = useData();
   const { t } = useLanguage();
-
-  // Mock data - replace with real data
-  const [templates, setTemplates] = useState<ChecklistTemplate[]>([
-    {
-      id: '1',
-      name: 'Verificação Mensal',
-      description: 'Checklist completo de verificação mensal das operações',
-      itemsCount: 5,
-      associatedStores: ['all'],
-      frequency: 'monthly',
-      isActive: true,
-      lastEditedAt: new Date(2024, 6, 10),
-      createdAt: new Date(2024, 5, 1),
-      usageCount: 12
-    },
-    {
-      id: '2',
-      name: 'Checklist Diário',
-      description: 'Verificações básicas diárias',
-      itemsCount: 3,
-      associatedStores: ['1', '2'],
-      frequency: 'daily',
-      isActive: true,
-      lastEditedAt: new Date(2024, 6, 5),
-      createdAt: new Date(2024, 5, 15),
-      usageCount: 45
-    },
-    {
-      id: '3',
-      name: 'Limpeza Semanal',
-      description: 'Protocolo de limpeza profunda semanal',
-      itemsCount: 8,
-      associatedStores: ['1'],
-      frequency: 'weekly',
-      isActive: false,
-      lastEditedAt: new Date(2024, 6, 1),
-      createdAt: new Date(2024, 4, 20),
-      usageCount: 8
-    }
-  ]);
+  const { templates, addTemplate, updateTemplate, deleteTemplate, toggleTemplateStatus } = useChecklist();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<ChecklistTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<ContextChecklistTemplate | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
 
@@ -104,21 +53,21 @@ const ChecklistAdminView: React.FC = () => {
     setIsBuilderOpen(true);
   };
 
-  const handleEdit = (template: ChecklistTemplate) => {
+  const handleEdit = (template: ContextChecklistTemplate) => {
     setSelectedTemplate(template);
     setIsBuilderOpen(true);
   };
 
-  const handleDuplicate = (template: ChecklistTemplate) => {
-    const duplicated = {
-      ...template,
-      id: Date.now().toString(),
+  const handleDuplicate = (template: ContextChecklistTemplate) => {
+    addTemplate({
       name: `${template.name} (${t('checklists.copy')})`,
-      createdAt: new Date(),
-      lastEditedAt: new Date(),
-      usageCount: 0
-    };
-    setTemplates(prev => [...prev, duplicated]);
+      description: template.description,
+      type: template.type,
+      items: template.items,
+      associatedStores: template.associatedStores,
+      frequency: template.frequency,
+      isActive: template.isActive
+    });
     toast({
       title: t('checklists.templateDuplicated'),
       description: t('checklists.templateDuplicatedDesc'),
@@ -132,7 +81,7 @@ const ChecklistAdminView: React.FC = () => {
 
   const confirmDelete = () => {
     if (templateToDelete) {
-      setTemplates(prev => prev.filter(t => t.id !== templateToDelete));
+      deleteTemplate(templateToDelete);
       toast({
         title: t('checklists.templateRemoved'),
         description: t('checklists.templateRemovedDesc'),
@@ -144,36 +93,29 @@ const ChecklistAdminView: React.FC = () => {
 
   const handleSaveTemplate = (templateData: any) => {
     if (selectedTemplate) {
-      // Edit existing
-      setTemplates(prev => prev.map(t =>
-        t.id === selectedTemplate.id
-          ? {
-            ...t,
-            ...templateData,
-            lastEditedAt: new Date(),
-            itemsCount: templateData.items?.length || t.itemsCount
-          }
-          : t
-      ));
+      updateTemplate(selectedTemplate.id, {
+        name: templateData.name,
+        description: templateData.description,
+        type: templateData.type || 'quality',
+        items: templateData.items || [],
+        associatedStores: templateData.associatedStores,
+        frequency: templateData.frequency,
+        isActive: templateData.isActive
+      });
       toast({
         title: t('checklists.templateUpdated'),
         description: t('checklists.templateUpdatedDesc'),
       });
     } else {
-      // Create new
-      const newTemplate: ChecklistTemplate = {
-        id: Date.now().toString(),
+      addTemplate({
         name: templateData.name,
         description: templateData.description,
-        itemsCount: templateData.items?.length || 0,
+        type: templateData.type || 'quality',
+        items: templateData.items || [],
         associatedStores: templateData.associatedStores,
         frequency: templateData.frequency,
-        isActive: templateData.isActive,
-        createdAt: new Date(),
-        lastEditedAt: new Date(),
-        usageCount: 0
-      };
-      setTemplates(prev => [...prev, newTemplate]);
+        isActive: templateData.isActive
+      });
       toast({
         title: t('checklists.templateCreated'),
         description: t('checklists.templateCreatedDesc'),
@@ -182,12 +124,8 @@ const ChecklistAdminView: React.FC = () => {
     setIsBuilderOpen(false);
   };
 
-  const toggleTemplateStatus = (templateId: string) => {
-    setTemplates(prev => prev.map(t =>
-      t.id === templateId
-        ? { ...t, isActive: !t.isActive, lastEditedAt: new Date() }
-        : t
-    ));
+  const handleToggleTemplateStatus = (templateId: string) => {
+    toggleTemplateStatus(templateId);
   };
 
   const getFrequencyLabel = (frequency: string) => {
@@ -318,7 +256,7 @@ const ChecklistAdminView: React.FC = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">{template.itemsCount}</span> {t('checklists.itemsCount')}
+                      <span className="font-medium">{template.items?.length || 0}</span> {t('checklists.itemsCount')}
                     </TableCell>
                     <TableCell className="max-w-[150px] truncate">
                       {getStoreNames(template.associatedStores)}
@@ -350,7 +288,7 @@ const ChecklistAdminView: React.FC = () => {
                             <Copy className="h-4 w-4 mr-2" />
                             {t('checklists.duplicate')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleTemplateStatus(template.id)}>
+                          <DropdownMenuItem onClick={() => handleToggleTemplateStatus(template.id)}>
                             <Eye className="h-4 w-4 mr-2" />
                             {template.isActive ? t('checklists.deactivate') : t('checklists.activate')}
                           </DropdownMenuItem>
@@ -401,7 +339,7 @@ const ChecklistAdminView: React.FC = () => {
               id: selectedTemplate.id,
               name: selectedTemplate.name,
               description: selectedTemplate.description,
-              items: [], // Would load from API
+              items: selectedTemplate.items || [],
               associatedStores: selectedTemplate.associatedStores,
               frequency: selectedTemplate.frequency,
               isActive: selectedTemplate.isActive
