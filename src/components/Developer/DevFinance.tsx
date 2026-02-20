@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
@@ -239,8 +240,8 @@ const DevFinance: React.FC = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input placeholder="Pesquisar loja, marca ou responsável..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
                 </div>
-                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-[150px]" placeholder="De" />
-                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-[150px]" placeholder="Até" />
+                <DateInput value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-[150px]" placeholder="dd/mm/yyyy" />
+                <DateInput value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-[150px]" placeholder="dd/mm/yyyy" />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
                     <SelectContent>

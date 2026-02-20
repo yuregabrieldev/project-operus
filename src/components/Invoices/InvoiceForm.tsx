@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -65,7 +66,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
     currency: 'EUR',
     issueDate: '',
     dueDate: '',
-    status: 'pedido_realizado' as InvoiceStatus,
+    status: 'contas_a_pagar' as InvoiceStatus,
     description: '',
     orderNumber: '',
     orderReceiptDate: '',
@@ -125,7 +126,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
         currency: invoice.currency || 'EUR',
         issueDate: invoice.issueDate ? new Date(invoice.issueDate).toISOString().split('T')[0] : '',
         dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
-        status: (invoice.status || 'pedido_realizado') as InvoiceStatus,
+        status: (invoice.status || 'contas_a_pagar') as InvoiceStatus,
         description: invoice.description || '',
         orderNumber: invoice.orderNumber || '',
         orderReceiptDate: invoice.orderReceiptDate ? new Date(invoice.orderReceiptDate).toISOString().split('T')[0] : '',
@@ -164,7 +165,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
     setFormData(prev => ({
       ...prev,
       markedAsPaid: checked,
-      status: checked ? 'finalizado_pago' : (prev.status === 'finalizado_pago' ? 'pedido_realizado' : prev.status),
+      status: checked ? 'finalizado_pago' : (prev.status === 'finalizado_pago' ? 'contas_a_pagar' : prev.status),
     }));
   };
 
@@ -519,8 +520,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">{t('invoices.issueDate')} *</Label>
-              <Input
-                type="date"
+              <DateInput
                 value={formData.issueDate}
                 onChange={(e) => handleChange('issueDate', e.target.value)}
                 required
@@ -528,8 +528,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">{t('invoices.dueDate')} *</Label>
-              <Input
-                type="date"
+              <DateInput
                 value={formData.dueDate}
                 onChange={(e) => handleChange('dueDate', e.target.value)}
                 required
@@ -559,8 +558,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">{t('invoices.receiptDate')} *</Label>
-              <Input
-                type="date"
+              <DateInput
                 value={formData.orderReceiptDate}
                 onChange={(e) => handleChange('orderReceiptDate', e.target.value)}
               />
@@ -729,8 +727,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, onClose, scro
               <Label className="text-sm font-semibold">
                 {t('invoices.paymentDate')} {isPaid && <span className="text-destructive">*</span>}
               </Label>
-              <Input
-                type="date"
+              <DateInput
                 value={formData.paymentDate}
                 onChange={(e) => handleChange('paymentDate', e.target.value)}
                 required={isPaid}

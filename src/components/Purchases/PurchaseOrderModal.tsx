@@ -45,7 +45,7 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { getProductById, getSupplierById, getStoreById, addMovement, addInvoice, addPurchaseOrder } = useData();
+  const { getProductById, getSupplierById, getStoreById, addMovement, addPurchaseOrder } = useData();
   const currentUserId = user?.id ?? '';
   const [showTransitDialog, setShowTransitDialog] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -182,24 +182,11 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         });
       });
 
-      // Create an invoice for the order
+      // Do NOT create invoice here — user will click "Gerar fatura" in order details
       const product0 = items[0] ? getProductById(items[0].productId) : null;
       const supplier = product0 ? getSupplierById(product0.supplierId) : null;
-      const totalAmount = items.reduce((sum, item) => {
-        const p = getProductById(item.productId);
-        return sum + (p ? p.costPrice * item.order : 0);
-      }, 0);
 
-      addInvoice({
-        supplierId: supplier?.id || '',
-        invoiceNumber: orderNumber,
-        amount: totalAmount,
-        status: 'pending',
-        issueDate: new Date(),
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      });
-
-      // Save the purchase order so it appears in "Gestão de pedidos"
+      // Save the purchase order so it appears in "Gestão de pedidos" (Gestão de Fatura = NÃO until user generates invoice)
       const orderItems: Array<{ productId: string; storeId: string; unit: string; quantity: number }> = [];
       const orderStoreIds = new Set<string>();
       items.forEach(item => {
@@ -215,15 +202,15 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           }
         });
       });
-      // invoiceId in DB must be UUID (invoices.id); order number is stored in observation
       await addPurchaseOrder({
         supplierId: supplier?.id || '',
         userId: currentUserId,
         storeIds: Array.from(orderStoreIds),
         items: orderItems,
-        hasInvoiceManagement: true,
+        hasInvoiceManagement: false,
         hasTransitGenerated: true,
-        observation: `Nº pedido: ${orderNumber}\n${observation}`,
+        ...(orderNumber.trim() && { invoiceId: orderNumber }),
+        observation: observation.trim() ? `Nº pedido: ${orderNumber}\n${observation}` : undefined,
         createdAt: new Date(),
       });
 
@@ -364,7 +351,7 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
       {/* Transit Creation Sub-Dialog */}
       <Dialog open={showTransitDialog} onOpenChange={setShowTransitDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[85vh] overflow-y-auto sm:w-full">
           <DialogHeader>
             <DialogTitle>{t('purchases.transitCreation')}</DialogTitle>
           </DialogHeader>

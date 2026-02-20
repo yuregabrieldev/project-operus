@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Eye, Download, Filter, Calendar, Clock, User, Store } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -306,8 +307,7 @@ const ChecklistHistory: React.FC = () => {
 
             <div>
               <label className="text-sm font-medium">{t('checklists.startDate')}</label>
-              <Input
-                type="date"
+              <DateInput
                 value={filters.dateFrom}
                 onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
               />
@@ -315,8 +315,7 @@ const ChecklistHistory: React.FC = () => {
 
             <div>
               <label className="text-sm font-medium">{t('checklists.endDate')}</label>
-              <Input
-                type="date"
+              <DateInput
                 value={filters.dateTo}
                 onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
               />

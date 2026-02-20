@@ -4,6 +4,7 @@ import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -96,16 +97,56 @@ const LicenseManager: React.FC = () => {
         );
     };
 
+    const addPeriodicityToDate = (date: Date, periodicity: License['periodicity']) => {
+        const next = new Date(date);
+        switch (periodicity) {
+            case 'mensal':
+                next.setMonth(next.getMonth() + 1);
+                break;
+            case 'trimestral':
+                next.setMonth(next.getMonth() + 3);
+                break;
+            case 'semestral':
+                next.setMonth(next.getMonth() + 6);
+                break;
+            case 'anual':
+                next.setFullYear(next.getFullYear() + 1);
+                break;
+            default:
+                next.setMonth(next.getMonth() + 1);
+                break;
+        }
+        return next;
+    };
+
+    const getComputedStatus = (license: License): LicenseStatus => {
+        if (license.status === 'cancelada') return 'cancelada';
+        const latestRenewal = getLatestRenewal(license);
+        if (!latestRenewal) return 'pendente';
+
+        const issueDate = new Date(latestRenewal.issueDate);
+        const renewalDate = new Date(latestRenewal.renewalDate);
+        const fallbackRenewal = addPeriodicityToDate(issueDate, license.periodicity);
+        const dueDate = isNaN(renewalDate.getTime()) ? fallbackRenewal : renewalDate;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (dueDate < today) return 'expirada';
+        return license.status === 'pendente' ? 'pendente' : 'ativa';
+    };
+
     // Filtered licenses
     const filteredLicenses = useMemo(() => {
         return licenses.filter(license => {
+            const computedStatus = getComputedStatus(license);
             const matchesSearch = !searchTerm ||
                 license.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (license.description || '').toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchesStore = !storeFilter || license.storeIds.includes(storeFilter);
 
-            const matchesStatus = !statusFilter || license.status === statusFilter;
+            const matchesStatus = !statusFilter || computedStatus === statusFilter;
 
             // Issue date filter — check latest renewal's issue date
             let matchesIssueDate = true;
@@ -140,9 +181,9 @@ const LicenseManager: React.FC = () => {
     // Stats
     const stats = useMemo(() => ({
         total: filteredLicenses.length,
-        ativa: filteredLicenses.filter(l => l.status === 'ativa').length,
-        expirada: filteredLicenses.filter(l => l.status === 'expirada').length,
-        pendente: filteredLicenses.filter(l => l.status === 'pendente').length,
+        ativa: filteredLicenses.filter(l => getComputedStatus(l) === 'ativa').length,
+        expirada: filteredLicenses.filter(l => getComputedStatus(l) === 'expirada').length,
+        pendente: filteredLicenses.filter(l => getComputedStatus(l) === 'pendente').length,
         totalValue: filteredLicenses.reduce((sum, l) => {
             const latest = getLatestRenewal(l);
             return sum + (latest?.value || 0);
@@ -174,13 +215,14 @@ const LicenseManager: React.FC = () => {
         const headers = ['Nome', 'Lojas', 'Descrição', 'Periodicidade', 'Valor', 'Status', 'Emissão', 'Renovação', 'Anexos'];
         const rows = filteredLicenses.map(l => {
             const latest = getLatestRenewal(l);
+            const computedStatus = getComputedStatus(l);
             return [
                 l.name,
                 getStoreNames(l.storeIds),
                 l.description || '',
                 getPeriodicityLabel(l.periodicity),
                 latest ? `${latest.currency}${latest.value.toFixed(2)}` : '',
-                getStatusLabel(l.status),
+                getStatusLabel(computedStatus),
                 latest ? formatDate(latest.issueDate) : '',
                 latest ? formatDate(latest.renewalDate) : '',
                 l.attachments.length.toString(),
@@ -356,8 +398,8 @@ const LicenseManager: React.FC = () => {
                                 <div className="space-y-2">
                                     <Label className="text-sm font-semibold">{t('licenses.issueDate')}</Label>
                                     <div className="flex gap-2">
-                                        <Input type="date" value={issueDateStart} onChange={(e) => setIssueDateStart(e.target.value)} className="text-sm bg-background" placeholder={t('common.start')} />
-                                        <Input type="date" value={issueDateEnd} onChange={(e) => setIssueDateEnd(e.target.value)} className="text-sm bg-background" placeholder={t('common.end')} />
+                                        <DateInput value={issueDateStart} onChange={(e) => setIssueDateStart(e.target.value)} className="text-sm bg-background" />
+                                        <DateInput value={issueDateEnd} onChange={(e) => setIssueDateEnd(e.target.value)} className="text-sm bg-background" />
                                     </div>
                                 </div>
 
@@ -365,8 +407,8 @@ const LicenseManager: React.FC = () => {
                                 <div className="space-y-2">
                                     <Label className="text-sm font-semibold text-gray-700">Data de Renovação</Label>
                                     <div className="flex gap-2">
-                                        <Input type="date" value={renewalDateStart} onChange={(e) => setRenewalDateStart(e.target.value)} className="text-sm" placeholder="Início" />
-                                        <Input type="date" value={renewalDateEnd} onChange={(e) => setRenewalDateEnd(e.target.value)} className="text-sm" placeholder="Fim" />
+                                        <DateInput value={renewalDateStart} onChange={(e) => setRenewalDateStart(e.target.value)} className="text-sm" />
+                                        <DateInput value={renewalDateEnd} onChange={(e) => setRenewalDateEnd(e.target.value)} className="text-sm" />
                                     </div>
                                 </div>
                             </div>
@@ -414,8 +456,9 @@ const LicenseManager: React.FC = () => {
                                     {filteredLicenses.map((license) => {
                                         const latestRenewal = getLatestRenewal(license);
                                         const latestIssue = getLatestIssueDate(license);
+                                        const computedStatus = getComputedStatus(license);
                                         return (
-                                            <TableRow key={license.id} className={`hover:bg-muted/50 transition-colors ${license.status === 'expirada' ? 'bg-destructive/5' : ''}`}>
+                                            <TableRow key={license.id} className={`hover:bg-muted/50 transition-colors ${computedStatus === 'expirada' ? 'bg-destructive/5' : ''}`}>
                                                 <TableCell className="font-medium text-foreground">{license.name}</TableCell>
                                                 <TableCell className="text-muted-foreground max-w-[150px] truncate">{getStoreNames(license.storeIds)}</TableCell>
                                                 <TableCell className="text-muted-foreground max-w-[180px] truncate">{license.description || '-'}</TableCell>
@@ -432,14 +475,14 @@ const LicenseManager: React.FC = () => {
                                                 <TableCell className="text-muted-foreground">
                                                     {latestIssue ? formatDate(latestIssue.issueDate) : '-'}
                                                 </TableCell>
-                                                <TableCell className={license.status === 'expirada' ? 'text-destructive font-semibold' : 'text-muted-foreground'}>
+                                                <TableCell className={computedStatus === 'expirada' ? 'text-destructive font-semibold' : 'text-muted-foreground'}>
                                                     {latestRenewal ? formatDate(latestRenewal.renewalDate) : '-'}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge className={`${getStatusColor(license.status)} transition-colors border ${license.status === 'expirada' ? 'animate-pulse' : ''}`}>
+                                                    <Badge className={`${getStatusColor(computedStatus)} transition-colors border ${computedStatus === 'expirada' ? 'animate-pulse' : ''}`}>
                                                         <div className="flex items-center gap-2">
-                                                            {getStatusIcon(license.status)}
-                                                            <span className="font-medium">{getStatusLabel(license.status)}</span>
+                                                            {getStatusIcon(computedStatus)}
+                                                            <span className="font-medium">{getStatusLabel(computedStatus)}</span>
                                                         </div>
                                                     </Badge>
                                                 </TableCell>

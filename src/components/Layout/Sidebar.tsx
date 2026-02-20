@@ -58,7 +58,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle, mode = 'deskto
   const getMenuItems = () => {
     if (isDeveloper(user)) return devMenuItems;
     const userPermissions = user?.permissions || [];
-    if (userPermissions.includes('*')) return allMenuItems;
+    // No permissions configured or wildcard → show all items
+    if (userPermissions.length === 0 || userPermissions.includes('*')) return allMenuItems;
     return allMenuItems.filter(item => userPermissions.includes(item.id!));
   };
 

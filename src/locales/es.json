@@ -418,7 +418,9 @@
     "noOrders": "Ningún pedido encontrado",
     "noOrdersDescription": "No hay pedidos con los filtros seleccionados",
     "deleted": "Pedido Eliminado",
-    "deletedDescription": "El pedido fue eliminado exitosamente"
+    "deletedDescription": "El pedido fue eliminado exitosamente",
+    "generateInvoice": "Generar factura",
+    "viewInvoice": "Ver factura"
   },
   "production": {
     "title": "Gestión de Producción",
@@ -1011,7 +1013,7 @@
     "closedBy": "Cerrado por",
     "view": "Ver",
     "noClosings": "Ningún cierre encontrado",
-    "noClosingsHint": "Haga clic en \"Agregar\" para abrir la caja",
+    "noClosingsHint": "Haga clic en \"Abrir Caja\" para abrir la caja",
     "noMovementCreated": "¡Registro sin movimientos creado!",
     "cashClosedSuccess": "¡Caja cerrada con éxito!",
     "depositManagement": "Gestión de depósitos pendientes de las tiendas del grupo",
@@ -1103,9 +1105,13 @@
     "difference": "Diferencia",
     "noMovements": "Sin Movimientos",
     "openCash": "Abrir Caja",
+    "closeCash": "Cerrar Caja",
     "selectStoreError": "Seleccione una tienda",
     "alreadyOpenToday": "Ya existe una caja para esta tienda hoy",
+    "openError": "No se pudo abrir la caja. Verifique que tenga una marca seleccionada e intente de nuevo.",
+    "openErrorGeneric": "No se pudo abrir la caja. Intente de nuevo.",
     "cashOpenedFill": "¡Caja abierta! Complete el cierre.",
+    "cashOpenedSuccess": "¡Caja abierta!",
     "system": "Sistema",
     "prevCloseShort": "Cierre Ant.",
     "closingLabel": "Cierre de Caja",
@@ -1384,6 +1390,12 @@
     "emailRequired": "El email es obligatorio",
     "emailInvalid": "Email inválido",
     "selectAtLeastOneStore": "Seleccione al menos una tienda",
+    "tempPasswordLabel": "Contraseña Temporal",
+    "tempPasswordPlaceholder": "Mínimo 6 caracteres",
+    "tempPasswordHint": "El usuario deberá cambiar la contraseña en el primer acceso.",
+    "generatePassword": "Generar contraseña aleatoria",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "selected": "Seleccionada",
     "editUser": "Editar Usuario",
     "saving": "Guardando...",
     "saveChanges": "Guardar Cambios",
@@ -1435,6 +1447,10 @@
     "logout": "Cerrar sesión",
     "myBrands": "Mis Marcas",
     "selectBrandGreeting": "¡Hola, {{name}}! Selecciona la marca para acceder:",
-    "primary": "Principal"
+    "primary": "Principal",
+    "selectStore": "Seleccionar Tienda",
+    "selectStoreFor": "Elige la tienda para",
+    "noStoresAvailable": "No hay tiendas disponibles para esta marca.",
+    "backToBrands": "Volver a las marcas"
   }
 }

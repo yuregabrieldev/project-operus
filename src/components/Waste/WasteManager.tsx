@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,6 +22,16 @@ import { toast } from '@/hooks/use-toast';
 import type { WasteVariant, WasteReason, WasteRecord, Product } from '@/contexts/DataContext';
 
 const WasteManager: React.FC = () => {
+    const toLocalISODate = (date: Date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    const todayLocal = new Date();
+    const monthStartLocal = new Date(todayLocal.getFullYear(), todayLocal.getMonth(), 1);
+
     const { t } = useLanguage();
     const { user } = useAuth();
     const {
@@ -46,8 +57,8 @@ const WasteManager: React.FC = () => {
     const [showTodayHistory, setShowTodayHistory] = useState(false);
 
     // ─── Report Tab State ───
-    const [reportStartDate, setReportStartDate] = useState('');
-    const [reportEndDate, setReportEndDate] = useState('');
+    const [reportStartDate, setReportStartDate] = useState(() => toLocalISODate(monthStartLocal));
+    const [reportEndDate, setReportEndDate] = useState(() => toLocalISODate(todayLocal));
     const [reportStoreFilter, setReportStoreFilter] = useState('');
     const [reportCategoryFilter, setReportCategoryFilter] = useState('');
 
@@ -114,7 +125,7 @@ const WasteManager: React.FC = () => {
         return record.userId === (user?.id || 'user1') && hoursDiff <= 24;
     };
 
-    const handleAddWaste = () => {
+    const handleAddWaste = async () => {
         if (!selectedProduct || !selectedVariant || !wasteReasonId) {
             toast({ title: t('waste.fillAllFields'), variant: 'destructive' });
             return;
@@ -124,10 +135,16 @@ const WasteManager: React.FC = () => {
             toast({ title: t('waste.commentRequired'), variant: 'destructive' });
             return;
         }
-        addWasteRecord({
+        const storeIdToUse = wasteStoreFilter || stores[0]?.id;
+        if (!storeIdToUse) {
+            toast({ title: t('waste.fillAllFields'), description: 'Selecione uma loja.', variant: 'destructive' });
+            return;
+        }
+
+        const saved = await addWasteRecord({
             productId: selectedProduct.id,
             variantId: selectedVariant.id,
-            storeId: wasteStoreFilter || '1',
+            storeId: storeIdToUse,
             userId: user?.id || 'user1',
             userName: user?.name || 'Usuário',
             quantity: wasteQuantity,
@@ -135,6 +152,11 @@ const WasteManager: React.FC = () => {
             comment: wasteComment.trim() || undefined,
             createdAt: new Date(),
         });
+        if (!saved) {
+            toast({ title: 'Erro ao salvar desperdício', description: 'Tente novamente.', variant: 'destructive' });
+            return;
+        }
+
         toast({ title: t('waste.wasteRecorded') });
         setWasteQuantity(1);
         setWasteReasonId('');
@@ -148,13 +170,22 @@ const WasteManager: React.FC = () => {
 
     // ─── Report Tab Logic ───
     const filteredReportRecords = useMemo(() => {
+        const parseLocalDateStart = (isoDate: string) => {
+            const [y, m, d] = isoDate.split('-').map(Number);
+            return new Date(y, (m || 1) - 1, d || 1, 0, 0, 0, 0);
+        };
+        const parseLocalDateEnd = (isoDate: string) => {
+            const [y, m, d] = isoDate.split('-').map(Number);
+            return new Date(y, (m || 1) - 1, d || 1, 23, 59, 59, 999);
+        };
+
         return wasteRecords.filter(r => {
             const d = new Date(r.createdAt);
             const product = getProductById(r.productId);
             const matchesStore = !reportStoreFilter || r.storeId === reportStoreFilter;
             const matchesCategory = !reportCategoryFilter || (product && product.categoryId === reportCategoryFilter);
-            const matchesStartDate = !reportStartDate || d >= new Date(reportStartDate);
-            const matchesEndDate = !reportEndDate || d <= new Date(reportEndDate + 'T23:59:59');
+            const matchesStartDate = !reportStartDate || d >= parseLocalDateStart(reportStartDate);
+            const matchesEndDate = !reportEndDate || d <= parseLocalDateEnd(reportEndDate);
             return matchesStore && matchesCategory && matchesStartDate && matchesEndDate;
         }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }, [wasteRecords, reportStoreFilter, reportCategoryFilter, reportStartDate, reportEndDate, getProductById]);
@@ -653,11 +684,11 @@ const WasteManager: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label className="text-sm font-semibold">{t('waste.startDate')}</Label>
-                            <Input type="date" value={reportStartDate} onChange={(e) => setReportStartDate(e.target.value)} />
+                            <DateInput value={reportStartDate} onChange={(e) => setReportStartDate(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label className="text-sm font-semibold">{t('waste.endDate')}</Label>
-                            <Input type="date" value={reportEndDate} onChange={(e) => setReportEndDate(e.target.value)} />
+                            <DateInput value={reportEndDate} onChange={(e) => setReportEndDate(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label className="text-sm font-semibold">{t('waste.store')}</Label>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -513,7 +514,7 @@ const CashManager: React.FC = () => {
               <div className="flex items-center gap-2"><span className="text-sm font-medium">{t('cash.storeLabel')}</span><Badge variant="outline">{storeName(depositStoreId)}</Badge></div>
               <div className="flex items-center gap-2"><span className="text-sm font-medium">{t('cash.accumulatedValue')}</span><Badge variant="outline" className="pointer-events-none bg-emerald-50 text-emerald-700 border-emerald-200">{fmt(storeAcumulado)}</Badge></div>
               <div><Label>{t('cash.depositValue')}</Label><Input type="number" step="0.01" value={depositFormValue || ''} onChange={e => setDepositFormValue(parseFloat(e.target.value) || 0)} className="mt-1" /></div>
-              <div><Label>{t('cash.depositDate')}</Label><Input type="date" value={depositFormDate} onChange={e => setDepositFormDate(e.target.value)} className="mt-1" /></div>
+              <div><Label>{t('cash.depositDate')}</Label><DateInput value={depositFormDate} onChange={e => setDepositFormDate(e.target.value)} className="mt-1" /></div>
               <div><Label>{t('cash.depositComment')}</Label><Input value={depositFormComment} onChange={e => setDepositFormComment(e.target.value)} placeholder={t('cash.depositCommentPlaceholder')} className="mt-1" /></div>
               <label className="w-full">
                 <div className="w-full inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-sm font-medium cursor-pointer">

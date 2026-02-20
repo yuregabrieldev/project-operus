@@ -46,6 +46,18 @@ export const authService = {
     return data;
   },
 
+  getProfilesByIds: async (userIds: string[]): Promise<Map<string, string>> => {
+    const unique = [...new Set(userIds)].filter(Boolean);
+    if (unique.length === 0) return new Map();
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, name')
+      .in('id', unique);
+    const map = new Map<string, string>();
+    (data ?? []).forEach((p: { id: string; name: string }) => map.set(p.id, p.name ?? p.id));
+    return map;
+  },
+
   updateProfile: async (userId: string, updates: Partial<DbProfile>) => {
     return throwIfError(
       await supabase.from('profiles').update(updates).eq('id', userId).select().single()
@@ -344,9 +356,19 @@ export const usersService = {
     );
   },
 
-  addUserToBrand: async (userId: string, brandId: string, role = 'operator') => {
+  upsertProfile: async (id: string, profileData: Partial<DbProfile> & { email: string }) => {
     return throwIfError(
-      await supabase.from('user_brands').insert({ user_id: userId, brand_id: brandId, role }).select().single()
+      await supabase
+        .from('profiles')
+        .upsert({ ...profileData, id, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+        .select()
+        .single()
+    );
+  },
+
+  addUserToBrand: async (userId: string, brandId: string, role = 'operator', storeIds: string[] = []) => {
+    return throwIfError(
+      await supabase.from('user_brands').insert({ user_id: userId, brand_id: brandId, role, store_ids: storeIds }).select().single()
     );
   },
 

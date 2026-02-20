@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,8 @@ import type { PurchaseOrder } from '@/contexts/DataContext';
 
 const PurchaseOrders: React.FC = () => {
     const { t } = useLanguage();
+    const { lang = 'pt' } = useParams<{ lang: string }>();
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { users } = useUsers();
     const {
@@ -56,6 +59,7 @@ const PurchaseOrders: React.FC = () => {
     const [orderNumber, setOrderNumber] = useState('');
     const [observation, setObservation] = useState('');
     const [isCreatingTransit, setIsCreatingTransit] = useState(false);
+    const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
     const toggleStore = (storeId: string) => {
         setSelectedStoreIds(prev =>
@@ -94,14 +98,7 @@ const PurchaseOrders: React.FC = () => {
     };
 
     const handleCreateTransit = async () => {
-        if (!selectedOrder || !orderNumber.trim() || !observation.trim()) {
-            toast({
-                title: t('purchases.requiredFields'),
-                description: t('purchases.fillRequiredFields'),
-                variant: 'destructive',
-            });
-            return;
-        }
+        if (!selectedOrder) return;
 
         setIsCreatingTransit(true);
         try {
@@ -120,42 +117,62 @@ const PurchaseOrders: React.FC = () => {
                 transitCount++;
             });
 
-            const supplier = getSupplierById(selectedOrder.supplierId);
-            const totalAmount = selectedOrder.items.reduce((sum, item) => {
-                const p = getProductById(item.productId);
-                return sum + (p ? p.costPrice * item.quantity : 0);
-            }, 0);
-
-            addInvoice({
-                supplierId: selectedOrder.supplierId,
-                invoiceNumber: orderNumber,
-                amount: totalAmount,
-                status: 'contas_a_pagar',
-                issueDate: new Date(),
-                dueDate: new Date(Date.now() + 30 * 86400000),
-            });
-
             updatePurchaseOrder(selectedOrder.id, {
-                hasInvoiceManagement: true,
                 hasTransitGenerated: true,
-                invoiceId: orderNumber,
-                observation: observation,
+                ...(orderNumber.trim() && { invoiceId: orderNumber }),
+                ...(observation.trim() && { observation }),
             });
 
             toast({
                 title: t('purchases.transitCreated'),
-                description: t('purchases.transitCreatedDescription').replace('{count}', String(transitCount)),
+                description: t('purchases.transitCreatedDescription').replace(/\{\{count\}\}|\{count\}/g, String(transitCount)),
             });
 
             setShowTransitDialog(false);
             setOrderNumber('');
             setObservation('');
-            setSelectedOrder({ ...selectedOrder, hasInvoiceManagement: true, hasTransitGenerated: true });
+            setSelectedOrder({ ...selectedOrder, hasTransitGenerated: true });
         } catch (error) {
             toast({ title: t('common.error'), description: t('purchases.transitError'), variant: 'destructive' });
         } finally {
             setIsCreatingTransit(false);
         }
+    };
+
+    const handleGenerateInvoice = async () => {
+        if (!selectedOrder) return;
+        setIsGeneratingInvoice(true);
+        try {
+            const supplier = getSupplierById(selectedOrder.supplierId);
+            const totalAmount = selectedOrder.items.reduce((sum, item) => {
+                const p = getProductById(item.productId);
+                return sum + (p ? p.costPrice * item.quantity : 0);
+            }, 0);
+            const invoiceNumber = selectedOrder.invoiceId?.trim() || `ORD-${selectedOrder.id.slice(0, 8)}`;
+            const newId = await addInvoice({
+                supplierId: selectedOrder.supplierId,
+                invoiceNumber,
+                amount: totalAmount,
+                status: 'contas_a_pagar',
+                issueDate: new Date(),
+                dueDate: new Date(Date.now() + 30 * 86400000),
+            });
+            if (newId) {
+                updatePurchaseOrder(selectedOrder.id, { hasInvoiceManagement: true, invoiceId: newId });
+                setSelectedOrder({ ...selectedOrder, hasInvoiceManagement: true, invoiceId: newId });
+                toast({ title: t('purchases.transitCreated'), description: t('orders.invoice') + ' criada.' });
+                navigate(`/${lang}/faturas/${newId}`);
+            }
+        } catch (error) {
+            toast({ title: t('common.error'), variant: 'destructive' });
+        } finally {
+            setIsGeneratingInvoice(false);
+        }
+    };
+
+    const goToInvoice = () => {
+        if (!selectedOrder?.invoiceId) return;
+        navigate(`/${lang}/faturas/${selectedOrder.invoiceId}`);
     };
 
     const storeLabel = selectedStoreIds.length === 0
@@ -183,19 +200,27 @@ const PurchaseOrders: React.FC = () => {
                         <div className="flex items-center gap-3">
                             <ShoppingCart className="h-5 w-5 text-muted-foreground" />
                             <h2 className="text-2xl font-bold text-foreground">{t('orders.orderDetails')}</h2>
-                            <Badge
-                                variant="outline"
-                                className={selectedOrder.hasInvoiceManagement
-                                    ? 'bg-green-500/10 text-green-700 border-green-500/20'
-                                    : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20'
-                                }
-                            >
-                                {t('orders.invoice')}
-                            </Badge>
+                            {selectedOrder.hasInvoiceManagement ? (
+                                <Badge
+                                    variant="outline"
+                                    role="button"
+                                    className="cursor-pointer bg-green-500/10 text-green-700 border-green-500/20 hover:bg-green-500/20 hover:opacity-90"
+                                    onClick={goToInvoice}
+                                >
+                                    {t('orders.invoice')}
+                                </Badge>
+                            ) : (
+                                <Badge
+                                    variant="outline"
+                                    className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20"
+                                >
+                                    {t('orders.invoice')}
+                                </Badge>
+                            )}
                             <Badge
                                 variant="outline"
                                 className={selectedOrder.hasTransitGenerated
-                                    ? 'bg-green-500/10 text-green-700 border-green-500/20'
+                                    ? 'bg-green-500/10 text-green-700 border-green-500/20 hover:bg-green-500/20 hover:opacity-90'
                                     : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20'
                                 }
                             >
@@ -263,18 +288,38 @@ const PurchaseOrders: React.FC = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex flex-wrap gap-3 justify-center pt-4">
+                        <div className="flex flex-wrap gap-3 justify-center pt-4 border-t">
                             <Button variant="outline" onClick={() => setSelectedOrder(null)} className="gap-2">
                                 <ShoppingCart className="h-4 w-4" />
                                 {t('orders.backToList')}
                             </Button>
                             {needsTransit && (
                                 <Button
-                                    className="gap-2"
+                                    className="gap-2 bg-purple-700 hover:bg-purple-800"
                                     onClick={() => setShowTransitDialog(true)}
                                 >
                                     <Truck className="h-4 w-4" />
-                                    {t('purchases.createTransitAndInvoice')}
+                                    {t('purchases.createTransit')}
+                                </Button>
+                            )}
+                            {!selectedOrder.hasInvoiceManagement && selectedOrder.hasTransitGenerated && (
+                                <Button
+                                    className="gap-2"
+                                    onClick={handleGenerateInvoice}
+                                    disabled={isGeneratingInvoice}
+                                >
+                                    {isGeneratingInvoice ? (
+                                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                                    ) : (
+                                        <FileText className="h-4 w-4" />
+                                    )}
+                                    {t('orders.generateInvoice')}
+                                </Button>
+                            )}
+                            {selectedOrder.hasInvoiceManagement && selectedOrder.invoiceId && (
+                                <Button variant="outline" className="gap-2" onClick={goToInvoice}>
+                                    <FileText className="h-4 w-4" />
+                                    {t('orders.viewInvoice')}
                                 </Button>
                             )}
                         </div>
@@ -283,13 +328,13 @@ const PurchaseOrders: React.FC = () => {
 
                 {/* Transit Creation Dialog */}
                 <Dialog open={showTransitDialog} onOpenChange={setShowTransitDialog}>
-                    <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+                    <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[85vh] overflow-y-auto sm:w-full">
                         <DialogHeader>
                             <DialogTitle>{t('purchases.transitCreation')}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                             <p className="text-sm text-gray-600">
-                                {t('purchases.transitWillCreate').replace('{count}', String(selectedOrder.items.length))}
+                                {t('purchases.transitWillCreate').replace(/\{\{count\}\}|\{count\}/g, String(selectedOrder.items.length))}
                             </p>
                             <div className="space-y-1.5">
                                 <Label className="font-medium">{t('purchases.orderNumberLabel')}*</Label>
@@ -315,7 +360,7 @@ const PurchaseOrders: React.FC = () => {
                                 </Button>
                                 <Button
                                     onClick={handleCreateTransit}
-                                    disabled={isCreatingTransit || !orderNumber.trim() || !observation.trim()}
+                                    disabled={isCreatingTransit}
                                     className="flex-1"
                                 >
                                     {isCreatingTransit ? (
@@ -437,12 +482,22 @@ const PurchaseOrders: React.FC = () => {
                                             <TableCell className="text-center">{getTotalItems(order)}</TableCell>
                                             <TableCell className="text-center font-semibold">{getTotalQty(order)}</TableCell>
                                             <TableCell className="text-center">
-                                                <Badge className={order.hasInvoiceManagement
-                                                    ? 'bg-green-500/10 text-green-700 border-green-500/20'
-                                                    : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20'
-                                                }>
-                                                    {order.hasInvoiceManagement ? t('orders.yes') : t('orders.no')}
-                                                </Badge>
+                                                {order.hasInvoiceManagement && order.invoiceId ? (
+                                                    <Badge
+                                                        role="button"
+                                                        className="cursor-pointer bg-green-500/10 text-green-700 border-green-500/20 hover:bg-green-500/20 hover:opacity-90"
+                                                        onClick={() => navigate(`/${lang}/faturas/${order.invoiceId}`)}
+                                                    >
+                                                        {t('orders.yes')}
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge className={order.hasInvoiceManagement
+                                                        ? 'bg-green-500/10 text-green-700 border-green-500/20'
+                                                        : 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20'
+                                                    }>
+                                                        {order.hasInvoiceManagement ? t('orders.yes') : t('orders.no')}
+                                                    </Badge>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <Badge className={order.hasTransitGenerated

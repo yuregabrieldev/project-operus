@@ -4,6 +4,7 @@ import { StatsCard } from '@/components/ui/stats-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -373,8 +374,7 @@ const ProductionManager: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">{t('production.startDate')}</Label>
-                <Input
-                  type="date"
+                <DateInput
                   value={exportStartDate}
                   onChange={(e) => setExportStartDate(e.target.value)}
                   className="rounded-xl"
@@ -382,8 +382,7 @@ const ProductionManager: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">{t('production.endDate')}</Label>
-                <Input
-                  type="date"
+                <DateInput
                   value={exportEndDate}
                   onChange={(e) => setExportEndDate(e.target.value)}
                   className="rounded-xl"

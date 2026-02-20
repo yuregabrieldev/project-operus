@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useBrand } from './BrandContext';
-import { usersService, authService } from '@/lib/supabase-services';
+import { usersService } from '@/lib/supabase-services';
 import { supabase } from '@/lib/supabase';
 
 interface Store {
@@ -26,6 +26,8 @@ interface CreateUserData {
   email: string;
   role: 'admin' | 'manager' | 'assistant';
   stores: Store[];
+  storeIds: string[];
+  password: string;
   sendWelcomeEmail?: boolean;
 }
 
@@ -39,7 +41,7 @@ interface UpdateUserData {
 
 interface UsersContextType {
   users: User[];
-  addUser: (userData: CreateUserData) => string;
+  addUser: (userData: CreateUserData) => Promise<void>;
   updateUser: (userData: UpdateUserData) => void;
   toggleUserStatus: (userId: string) => void;
   generateTempPassword: (userId: string) => string;
@@ -97,43 +99,31 @@ export const UsersProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
-  const addUser = (userData: CreateUserData): string => {
-    const tempPassword = generateRandomPassword();
+  const addUser = async (userData: CreateUserData): Promise<void> => {
+    if (!selectedBrand?.id) throw new Error('No brand selected');
 
-    (async () => {
+    const { data: fnData, error: fnError } = await supabase.functions.invoke('create-user', {
+      body: {
+        email: userData.email,
+        password: userData.password,
+        name: userData.name,
+        role: userData.role,
+        brandId: selectedBrand.id,
+        storeIds: userData.storeIds,
+      },
+    });
+
+    if (fnError) {
+      let message = fnError.message;
       try {
-        const { data, error } = await supabase.auth.signUp({
-          email: userData.email,
-          password: tempPassword,
-          options: { data: { name: userData.name, role: userData.role } },
-        });
-        if (error) throw error;
-        if (data.user && selectedBrand?.id) {
-          await usersService.addUserToBrand(data.user.id, selectedBrand.id, userData.role);
-          await usersService.updateProfile(data.user.id, {
-            role: userData.role,
-            needs_password_change: true,
-            is_active: true,
-          } as any);
-          await loadUsers();
-        }
-      } catch (err) {
-        console.error('Error creating user:', err);
-        const fallbackUser: User = {
-          id: Math.random().toString(36).substr(2, 9),
-          name: userData.name,
-          email: userData.email,
-          role: userData.role,
-          stores: userData.stores,
-          isActive: true,
-          createdAt: new Date(),
-          needsPasswordChange: true,
-        };
-        setUsers(prev => [...prev, fallbackUser]);
-      }
-    })();
+        const body = await (fnError as any).context?.json?.();
+        if (body?.error) message = body.error;
+      } catch { /* ignore parse errors */ }
+      throw new Error(message);
+    }
+    if (fnData?.error) throw new Error(fnData.error);
 
-    return tempPassword;
+    await loadUsers();
   };
 
   const updateUser = (userData: UpdateUserData) => {

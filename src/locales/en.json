@@ -418,7 +418,9 @@
     "noOrders": "No orders found",
     "noOrdersDescription": "No orders match the selected filters",
     "deleted": "Order Deleted",
-    "deletedDescription": "The order was successfully deleted"
+    "deletedDescription": "The order was successfully deleted",
+    "generateInvoice": "Generate invoice",
+    "viewInvoice": "View invoice"
   },
   "production": {
     "title": "Production Management",
@@ -1011,7 +1013,7 @@
     "closedBy": "Closed by",
     "view": "View",
     "noClosings": "No closings found",
-    "noClosingsHint": "Click \"Add\" to open the cash register",
+    "noClosingsHint": "Click \"Open Cash\" to open the cash register",
     "noMovementCreated": "No movement record created!",
     "cashClosedSuccess": "Cash register closed successfully!",
     "depositManagement": "Pending deposit management for group stores",
@@ -1103,9 +1105,13 @@
     "difference": "Difference",
     "noMovements": "No Movements",
     "openCash": "Open Cash",
+    "closeCash": "Close Cash",
     "selectStoreError": "Select a store",
     "alreadyOpenToday": "A cash register already exists for this store today",
+    "openError": "Could not open cash register. Please ensure a brand is selected and try again.",
+    "openErrorGeneric": "Could not open cash register. Please try again.",
     "cashOpenedFill": "Cash opened! Fill in the closing.",
+    "cashOpenedSuccess": "Cash register opened!",
     "system": "System",
     "prevCloseShort": "Prev. Close",
     "closingLabel": "Cash Closing",
@@ -1384,6 +1390,12 @@
     "emailRequired": "Email is required",
     "emailInvalid": "Invalid email",
     "selectAtLeastOneStore": "Select at least one store",
+    "tempPasswordLabel": "Temporary Password",
+    "tempPasswordPlaceholder": "Minimum 6 characters",
+    "tempPasswordHint": "The user must change the password on first login.",
+    "generatePassword": "Generate random password",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "selected": "Selected",
     "editUser": "Edit User",
     "saving": "Saving...",
     "saveChanges": "Save Changes",
@@ -1435,6 +1447,10 @@
     "logout": "Sign out",
     "myBrands": "My Brands",
     "selectBrandGreeting": "Hello, {{name}}! Select a brand to access:",
-    "primary": "Primary"
+    "primary": "Primary",
+    "selectStore": "Select Store",
+    "selectStoreFor": "Choose the store for",
+    "noStoresAvailable": "No stores available for this brand.",
+    "backToBrands": "Back to brands"
   }
 }

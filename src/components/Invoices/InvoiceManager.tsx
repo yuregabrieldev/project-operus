@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -140,6 +141,15 @@ const InvoiceManager: React.FC = () => {
 
   // Filtered invoices
   const filteredInvoices = useMemo(() => {
+    const statusOrder: Record<string, number> = {
+      contas_a_pagar: 0,
+      mercadoria_recebida: 1,
+      pedido_realizado: 2,
+      finalizado_pago: 3,
+      finalizado_outros: 4,
+      cancelado: 5,
+    };
+
     return invoices.filter(invoice => {
       const supplier = getSupplierById(invoice.supplierId);
       const invoiceDate = new Date(invoice.issueDate);
@@ -164,6 +174,14 @@ const InvoiceManager: React.FC = () => {
 
       return matchesSearch && matchesStatus && matchesSupplier &&
         matchesIssueDate && matchesDueDate && matchesAmount;
+    }).sort((a, b) => {
+      const issueDiff = new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime();
+      if (issueDiff !== 0) return issueDiff;
+
+      const dueDiff = new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+      if (dueDiff !== 0) return dueDiff;
+
+      return (statusOrder[a.status] ?? 999) - (statusOrder[b.status] ?? 999);
     });
   }, [invoices, searchTerm, statusFilter, supplierFilter,
     issueDateStart, issueDateEnd, dueDateStart, dueDateEnd, minAmount, maxAmount]);
@@ -451,8 +469,8 @@ const InvoiceManager: React.FC = () => {
                   </Select>
                   {issueDatePreset === 'custom' && (
                     <div className="flex gap-2 mt-2">
-                      <Input type="date" value={issueDateStart} onChange={(e) => setIssueDateStart(e.target.value)} className="text-sm" />
-                      <Input type="date" value={issueDateEnd} onChange={(e) => setIssueDateEnd(e.target.value)} className="text-sm" />
+                      <DateInput value={issueDateStart} onChange={(e) => setIssueDateStart(e.target.value)} className="text-sm" />
+                      <DateInput value={issueDateEnd} onChange={(e) => setIssueDateEnd(e.target.value)} className="text-sm" />
                     </div>
                   )}
                 </div>
@@ -473,8 +491,8 @@ const InvoiceManager: React.FC = () => {
                   </Select>
                   {dueDatePreset === 'custom' && (
                     <div className="flex gap-2 mt-2">
-                      <Input type="date" value={dueDateStart} onChange={(e) => setDueDateStart(e.target.value)} className="text-sm" />
-                      <Input type="date" value={dueDateEnd} onChange={(e) => setDueDateEnd(e.target.value)} className="text-sm" />
+                      <DateInput value={dueDateStart} onChange={(e) => setDueDateStart(e.target.value)} className="text-sm" />
+                      <DateInput value={dueDateEnd} onChange={(e) => setDueDateEnd(e.target.value)} className="text-sm" />
                     </div>
                   )}
                 </div>

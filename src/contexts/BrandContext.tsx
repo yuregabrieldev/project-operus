@@ -18,6 +18,7 @@ export interface Store {
   contact: string;
   manager: string;
   isActive: boolean;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -31,9 +32,11 @@ export interface UserBrand {
 
 interface BrandContextType {
   selectedBrand: Brand | null;
+  selectedStore: Store | null;
   userBrands: Brand[];
   stores: Store[];
   setSelectedBrand: (brand: Brand) => void;
+  setSelectedStore: (store: Store | null) => void;
   loadUserBrands: (userId: string, userRole?: string) => void;
   addBrand: (brand: Brand, userId: string) => Promise<void>;
   addStore: (store: Store) => Promise<void>;
@@ -72,6 +75,7 @@ function dbStoreToStore(db: DbStore): Store {
     contact: db.contact,
     manager: db.manager,
     isActive: db.is_active,
+    imageUrl: db.image_url ?? null,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   };
@@ -79,6 +83,7 @@ function dbStoreToStore(db: DbStore): Store {
 
 export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedBrand, setSelectedBrandState] = useState<Brand | null>(null);
+  const [selectedStore, setSelectedStoreState] = useState<Store | null>(null);
   const [userBrands, setUserBrands] = useState<Brand[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -201,6 +206,15 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.documentElement.style.setProperty('--brand-primary', brand.primaryColor);
   };
 
+  const setSelectedStore = (store: Store | null) => {
+    setSelectedStoreState(store);
+    if (store) {
+      localStorage.setItem('selected_store', JSON.stringify(store));
+    } else {
+      localStorage.removeItem('selected_store');
+    }
+  };
+
   useEffect(() => {
     const savedBrand = localStorage.getItem('selected_brand');
     if (savedBrand) {
@@ -210,13 +224,21 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         document.documentElement.style.setProperty('--brand-primary', brand.primaryColor);
       } catch { /* ignore */ }
     }
+    const savedStore = localStorage.getItem('selected_store');
+    if (savedStore) {
+      try {
+        setSelectedStoreState(JSON.parse(savedStore));
+      } catch { /* ignore */ }
+    }
   }, []);
 
   const value = {
     selectedBrand,
+    selectedStore,
     userBrands,
     stores,
     setSelectedBrand,
+    setSelectedStore,
     loadUserBrands,
     addBrand,
     addStore,

@@ -23,7 +23,7 @@ interface UserEditFormProps {
 
 export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClose }) => {
   const { updateUser } = useUsers();
-  const { stores } = useBrand();
+  const { stores, selectedBrand } = useBrand();
   const { user: currentUser } = useAuth();
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
@@ -57,7 +57,7 @@ export const UserEditForm: React.FC<UserEditFormProps> = ({ user, isOpen, onClos
   const canEditPin = (currentUser?.role === 'admin') || (currentUser?.role === 'manager' && formData.role === 'assistant');
   const canViewPin = canEditPin;
 
-  const allStores = stores || [];
+  const allStores = stores.filter(s => s.brandId === selectedBrand?.id);
 
   useEffect(() => {
     if (user) {

@@ -58,7 +58,7 @@ const LanguageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) 
  */
 const AuthGate: React.FC = () => {
   const { isAuthenticated, loading, needsBrandSelection, user } = useAuth();
-  const { selectedBrand } = useBrand();
+  const { selectedBrand, brandsLoaded, isLoading, loadUserBrands } = useBrand();
   const navigate = useNavigate();
   const wasAuthenticatedRef = useRef(false);
   const isDev = isDeveloper(user);
@@ -74,6 +74,14 @@ const AuthGate: React.FC = () => {
       wasAuthenticatedRef.current = false;
     }
   }, [isAuthenticated, user, defaultPath, navigate]);
+
+  // Ensure brands/stores are always loaded when user is authenticated,
+  // even if BrandSelector was skipped due to a cached brand in localStorage
+  useEffect(() => {
+    if (isAuthenticated && user && !isDev && !brandsLoaded && !isLoading) {
+      loadUserBrands(user.id, user.role);
+    }
+  }, [isAuthenticated, user?.id, isDev, brandsLoaded, isLoading, loadUserBrands]);
 
   if (loading) {
     return (

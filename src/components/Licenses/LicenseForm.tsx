@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -539,11 +540,11 @@ export const LicenseForm: React.FC<LicenseFormProps> = ({ license, onClose }) =>
                     <div className="space-y-4">
                         <div>
                             <Label className="flex items-center gap-1 text-sm"><Calendar className="h-3 w-3" /> Emissão</Label>
-                            <Input type="date" value={renewalForm.issueDate} onChange={(e) => setRenewalForm(prev => ({ ...prev, issueDate: e.target.value }))} className="mt-1" />
+                            <DateInput value={renewalForm.issueDate} onChange={(e) => setRenewalForm(prev => ({ ...prev, issueDate: e.target.value }))} className="mt-1" />
                         </div>
                         <div>
                             <Label className="flex items-center gap-1 text-sm"><Calendar className="h-3 w-3" /> Renovação</Label>
-                            <Input type="date" value={renewalForm.renewalDate} onChange={(e) => setRenewalForm(prev => ({ ...prev, renewalDate: e.target.value }))} className="mt-1" />
+                            <DateInput value={renewalForm.renewalDate} onChange={(e) => setRenewalForm(prev => ({ ...prev, renewalDate: e.target.value }))} className="mt-1" />
                         </div>
                         <div>
                             <Label className="flex items-center gap-1 text-sm"><DollarSign className="h-3 w-3" /> Valor</Label>

@@ -1,18 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useBrand } from '@/contexts/BrandContext';
+import { useBrand, type Brand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { isDeveloper } from '@/lib/developer-access';
-import { Store, Crown, LogOut, AlertTriangle } from 'lucide-react';
+import { Store, Crown, LogOut, AlertTriangle, ArrowLeft, MapPin } from 'lucide-react';
 
 const BrandSelector: React.FC = () => {
-  const { userBrands, setSelectedBrand, loadUserBrands, isLoading, brandsLoaded } = useBrand();
+  const { userBrands, stores, setSelectedBrand, setSelectedStore, loadUserBrands, isLoading, brandsLoaded } = useBrand();
   const { user, setNeedsBrandSelection, logout } = useAuth();
   const { t } = useLanguage();
+  const [selectedBrandLocal, setSelectedBrandLocal] = useState<Brand | null>(null);
 
   if (isDeveloper(user)) {
     return <Navigate to="/pt/dev-dashboard" replace />;
@@ -24,9 +25,33 @@ const BrandSelector: React.FC = () => {
     }
   }, [user?.id, brandsLoaded, isLoading, loadUserBrands]);
 
-  const handleBrandSelect = (brand: any) => {
-    setSelectedBrand(brand);
+  const brandStores = useMemo(() => {
+    if (!selectedBrandLocal) return [];
+    return stores.filter(s => s.brandId === selectedBrandLocal.id && s.isActive);
+  }, [selectedBrandLocal, stores]);
+
+  const handleBrandSelect = (brand: Brand) => {
+    const brandActiveStores = stores.filter(s => s.brandId === brand.id && s.isActive);
+    if (brandActiveStores.length === 0) {
+      // No stores — proceed directly without store selection
+      setSelectedBrand(brand);
+      setSelectedStore(null);
+      setNeedsBrandSelection(false);
+    } else {
+      // 1 or more stores — always show store selection
+      setSelectedBrandLocal(brand);
+    }
+  };
+
+  const handleStoreSelect = (store: typeof stores[0]) => {
+    if (!selectedBrandLocal) return;
+    setSelectedBrand(selectedBrandLocal);
+    setSelectedStore(store);
     setNeedsBrandSelection(false);
+  };
+
+  const handleBack = () => {
+    setSelectedBrandLocal(null);
   };
 
   if (isLoading || !brandsLoaded) {
@@ -75,6 +100,82 @@ const BrandSelector: React.FC = () => {
     );
   }
 
+  // Step 2: Store selection (after brand is chosen)
+  if (selectedBrandLocal) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-4xl">
+          <div className="text-center mb-8">
+            <img src="/operus-logo.png" alt="OPERUS" className="w-14 h-14 rounded-lg mx-auto mb-4 object-contain" />
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              {t('brand.selectStore')}
+            </h1>
+            <p className="text-muted-foreground">
+              {t('brand.selectStoreFor')}{' '}
+              <span className="font-semibold" style={{ color: selectedBrandLocal.primaryColor }}>{selectedBrandLocal.name}</span>
+            </p>
+          </div>
+
+          {brandStores.length === 0 ? (
+            <div className="text-center py-12">
+              <Store className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">{t('brand.noStoresAvailable')}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {brandStores.map((store) => (
+                <Card
+                  key={store.id}
+                  className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-2"
+                  style={{ borderColor: selectedBrandLocal.primaryColor + '20' }}
+                  onClick={() => handleStoreSelect(store)}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = selectedBrandLocal.primaryColor; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = selectedBrandLocal.primaryColor + '20'; }}
+                >
+                  <CardHeader className="text-center pb-2">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: selectedBrandLocal.primaryColor + '15' }}>
+                      {store.imageUrl ? (
+                        <img
+                          src={store.imageUrl}
+                          alt={store.name}
+                          className="w-12 h-12 object-cover rounded-full"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                            (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <MapPin
+                        className={`w-6 h-6${store.imageUrl ? ' hidden' : ''}`}
+                        style={{ color: selectedBrandLocal.primaryColor }}
+                      />
+                    </div>
+                    <h3 className="text-lg font-semibold">{store.name}</h3>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    {store.address && (
+                      <p className="text-sm text-muted-foreground">{store.address}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {userBrands.length > 1 && (
+            <div className="text-center">
+              <Button variant="ghost" onClick={handleBack} className="flex items-center gap-2 mx-auto">
+                <ArrowLeft className="w-4 h-4" />
+                {t('brand.backToBrands')}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Step 1: Brand selection
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-4xl">

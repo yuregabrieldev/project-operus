@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -246,7 +247,7 @@ const InventoryManager: React.FC = () => {
             </div>
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-muted-foreground">Data</Label>
-              <Input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="w-[160px] h-9" />
+              <DateInput value={reportDate} onChange={e => setReportDate(e.target.value)} className="w-[160px] h-9" />
             </div>
             <Button variant="outline" size="sm" onClick={exportReportCSV} className="ml-auto gap-2">
               <Download className="h-3.5 w-3.5" /> Exportar XLSX

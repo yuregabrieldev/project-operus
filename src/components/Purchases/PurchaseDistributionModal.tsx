@@ -251,7 +251,7 @@ export const PurchaseDistributionModal: React.FC<PurchaseDistributionModalProps>
               </div>
 
               {!isValid && (
-                <div className="flex items-center gap-2 text-red-600">
+                <div className="flex items-center gap-2 text-amber-600">
                   <AlertTriangle className="h-4 w-4" />
                   <span className="text-sm">{t('purchases.exceedsSuggested')}</span>
                 </div>
@@ -273,7 +273,7 @@ export const PurchaseDistributionModal: React.FC<PurchaseDistributionModalProps>
             </Button>
             <Button
               onClick={handleConfirm}
-              disabled={!isValid || totalQuantity === 0}
+              disabled={totalQuantity === 0}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {t('purchases.confirmDistribution')}

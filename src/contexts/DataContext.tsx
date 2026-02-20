@@ -296,7 +296,7 @@ interface DataContextType {
   addWasteReason: (reason: Omit<WasteReason, 'id'>) => void;
   updateWasteReason: (id: string, reason: Partial<WasteReason>) => void;
   deleteWasteReason: (id: string) => void;
-  addWasteRecord: (record: Omit<WasteRecord, 'id'>) => void;
+  addWasteRecord: (record: Omit<WasteRecord, 'id'>) => Promise<boolean>;
   deleteWasteRecord: (id: string) => void;
   addChecklist: (checklist: Omit<Checklist, 'id'>) => void;
   updateChecklist: (id: string, checklist: Partial<Checklist>) => void;
@@ -825,8 +825,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
-  const addWasteRecord = async (record: Omit<WasteRecord, 'id'>) => {
-    if (!brandId) return;
+  const addWasteRecord = async (record: Omit<WasteRecord, 'id'>): Promise<boolean> => {
+    if (!brandId) return false;
     try {
       const created = await wasteService.createRecord({
         brand_id: brandId, product_id: record.productId, variant_id: record.variantId || null,
@@ -835,7 +835,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         comment: record.comment ?? null, created_at: record.createdAt.toISOString(),
       });
       setWasteRecords(prev => [...prev, { ...record, id: created.id }]);
+      return true;
     } catch (err) { console.error(err?.message || 'Operation failed'); }
+    return false;
   };
 
   const deleteWasteRecord = async (id: string) => {
