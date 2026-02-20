@@ -123,7 +123,7 @@ const DevUsers: React.FC = () => {
                 const users: DemoUser[] = profiles.map((p: any) => {
                     const ubs = ubByUser.get(p.id) ?? [];
                     const brandIds = ubs.map(ub => ub.brand_id);
-                    const brandNamesList = brandIds.map(id => brandNames.get(id) ?? '-').filter(Boolean);
+                    const brandNamesList = brandIds.map(id => brandNames.get(id) ?? '').filter(Boolean);
                     const storesListForUser = brandIds.flatMap(id => storesByBrand.get(id) ?? []);
                     const role = (p.role === 'developer' ? 'admin' : p.role) as UserRole;
                     const status: UserStatus = p.is_active === false ? 'inactive' : (ubs.length === 0 ? 'pending' : 'active');
@@ -131,7 +131,7 @@ const DevUsers: React.FC = () => {
                         id: p.id,
                         name: p.name || p.email || '-',
                         email: p.email || '',
-                        brand: brandNamesList[0] ?? '-',
+                        brand: brandNamesList.length > 0 ? brandNamesList.join(', ') : '-',
                         stores: [...new Set(storesListForUser)],
                         status,
                         role: role in { admin: 1, manager: 1, assistant: 1 } ? role : 'assistant',
@@ -520,7 +520,17 @@ const DevUsers: React.FC = () => {
                                                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Editar" onClick={() => handleOpenEdit(user)}>
                                                         <Pencil className="h-3.5 w-3.5 text-blue-600" />
                                                     </Button>
-                                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title={user.status === 'active' ? 'Desativar' : 'Ativar'}>
+                                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title={user.status === 'active' ? 'Desativar' : 'Ativar'} onClick={async () => {
+                                                        const newActive = user.status !== 'active';
+                                                        try {
+                                                            const { error } = await supabase.from('profiles').update({ is_active: newActive }).eq('id', user.id);
+                                                            if (error) throw error;
+                                                            setDemoUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: newActive ? 'active' : 'inactive' } : u));
+                                                            toast({ title: newActive ? 'Usuário ativado!' : 'Usuário desativado!' });
+                                                        } catch (e: any) {
+                                                            toast({ title: 'Erro ao alterar status', description: e?.message, variant: 'destructive' });
+                                                        }
+                                                    }}>
                                                         <Power className={`h-3.5 w-3.5 ${user.status === 'active' ? 'text-emerald-600' : 'text-gray-400'}`} />
                                                     </Button>
                                                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Excluir" onClick={() => { setSelectedUser(user); setShowDelete(true); }}>
@@ -609,7 +619,22 @@ const DevUsers: React.FC = () => {
                     </DialogHeader>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowDelete(false)}>Cancelar</Button>
-                        <Button variant="destructive" onClick={() => { setShowDelete(false); toast({ title: 'Usuário excluído!' }); }}>Excluir</Button>
+                        <Button variant="destructive" onClick={async () => {
+                            if (!selectedUser) return;
+                            try {
+                                // Remove brand associations
+                                await supabase.from('user_brands').delete().eq('user_id', selectedUser.id);
+                                // Deactivate profile (soft delete — Supabase Auth users cannot be deleted via client SDK)
+                                const { error } = await supabase.from('profiles').update({ is_active: false, role: 'deleted' }).eq('id', selectedUser.id);
+                                if (error) throw error;
+                                setDemoUsers(prev => prev.filter(u => u.id !== selectedUser.id));
+                                setShowDelete(false);
+                                toast({ title: 'Usuário excluído com sucesso!' });
+                            } catch (e: any) {
+                                toast({ title: 'Erro ao excluir', description: e?.message || 'Tente novamente.', variant: 'destructive' });
+                                setShowDelete(false);
+                            }
+                        }}>Excluir</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
