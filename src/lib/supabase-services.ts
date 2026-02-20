@@ -57,7 +57,12 @@ export const authService = {
 // BRANDS SERVICE
 // ============================================================
 export const brandsService = {
-  getUserBrands: async (userId: string): Promise<DbBrand[]> => {
+  getUserBrands: async (userId: string, userRole?: string): Promise<DbBrand[]> => {
+    // Developers see ALL brands
+    if (userRole === 'developer') {
+      const { data } = await supabase.from('brands').select('*').order('name');
+      return data ?? [];
+    }
     const { data: ubRows } = await supabase
       .from('user_brands')
       .select('brand_id')

@@ -98,13 +98,13 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setStores(allStores);
   }, []);
 
-  const loadUserBrands = useCallback(async (userId: string, _userRole?: string) => {
+  const loadUserBrands = useCallback(async (userId: string, userRole?: string) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setIsLoading(true);
 
     try {
-      const dbBrands = await brandsService.getUserBrands(userId);
+      const dbBrands = await brandsService.getUserBrands(userId, userRole);
       const brands = dbBrands.map(dbBrandToBrand);
       setUserBrands(brands);
       await loadStoresForBrands(brands);
