@@ -76,6 +76,14 @@ const DevBrands: React.FC = () => {
     const [storeAdminSearch, setStoreAdminSearch] = useState('');
     const [selectedStoreAdmin, setSelectedStoreAdmin] = useState<SystemUser | null>(null);
 
+    // Edit Store form state
+    const [showEditStore, setShowEditStore] = useState(false);
+    const [editStoreId, setEditStoreId] = useState('');
+    const [editStoreName, setEditStoreName] = useState('');
+    const [editStoreAddress, setEditStoreAddress] = useState('');
+    const [editStoreContact, setEditStoreContact] = useState('');
+    const [editStoreManager, setEditStoreManager] = useState('');
+
     const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
     useEffect(() => {
@@ -149,9 +157,31 @@ const DevBrands: React.FC = () => {
         return <Badge variant="outline" className={styles[status]}>{labels[status]}</Badge>;
     };
 
-    const handleDelete = () => {
-        setShowDeleteConfirm(false);
-        setDeleteTarget(null);
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            if (deleteTarget.type === 'brand') {
+                const { error } = await supabase.from('brands').delete().eq('id', deleteTarget.id);
+                if (error) throw error;
+                setDemoBrands(prev => prev.filter(b => b.id !== deleteTarget.id));
+                if (selectedBrand?.id === deleteTarget.id) setSelectedBrand(null);
+                toast({ title: 'Marca excluída com sucesso!' });
+            } else {
+                const { error } = await supabase.from('stores').delete().eq('id', deleteTarget.id);
+                if (error) throw error;
+                setDemoBrands(prev => prev.map(b => ({
+                    ...b,
+                    stores: b.stores.filter(s => s.id !== deleteTarget.id),
+                    storesCount: b.stores.filter(s => s.id !== deleteTarget.id).length,
+                })));
+                toast({ title: 'Loja excluída com sucesso!' });
+            }
+        } catch (e: any) {
+            toast({ title: 'Erro ao excluir', description: e?.message || 'Tente novamente.', variant: 'destructive' });
+        } finally {
+            setShowDeleteConfirm(false);
+            setDeleteTarget(null);
+        }
     };
 
     const filteredAdminUsers = systemUsers.filter(u =>
@@ -191,6 +221,40 @@ const DevBrands: React.FC = () => {
         setShowCreateBrand(false);
     };
 
+    const handleCreateBrand = async () => {
+        if (!newBrandName || !selectedAdmin) return;
+        try {
+            const { data: created, error } = await supabase.from('brands').insert({
+                name: newBrandName,
+                logo_url: newBrandImage || null,
+                primary_color: '#6366f1',
+            }).select().single();
+            if (error) throw error;
+            // Link admin user to brand
+            await supabase.from('user_brands').insert({
+                user_id: selectedAdmin.id,
+                brand_id: created.id,
+                role: 'admin',
+                is_primary: true,
+            });
+            setDemoBrands(prev => [...prev, {
+                id: created.id,
+                name: created.name,
+                storesCount: 0,
+                responsible: selectedAdmin.name,
+                monthlyRevenue: 0,
+                totalRevenue: 0,
+                status: 'active' as BrandStatus,
+                stores: [],
+                imageUrl: newBrandImage || undefined,
+            }]);
+            toast({ title: 'Marca criada com sucesso!' });
+            resetCreateBrand();
+        } catch (e: any) {
+            toast({ title: 'Erro ao criar marca', description: e?.message || 'Tente novamente.', variant: 'destructive' });
+        }
+    };
+
     const resetAddStore = () => {
         setNewStoreName('');
         setNewStoreAddress('');
@@ -199,6 +263,88 @@ const DevBrands: React.FC = () => {
         setStoreAdminSearch('');
         setSelectedStoreAdmin(null);
         setShowAddStore(false);
+    };
+
+    const handleAddStore = async () => {
+        if (!newStoreName || !newStoreAddress || !selectedStoreAdmin || !selectedBrand) return;
+        try {
+            const { data: created, error } = await supabase.from('stores').insert({
+                brand_id: selectedBrand.id,
+                name: newStoreName,
+                address: newStoreAddress,
+                manager: selectedStoreAdmin.name,
+                contact: '',
+                is_active: true,
+            }).select().single();
+            if (error) throw error;
+            setDemoBrands(prev => prev.map(b => {
+                if (b.id !== selectedBrand.id) return b;
+                return {
+                    ...b,
+                    storesCount: b.storesCount + 1,
+                    stores: [...b.stores, {
+                        id: created.id,
+                        name: created.name,
+                        address: created.address || '',
+                        responsible: created.manager || '-',
+                        contact: created.contact || '',
+                        plan: newStorePlan,
+                        planValue: 0,
+                        status: 'active' as BrandStatus,
+                    }],
+                };
+            }));
+            // Update selectedBrand too
+            setSelectedBrand(prev => prev ? {
+                ...prev,
+                storesCount: prev.storesCount + 1,
+                stores: [...prev.stores, {
+                    id: created.id,
+                    name: created.name,
+                    address: created.address || '',
+                    responsible: created.manager || '-',
+                    contact: created.contact || '',
+                    plan: newStorePlan,
+                    planValue: 0,
+                    status: 'active' as BrandStatus,
+                }],
+            } : null);
+            toast({ title: 'Loja adicionada com sucesso!' });
+            resetAddStore();
+        } catch (e: any) {
+            toast({ title: 'Erro ao adicionar loja', description: e?.message || 'Tente novamente.', variant: 'destructive' });
+        }
+    };
+
+    const openEditStore = (store: DemoStore) => {
+        setEditStoreId(store.id);
+        setEditStoreName(store.name);
+        setEditStoreAddress(store.address);
+        setEditStoreContact(store.contact);
+        setEditStoreManager(store.responsible);
+        setShowEditStore(true);
+    };
+
+    const handleEditStore = async () => {
+        if (!editStoreId || !editStoreName) return;
+        try {
+            const { error } = await supabase.from('stores').update({
+                name: editStoreName,
+                address: editStoreAddress,
+                contact: editStoreContact,
+                manager: editStoreManager,
+            }).eq('id', editStoreId);
+            if (error) throw error;
+            const updateStore = (stores: DemoStore[]) => stores.map(s =>
+                s.id === editStoreId ? { ...s, name: editStoreName, address: editStoreAddress, contact: editStoreContact, responsible: editStoreManager } : s
+            );
+            setDemoBrands(prev => prev.map(b => ({ ...b, stores: updateStore(b.stores) })));
+            setSelectedBrand(prev => prev ? { ...prev, stores: updateStore(prev.stores) } : null);
+            toast({ title: 'Loja atualizada com sucesso!' });
+            setShowEditStore(false);
+        } catch (e: any) {
+            toast({ title: 'Erro ao atualizar loja', description: e?.message || 'Tente novamente.', variant: 'destructive' });
+        }
     };
 
     // Brand Detail View
@@ -267,6 +413,9 @@ const DevBrands: React.FC = () => {
                                             <td className="p-3 text-center">{statusBadge(store.status)}</td>
                                             <td className="p-3 text-center">
                                                 <div className="flex items-center justify-center gap-1">
+                                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Editar" onClick={() => openEditStore(store)}>
+                                                        <Edit className="h-3.5 w-3.5 text-blue-500" />
+                                                    </Button>
                                                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title={store.status === 'active' ? 'Desativar' : 'Ativar'}>
                                                         <Power className={`h-3.5 w-3.5 ${store.status === 'active' ? 'text-emerald-600' : 'text-gray-400'}`} />
                                                     </Button>
@@ -307,6 +456,42 @@ const DevBrands: React.FC = () => {
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancelar</Button>
                             <Button variant="destructive" onClick={handleDelete}>Sim, Excluir</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Edit Store Dialog */}
+                <Dialog open={showEditStore} onOpenChange={(open) => { if (!open) setShowEditStore(false); }}>
+                    <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <Edit className="h-5 w-5 text-blue-600" /> Editar Loja
+                            </DialogTitle>
+                            <DialogDescription>Altere os dados da loja</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Nome da Loja *</Label>
+                                <Input value={editStoreName} onChange={e => setEditStoreName(e.target.value)} placeholder="Nome da loja" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Endereço *</Label>
+                                <Input value={editStoreAddress} onChange={e => setEditStoreAddress(e.target.value)} placeholder="Endereço" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Contacto</Label>
+                                <Input value={editStoreContact} onChange={e => setEditStoreContact(e.target.value)} placeholder="Telefone ou email" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Responsável</Label>
+                                <Input value={editStoreManager} onChange={e => setEditStoreManager(e.target.value)} placeholder="Nome do responsável" />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setShowEditStore(false)}>Cancelar</Button>
+                            <Button disabled={!editStoreName} onClick={handleEditStore} className="gap-2">
+                                <CheckCircle className="h-4 w-4" /> Salvar
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -393,7 +578,7 @@ const DevBrands: React.FC = () => {
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={resetAddStore}>Cancelar</Button>
-                            <Button disabled={!newStoreName || !newStoreAddress || !selectedStoreAdmin} onClick={resetAddStore} className="gap-2">
+                            <Button disabled={!newStoreName || !newStoreAddress || !selectedStoreAdmin} onClick={handleAddStore} className="gap-2">
                                 <Plus className="h-4 w-4" /> Adicionar Loja
                             </Button>
                         </DialogFooter>
@@ -592,7 +777,7 @@ const DevBrands: React.FC = () => {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={resetCreateBrand}>Cancelar</Button>
-                        <Button disabled={!newBrandName || !selectedAdmin} onClick={resetCreateBrand} className="gap-2">
+                        <Button disabled={!newBrandName || !selectedAdmin} onClick={handleCreateBrand} className="gap-2">
                             <Plus className="h-4 w-4" /> Criar Marca
                         </Button>
                     </DialogFooter>
