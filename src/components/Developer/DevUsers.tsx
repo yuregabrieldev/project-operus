@@ -263,16 +263,16 @@ const DevUsers: React.FC = () => {
             const { error } = await authService.signUp(req.email, password, { name: req.name, role: 'assistant' });
             if (error) throw error;
             try {
-                await supabase.from('registration_requests').update({ status: 'conta_criada', temp_password: password }).eq('id', req.id);
+                await supabase.from('registration_requests').update({ status: 'aguardando_confirmacao', temp_password: password }).eq('id', req.id);
             } catch (_) {
                 // Coluna status/temp_password ou policy pode não existir; conta já foi criada
             }
-            setInteressados(prev => prev.map(r => r.id === req.id ? { ...r, status: 'conta_criada', temp_password: password } : r));
+            setInteressados(prev => prev.map(r => r.id === req.id ? { ...r, status: 'aguardando_confirmacao', temp_password: password } : r));
             await navigator.clipboard.writeText(password);
             setPasswordDialog({ open: true, name: req.name, email: req.email, password });
             toast({
-                title: 'Conta criada',
-                description: 'O interessado fica na lista até confirmar o email. Senha copiada.',
+                title: 'Conta criada — Aguardando confirmação',
+                description: 'O interessado precisa confirmar o email. Depois será movido automaticamente para a lista de utilizadores. Senha copiada.',
             });
         } catch (e: any) {
             toast({
@@ -381,7 +381,7 @@ const DevUsers: React.FC = () => {
                                             <td className="p-3">{req.stores_range || '-'}</td>
                                             <td className="p-3 text-gray-600">{req.created_at}</td>
                                             <td className="p-3">
-                                                {req.status === 'conta_criada' ? (
+                                                {req.status === 'aguardando_confirmacao' || req.status === 'conta_criada' ? (
                                                     <Badge variant="secondary" className="bg-amber-100 text-amber-800">Aguardando confirmação</Badge>
                                                 ) : (
                                                     <Badge variant="outline">Pendente</Badge>
@@ -389,7 +389,7 @@ const DevUsers: React.FC = () => {
                                             </td>
                                             <td className="p-3 text-center">
                                                 <div className="flex items-center justify-center gap-2 flex-wrap">
-                                                    {req.status !== 'conta_criada' && (
+                                                    {req.status !== 'conta_criada' && req.status !== 'aguardando_confirmacao' && (
                                                         <Button
                                                             size="sm"
                                                             className="gap-1.5"

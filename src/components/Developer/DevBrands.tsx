@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import {
     ArrowLeft, Upload, X, Power, AlertTriangle, Plus, UserPlus, Image as ImageIcon
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
 
 type BrandStatus = 'active' | 'pending' | 'inactive';
 
@@ -56,6 +57,10 @@ const DevBrands: React.FC = () => {
     const [demoBrands, setDemoBrands] = useState<DemoBrand[]>([]);
     const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
     const [loading, setLoading] = useState(true);
+    const [uploadingBrandImage, setUploadingBrandImage] = useState(false);
+    const [uploadingStoreImage, setUploadingStoreImage] = useState(false);
+    const brandImageRef = useRef<HTMLInputElement>(null);
+    const storeImageRef = useRef<HTMLInputElement>(null);
 
     // Create Brand form state
     const [newBrandName, setNewBrandName] = useState('');
@@ -158,6 +163,25 @@ const DevBrands: React.FC = () => {
         u.name.toLowerCase().includes(storeAdminSearch.toLowerCase()) ||
         u.email.toLowerCase().includes(storeAdminSearch.toLowerCase())
     );
+
+    const handleImageUpload = async (file: File, target: 'brand' | 'store') => {
+        const setUploading = target === 'brand' ? setUploadingBrandImage : setUploadingStoreImage;
+        const setImage = target === 'brand' ? setNewBrandImage : setNewStoreImage;
+        setUploading(true);
+        try {
+            const ext = file.name.split('.').pop() || 'png';
+            const path = `${target}s/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+            const { error: uploadError } = await supabase.storage.from('brand-images').upload(path, file, { upsert: true });
+            if (uploadError) throw uploadError;
+            const { data: urlData } = supabase.storage.from('brand-images').getPublicUrl(path);
+            setImage(urlData.publicUrl);
+            toast({ title: 'Imagem carregada!' });
+        } catch (e: any) {
+            toast({ title: 'Erro ao carregar imagem', description: e?.message || 'Tente novamente.', variant: 'destructive' });
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const resetCreateBrand = () => {
         setNewBrandName('');
@@ -307,11 +331,12 @@ const DevBrands: React.FC = () => {
                             <div className="space-y-2">
                                 <Label>Imagem da Loja</Label>
                                 <div className="flex items-center gap-3">
-                                    <div className="h-16 w-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-                                        <ImageIcon className="h-6 w-6 text-gray-400" />
+                                    <div className="h-16 w-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                                        {newStoreImage ? <img src={newStoreImage} alt="Store" className="h-full w-full object-cover" /> : <ImageIcon className="h-6 w-6 text-gray-400" />}
                                     </div>
-                                    <Button variant="outline" size="sm" className="gap-2">
-                                        <Upload className="h-3.5 w-3.5" /> Carregar
+                                    <input ref={storeImageRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, 'store'); }} />
+                                    <Button variant="outline" size="sm" className="gap-2" disabled={uploadingStoreImage} onClick={() => storeImageRef.current?.click()}>
+                                        <Upload className="h-3.5 w-3.5" /> {uploadingStoreImage ? 'A enviar...' : 'Carregar'}
                                     </Button>
                                 </div>
                             </div>
@@ -511,11 +536,12 @@ const DevBrands: React.FC = () => {
                         <div className="space-y-2">
                             <Label>Imagem / Logo da Marca</Label>
                             <div className="flex items-center gap-3">
-                                <div className="h-16 w-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-                                    <ImageIcon className="h-6 w-6 text-gray-400" />
+                                <div className="h-16 w-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                                    {newBrandImage ? <img src={newBrandImage} alt="Brand" className="h-full w-full object-cover" /> : <ImageIcon className="h-6 w-6 text-gray-400" />}
                                 </div>
-                                <Button variant="outline" size="sm" className="gap-2">
-                                    <Upload className="h-3.5 w-3.5" /> Carregar
+                                <input ref={brandImageRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, 'brand'); }} />
+                                <Button variant="outline" size="sm" className="gap-2" disabled={uploadingBrandImage} onClick={() => brandImageRef.current?.click()}>
+                                    <Upload className="h-3.5 w-3.5" /> {uploadingBrandImage ? 'A enviar...' : 'Carregar'}
                                 </Button>
                             </div>
                         </div>
