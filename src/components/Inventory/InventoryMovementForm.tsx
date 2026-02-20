@@ -25,6 +25,7 @@ const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({ productId
   const {
     stores,
     addMovement,
+    addInventoryItem,
     updateInventoryItem,
     inventory,
     getProductById
@@ -40,7 +41,7 @@ const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({ productId
 
   const product = getProductById(productId);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.quantity || formData.quantity <= 0) {
@@ -71,41 +72,59 @@ const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({ productId
         ...(formData.toStoreId && { toStoreId: formData.toStoreId })
       };
 
-      addMovement(movement);
+      await addMovement(movement);
 
-      // Update inventory quantities
+      // Update or create inventory quantities
       if (formData.type === 'in') {
-        // Find or create inventory item for the store
         const inventoryItem = inventory.find(i => i.productId === productId && i.storeId === formData.toStoreId);
         if (inventoryItem) {
-          updateInventoryItem(inventoryItem.id, {
+          await updateInventoryItem(inventoryItem.id, {
             currentQuantity: inventoryItem.currentQuantity + formData.quantity
+          });
+        } else {
+          await addInventoryItem({
+            productId,
+            storeId: formData.toStoreId,
+            currentQuantity: formData.quantity,
+            minQuantity: 0,
+            lastUpdated: new Date()
           });
         }
       } else if (formData.type === 'out') {
-        // Decrease inventory
         const inventoryItem = inventory.find(i => i.productId === productId && i.storeId === formData.toStoreId);
         if (inventoryItem) {
           const newQuantity = Math.max(0, inventoryItem.currentQuantity - formData.quantity);
-          updateInventoryItem(inventoryItem.id, {
+          await updateInventoryItem(inventoryItem.id, {
             currentQuantity: newQuantity
           });
+        } else {
+          toast.error('Não existe registo de inventário para esta loja. Registe primeiro uma entrada.');
+          return;
         }
       } else if (formData.type === 'transfer') {
-        // Decrease from source store
         const fromInventory = inventory.find(i => i.productId === productId && i.storeId === formData.fromStoreId);
         if (fromInventory) {
           const newFromQuantity = Math.max(0, fromInventory.currentQuantity - formData.quantity);
-          updateInventoryItem(fromInventory.id, {
+          await updateInventoryItem(fromInventory.id, {
             currentQuantity: newFromQuantity
           });
+        } else {
+          toast.error('Não existe stock na loja de origem para transferir.');
+          return;
         }
 
-        // Increase to destination store
         const toInventory = inventory.find(i => i.productId === productId && i.storeId === formData.toStoreId);
         if (toInventory) {
-          updateInventoryItem(toInventory.id, {
+          await updateInventoryItem(toInventory.id, {
             currentQuantity: toInventory.currentQuantity + formData.quantity
+          });
+        } else {
+          await addInventoryItem({
+            productId,
+            storeId: formData.toStoreId,
+            currentQuantity: formData.quantity,
+            minQuantity: 0,
+            lastUpdated: new Date()
           });
         }
       }

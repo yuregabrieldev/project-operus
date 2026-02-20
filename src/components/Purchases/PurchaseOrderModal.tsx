@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Copy, MessageCircle, Download, Truck, FileText, Package } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
@@ -43,7 +44,9 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   onClose
 }) => {
   const { t } = useLanguage();
-  const { getProductById, getSupplierById, getStoreById, addMovement, addInvoice } = useData();
+  const { user } = useAuth();
+  const { getProductById, getSupplierById, getStoreById, addMovement, addInvoice, addPurchaseOrder } = useData();
+  const currentUserId = user?.id ?? '';
   const [showTransitDialog, setShowTransitDialog] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [observation, setObservation] = useState('');
@@ -171,7 +174,7 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
               quantity: store.quantity,
               status: 'in_transit',
               createdAt: new Date(),
-              userId: 'user1',
+              userId: currentUserId,
               type: 'in'
             });
             transitCount++;
@@ -194,6 +197,34 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         status: 'pending',
         issueDate: new Date(),
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      });
+
+      // Save the purchase order so it appears in "Gestão de pedidos"
+      const orderItems: Array<{ productId: string; storeId: string; unit: string; quantity: number }> = [];
+      const orderStoreIds = new Set<string>();
+      items.forEach(item => {
+        item.stores.forEach(store => {
+          if (store.quantity > 0) {
+            orderItems.push({
+              productId: item.productId,
+              storeId: store.storeId,
+              unit: item.unit,
+              quantity: store.quantity,
+            });
+            orderStoreIds.add(store.storeId);
+          }
+        });
+      });
+      // invoiceId in DB must be UUID (invoices.id); order number is stored in observation
+      await addPurchaseOrder({
+        supplierId: supplier?.id || '',
+        userId: currentUserId,
+        storeIds: Array.from(orderStoreIds),
+        items: orderItems,
+        hasInvoiceManagement: true,
+        hasTransitGenerated: true,
+        observation: `Nº pedido: ${orderNumber}\n${observation}`,
+        createdAt: new Date(),
       });
 
       toast({

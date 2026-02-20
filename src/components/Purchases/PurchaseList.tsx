@@ -49,7 +49,6 @@ const PurchaseList: React.FC = () => {
     getProductById,
     getSupplierById,
     getStoreById,
-    getLowStockItems
   } = useData();
 
   const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
@@ -73,23 +72,25 @@ const PurchaseList: React.FC = () => {
   }, [selectedSupplier, selectedStoreIds, statusFilter, inventory, products]);
 
   const generatePurchaseItems = () => {
-    const lowStockItems = getLowStockItems();
+    // Use all inventory so every product with stock data appears (not only low stock)
     const itemsMap = new Map<string, PurchaseItem>();
 
-    lowStockItems.forEach(item => {
+    inventory.forEach(item => {
       const product = getProductById(item.productId);
       const store = getStoreById(item.storeId);
-      const supplier = product ? getSupplierById(product.supplierId) : null;
+      const supplier = product?.supplierId ? getSupplierById(product.supplierId) : null;
 
-      if (!product || !store || !supplier) return;
+      if (!product || !store) return;
 
-      // Supplier filter
-      if (selectedSupplier !== 'all' && supplier.id !== selectedSupplier) return;
+      // Supplier filter (include items without supplier when filter is 'all')
+      if (selectedSupplier !== 'all') {
+        if (!supplier || supplier.id !== selectedSupplier) return;
+      }
 
       // Multi-store filter
       if (selectedStoreIds.length > 0 && !selectedStoreIds.includes(store.id)) return;
 
-      const key = `${product.id}-${supplier.id}`;
+      const key = `${product.id}-${supplier?.id ?? product.id}`;
 
       if (!itemsMap.has(key)) {
         itemsMap.set(key, {
@@ -108,7 +109,7 @@ const PurchaseList: React.FC = () => {
 
       const purchaseItem = itemsMap.get(key)!;
       // Use alertWarning as ideal if available, otherwise minQuantity * 2
-      const idealStock = item.alertWarning || item.minQuantity * 2;
+      const idealStock = item.alertWarning ?? item.minQuantity * 2;
       const suggestedQuantity = Math.max(idealStock - item.currentQuantity, 0);
 
       purchaseItem.stores.push({

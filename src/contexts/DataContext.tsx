@@ -269,7 +269,7 @@ interface DataContextType {
   deleteStore: (id: string) => void;
   addCategory: (category: Omit<Category, 'id'>) => void;
   deleteCategory: (id: string) => void;
-  addProduct: (product: Omit<Product, 'id'>) => void;
+  addProduct: (product: Omit<Product, 'id'>) => Promise<string | undefined>;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   addInventoryItem: (item: Omit<InventoryItem, 'id'>) => void;
@@ -516,8 +516,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
-  const addProduct = async (product: Omit<Product, 'id'>) => {
-    if (!brandId) return;
+  const addProduct = async (product: Omit<Product, 'id'>): Promise<string | undefined> => {
+    if (!brandId) return undefined;
     try {
       const created = await productsService.create({
         brand_id: brandId, name: product.name, sku: product.sku,
@@ -526,7 +526,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         barcode: product.barcode, image_url: product.imageUrl ?? null, unit: product.unit || 'UN.',
       });
       setProducts(prev => [...prev, { ...product, id: created.id }]);
-    } catch (err) { console.error(err?.message || 'Operation failed'); }
+      return created.id;
+    } catch (err) { console.error(err?.message || 'Operation failed'); return undefined; }
   };
 
   const updateProduct = async (id: string, product: Partial<Product>) => {
@@ -909,16 +910,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addPurchaseOrder = async (order: Omit<PurchaseOrder, 'id'>) => {
     if (!brandId) return;
     try {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const invoiceIdUuid = order.invoiceId && uuidRegex.test(order.invoiceId) ? order.invoiceId : null;
+      const userIdUuid = order.userId && uuidRegex.test(order.userId) ? order.userId : null;
       const created = await purchaseOrdersService.create({
         brand_id: brandId, supplier_id: order.supplierId || null,
-        user_id: order.userId || null, store_ids: order.storeIds, items: order.items,
+        user_id: userIdUuid, store_ids: order.storeIds, items: order.items,
         has_invoice_management: order.hasInvoiceManagement,
         has_transit_generated: order.hasTransitGenerated,
-        invoice_id: order.invoiceId ?? null, observation: order.observation ?? null,
+        invoice_id: invoiceIdUuid, observation: order.observation ?? null,
         created_at: order.createdAt.toISOString(),
       });
       setPurchaseOrders(prev => [...prev, { ...order, id: created.id }]);
-    } catch (err) { console.error(err?.message || 'Operation failed'); }
+    } catch (err) {
+      console.error(err?.message || 'Operation failed');
+      throw err;
+    }
   };
 
   const updatePurchaseOrder = async (id: string, order: Partial<PurchaseOrder>) => {

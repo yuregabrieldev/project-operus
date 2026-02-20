@@ -17,12 +17,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUsers } from '@/contexts/UsersContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import type { PurchaseOrder } from '@/contexts/DataContext';
 
 const PurchaseOrders: React.FC = () => {
     const { t } = useLanguage();
+    const { user } = useAuth();
+    const { users } = useUsers();
     const {
         purchaseOrders,
         suppliers,
@@ -35,6 +39,14 @@ const PurchaseOrders: React.FC = () => {
         addMovement,
         addInvoice,
     } = useData();
+
+    const getOrderUserName = (userId: string) => {
+        if (!userId) return '—';
+        const brandUser = users.find(u => u.id === userId);
+        if (brandUser?.name) return brandUser.name;
+        if (userId === user?.id && user?.name) return user.name;
+        return userId;
+    };
 
     const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
     const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([]);
@@ -94,6 +106,7 @@ const PurchaseOrders: React.FC = () => {
         setIsCreatingTransit(true);
         try {
             let transitCount = 0;
+            const currentUserId = user?.id ?? '';
             selectedOrder.items.forEach(item => {
                 addMovement({
                     productId: item.productId,
@@ -101,7 +114,7 @@ const PurchaseOrders: React.FC = () => {
                     quantity: item.quantity,
                     status: 'in_transit',
                     createdAt: new Date(),
-                    userId: 'user1',
+                    userId: currentUserId,
                     type: 'in',
                 });
                 transitCount++;
@@ -198,7 +211,7 @@ const PurchaseOrders: React.FC = () => {
                             </div>
                             <div>
                                 <span className="text-muted-foreground text-xs uppercase">{t('orders.createdBy')}</span>
-                                <p className="font-medium">{selectedOrder.userId}</p>
+                                <p className="font-medium">{getOrderUserName(selectedOrder.userId)}</p>
                             </div>
                         </div>
 
@@ -417,7 +430,7 @@ const PurchaseOrders: React.FC = () => {
                                                 <span className="text-gray-400 text-xs">{order.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                                             </TableCell>
                                             <TableCell className="font-semibold">{supplier?.name || '-'}</TableCell>
-                                            <TableCell>{order.userId}</TableCell>
+                                            <TableCell>{getOrderUserName(order.userId)}</TableCell>
                                             <TableCell className="max-w-[200px]">
                                                 <span className="text-sm">{getStoreNames(order.storeIds)}</span>
                                             </TableCell>
