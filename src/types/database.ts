@@ -38,6 +38,9 @@ export interface DbStore {
   contact: string;
   manager: string;
   is_active: boolean;
+  image_url: string | null;
+  plan?: string;
+  plan_value?: number;
   created_at: string;
   updated_at: string;
 }
@@ -93,6 +96,26 @@ export interface DbCostCenter {
   created_at: string;
 }
 
+/** JSON shape stored in cash_registers.closure_details */
+export interface DbClosureDetails {
+  closingEspecie?: number;
+  closingCartao?: number;
+  closingDelivery?: number;
+  closingTotal?: number;
+  apuracaoNotas?: number;
+  apuracaoMoedas?: number;
+  apuracaoEspecieTotal?: number;
+  cartaoItems?: { brand: string; value: number }[];
+  deliveryItems?: { app: string; value: number }[];
+  extras?: { description: string; value: number; type: 'entrada' | 'saida' }[];
+  depositValue?: number;
+  depositStatus?: 'deposited' | 'pending';
+  attachments?: { name: string; date: string }[];
+  comments?: string[];
+  closedBy?: string;
+  noMovement?: boolean;
+}
+
 export interface DbCashRegister {
   id: string;
   brand_id: string;
@@ -104,6 +127,8 @@ export interface DbCashRegister {
   opened_by: string;
   closed_by: string | null;
   status: 'open' | 'closed';
+  deposited?: boolean;
+  closure_details?: DbClosureDetails | null;
   created_at: string;
 }
 

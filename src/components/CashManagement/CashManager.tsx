@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,11 +21,16 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import CashForm from './CashForm';
-import { CashEntry, DepositRecord, CashSettings, DEMO_ENTRIES, DEMO_DEPOSITS, DEFAULT_CARD_BRANDS, DEFAULT_DELIVERY_APPS, fmt } from './types';
+import { CashEntry, DepositRecord, CashSettings, DEFAULT_CARD_BRANDS, DEFAULT_DELIVERY_APPS, fmt, cashRegisterToEntry } from './types';
+
+type DepositOverride = {
+  depositValue: number;
+  depositStatus: 'pending' | 'deposited';
+};
 
 const CashManager: React.FC = () => {
   const { user } = useAuth();
-  const { stores } = useData();
+  const { stores, cashRegisters, getOpenCashRegisters, addCashRegister, updateCashRegister } = useData();
   const { stores: brandStores, selectedBrand } = useBrand();
   const { lang = 'pt' } = useParams<{ lang: string }>();
   const { t } = useLanguage();
@@ -36,10 +41,11 @@ const CashManager: React.FC = () => {
   const [preStoreId, setPreStoreId] = useState('');
   const [preOpeningValue, setPreOpeningValue] = useState(0);
   const [prePreviousClose, setPrePreviousClose] = useState(0);
+  const [cashRegisterIdToClose, setCashRegisterIdToClose] = useState<string | null>(null);
 
   // Shared state
-  const [entries, setEntries] = useState<CashEntry[]>(DEMO_ENTRIES);
-  const [deposits, setDeposits] = useState<DepositRecord[]>(DEMO_DEPOSITS);
+  const [deposits, setDeposits] = useState<DepositRecord[]>([]);
+  const [depositOverrides, setDepositOverrides] = useState<Record<string, DepositOverride>>({});
   const [cardBrands, setCardBrands] = useState<string[]>(DEFAULT_CARD_BRANDS);
   const [deliveryApps, setDeliveryApps] = useState<string[]>(DEFAULT_DELIVERY_APPS);
   const [cashSettings, setCashSettings] = useState<CashSettings>({ baseValueEnabled: false, baseValue: 0, extrasConsideredStores: [] });
@@ -58,12 +64,97 @@ const CashManager: React.FC = () => {
   const [depositFormValue, setDepositFormValue] = useState(0);
   const [depositFormDate, setDepositFormDate] = useState(new Date().toISOString().split('T')[0]);
   const [depositFormComment, setDepositFormComment] = useState('');
+  const [depositReceiptFile, setDepositReceiptFile] = useState<File | null>(null);
 
   // Settings Add Dialog State
   const [showAddBrandDialog, setShowAddBrandDialog] = useState(false);
   const [showAddAppDialog, setShowAddAppDialog] = useState(false);
   const [newBrandName, setNewBrandName] = useState('');
   const [newAppName, setNewAppName] = useState('');
+  const [settingsHydrated, setSettingsHydrated] = useState(false);
+  const [depositsHydrated, setDepositsHydrated] = useState(false);
+
+  const cashSettingsStorageKey = useMemo(
+    () => `cash_settings_${selectedBrand?.id || 'global'}`,
+    [selectedBrand?.id]
+  );
+  const cashDepositsStorageKey = useMemo(
+    () => `cash_deposits_${selectedBrand?.id || 'global'}`,
+    [selectedBrand?.id]
+  );
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(cashSettingsStorageKey);
+      if (!raw) {
+        setCashSettings({ baseValueEnabled: false, baseValue: 0, extrasConsideredStores: [] });
+        setCardBrands(DEFAULT_CARD_BRANDS);
+        setDeliveryApps(DEFAULT_DELIVERY_APPS);
+        setSettingsHydrated(true);
+        return;
+      }
+      const parsed = JSON.parse(raw) as {
+        cashSettings?: Partial<CashSettings>;
+        cardBrands?: string[];
+        deliveryApps?: string[];
+      };
+      const parsedSettings = parsed?.cashSettings ?? parsed;
+      setCashSettings({
+        baseValueEnabled: !!parsedSettings.baseValueEnabled,
+        baseValue: Number(parsedSettings.baseValue ?? 0),
+        extrasConsideredStores: Array.isArray(parsedSettings.extrasConsideredStores) ? parsedSettings.extrasConsideredStores : [],
+      });
+      setCardBrands(Array.isArray(parsed.cardBrands) && parsed.cardBrands.length > 0 ? parsed.cardBrands : DEFAULT_CARD_BRANDS);
+      setDeliveryApps(Array.isArray(parsed.deliveryApps) && parsed.deliveryApps.length > 0 ? parsed.deliveryApps : DEFAULT_DELIVERY_APPS);
+    } catch {
+      // Ignore invalid persisted settings and keep defaults.
+      setCashSettings({ baseValueEnabled: false, baseValue: 0, extrasConsideredStores: [] });
+      setCardBrands(DEFAULT_CARD_BRANDS);
+      setDeliveryApps(DEFAULT_DELIVERY_APPS);
+    } finally {
+      setSettingsHydrated(true);
+    }
+  }, [cashSettingsStorageKey]);
+
+  useEffect(() => {
+    if (!settingsHydrated) return;
+    localStorage.setItem(cashSettingsStorageKey, JSON.stringify({
+      cashSettings,
+      cardBrands,
+      deliveryApps,
+    }));
+  }, [cashSettingsStorageKey, cashSettings, cardBrands, deliveryApps, settingsHydrated]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(cashDepositsStorageKey);
+      if (!raw) {
+        setDeposits([]);
+        setDepositOverrides({});
+        setDepositsHydrated(true);
+        return;
+      }
+      const parsed = JSON.parse(raw) as {
+        deposits?: DepositRecord[];
+        depositOverrides?: Record<string, DepositOverride>;
+      };
+      setDeposits(Array.isArray(parsed.deposits) ? parsed.deposits : []);
+      setDepositOverrides(parsed.depositOverrides && typeof parsed.depositOverrides === 'object' ? parsed.depositOverrides : {});
+    } catch {
+      setDeposits([]);
+      setDepositOverrides({});
+    } finally {
+      setDepositsHydrated(true);
+    }
+  }, [cashDepositsStorageKey]);
+
+  useEffect(() => {
+    if (!depositsHydrated) return;
+    localStorage.setItem(cashDepositsStorageKey, JSON.stringify({
+      deposits,
+      depositOverrides,
+    }));
+  }, [cashDepositsStorageKey, deposits, depositOverrides, depositsHydrated]);
 
   // View entry — now uses route navigation via <Link>
 
@@ -74,23 +165,46 @@ const CashManager: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0];
 
+  // Entries from persisted cash registers merged with local deposit overrides.
+  const entries = useMemo((): CashEntry[] => cashRegisters.map(cr => {
+    const base = cashRegisterToEntry(cr);
+    const ov = depositOverrides[cr.id];
+    return ov ? { ...base, depositValue: ov.depositValue, depositStatus: ov.depositStatus } : base;
+  }), [cashRegisters, depositOverrides]);
+
+  const openCashRegistersToday = useMemo(() => {
+    const open = getOpenCashRegisters();
+    return open.filter(cr => {
+      const dateStr = cr.openedAt instanceof Date ? cr.openedAt.toISOString().split('T')[0] : new Date(cr.openedAt).toISOString().split('T')[0];
+      return dateStr === today;
+    });
+  }, [getOpenCashRegisters, cashRegisters, today]);
+
   const filteredEntries = useMemo(() => entries.filter(e => {
     if (filterStore !== 'all' && e.storeId !== filterStore) return false;
     const d = new Date(e.date);
     if (filterMonth !== 'all' && (d.getMonth() + 1).toString() !== filterMonth) return false;
     if (d.getFullYear().toString() !== filterYear) return false;
     return true;
-  }), [entries, filterStore, filterMonth, filterYear]);
+  }).sort((a, b) => b.date.localeCompare(a.date)), [entries, filterStore, filterMonth, filterYear]);
 
   const storeName = (id: string) => allStores.find(s => s.id === id)?.name || t('cash.store');
 
   const handleAddClick = () => {
-    const todayOpen = entries.find(e => e.date === today && e.status === 'open');
-    if (todayOpen) {
-      setPreStoreId(todayOpen.storeId);
-      setPreOpeningValue(todayOpen.openingValue);
-      setPrePreviousClose(todayOpen.previousClose);
+    const hasOpenToday = openCashRegistersToday.length > 0;
+    if (hasOpenToday) {
+      const first = openCashRegistersToday[0];
+      const lastClosedForStore = entries
+        .filter(e => e.storeId === first.storeId && e.status === 'closed')
+        .sort((a, b) => b.date.localeCompare(a.date))[0];
+      const configuredPreviousClose = cashSettings.baseValueEnabled
+        ? cashSettings.baseValue
+        : (lastClosedForStore?.depositStatus === 'deposited' ? 0 : (lastClosedForStore?.closingTotal ?? 0));
+      setPreStoreId(first.storeId);
+      setPreOpeningValue(first.openingBalance);
+      setPrePreviousClose(configuredPreviousClose);
       setFormInitStep('close');
+      setCashRegisterIdToClose(first.id);
       setShowForm(true);
       return;
     }
@@ -98,16 +212,51 @@ const CashManager: React.FC = () => {
     setPreOpeningValue(0);
     setPrePreviousClose(0);
     setFormInitStep('open');
+    setCashRegisterIdToClose(null);
     setShowForm(true);
   };
 
-  const handleFormSubmit = (entry: Omit<CashEntry, 'id'>) => {
-    const newEntry: CashEntry = { ...entry, id: Date.now().toString() };
-    // Remove any open entry for same store today
-    setEntries(prev => {
-      const filtered = prev.filter(e => !(e.date === today && e.storeId === entry.storeId && e.status === 'open'));
-      return [...filtered, newEntry];
+  const handleOpenComplete = async (storeId: string, openingValue: number): Promise<string | undefined> => {
+    const id = await addCashRegister({
+      storeId,
+      openingBalance: openingValue,
+      openedAt: new Date(),
+      openedBy: user?.name || 'Usuário',
+      status: 'open',
     });
+    setCashRegisterIdToClose(id ?? null);
+    return id;
+  };
+
+  const handleFormSubmit = (entry: Omit<CashEntry, 'id'>, cashRegisterId?: string) => {
+    const idToClose = cashRegisterId ?? cashRegisterIdToClose;
+    if (idToClose) {
+      updateCashRegister(idToClose, {
+        closingBalance: entry.closingTotal,
+        closedAt: new Date(),
+        closedBy: entry.closedBy || user?.name || 'Usuário',
+        status: 'closed',
+        closureDetails: {
+          closingEspecie: entry.closingEspecie,
+          closingCartao: entry.closingCartao,
+          closingDelivery: entry.closingDelivery,
+          closingTotal: entry.closingTotal,
+          apuracaoNotas: entry.apuracaoNotas,
+          apuracaoMoedas: entry.apuracaoMoedas,
+          apuracaoEspecieTotal: entry.apuracaoEspecieTotal,
+          cartaoItems: entry.cartaoItems,
+          deliveryItems: entry.deliveryItems,
+          extras: entry.extras,
+          depositValue: entry.depositValue,
+          depositStatus: entry.depositStatus,
+          attachments: entry.attachments,
+          comments: entry.comments,
+          closedBy: entry.closedBy || user?.name || 'Usuário',
+          noMovement: entry.noMovement,
+        },
+      });
+    }
+    setCashRegisterIdToClose(null);
     setShowForm(false);
     toast({ title: entry.noMovement ? t('cash.noMovementCreated') : t('cash.cashClosedSuccess') });
   };
@@ -159,7 +308,8 @@ const CashManager: React.FC = () => {
               </div>
             </div>
             <Button onClick={handleAddClick} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 w-full sm:w-auto sm:ml-auto">
-              <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
+              <Plus className="h-4 w-4 mr-2" />
+              {openCashRegistersToday.length > 0 ? t('cashForm.closeCash') : t('cashForm.openCash')}
             </Button>
           </div>
         </CardContent>
@@ -272,10 +422,12 @@ const CashManager: React.FC = () => {
 
   // ═══ DEPOSITO TAB ═══
   const renderDepositoTab = () => {
+    const getPendingDepositValue = (entry: CashEntry) => Math.max(0, entry.closingTotal - entry.depositValue);
+
     const pendingByStore = allStores.map(store => {
       const pending = entries.filter(e => e.storeId === store.id && e.status === 'closed' && e.depositStatus === 'pending');
       const dias = pending.length;
-      const acumulado = pending.reduce((s, e) => s + e.depositValue, 0);
+      const acumulado = pending.reduce((s, e) => s + getPendingDepositValue(e), 0);
       const media = dias > 0 ? acumulado / dias : 0;
       return { store, dias, media, acumulado, pendingEntries: pending };
     });
@@ -284,7 +436,7 @@ const CashManager: React.FC = () => {
 
     const storeDeposits = deposits.filter(d => d.storeId === depositStoreId);
     const storeDetail = entries.filter(e => e.storeId === depositStoreId && e.status === 'closed' && e.depositStatus === 'pending');
-    const storeAcumulado = storeDetail.reduce((s, e) => s + e.depositValue, 0);
+    const storeAcumulado = storeDetail.reduce((s, e) => s + getPendingDepositValue(e), 0);
 
     return (
       <div className="space-y-4">
@@ -320,7 +472,7 @@ const CashManager: React.FC = () => {
                         <div className="bg-muted/30 p-4 flex items-center justify-center gap-3 border-b">
                           {acumulado > 0 && (
                             <Button size="sm" variant="outline" className="gap-2 text-primary border-primary/20 hover:bg-primary/10" onClick={() => {
-                              setDepositStoreId(store.id); setDepositFormValue(acumulado); setDepositFormDate(today); setDepositFormComment(''); setShowDepositDialog(true);
+                              setDepositStoreId(store.id); setDepositFormValue(acumulado); setDepositFormDate(today); setDepositFormComment(''); setDepositReceiptFile(null); setShowDepositDialog(true);
                             }}>
                               <Banknote className="h-3.5 w-3.5" /> {t('cash.depositAction')}
                             </Button>
@@ -363,20 +515,85 @@ const CashManager: React.FC = () => {
               <div><Label>{t('cash.depositValue')}</Label><Input type="number" step="0.01" value={depositFormValue || ''} onChange={e => setDepositFormValue(parseFloat(e.target.value) || 0)} className="mt-1" /></div>
               <div><Label>{t('cash.depositDate')}</Label><Input type="date" value={depositFormDate} onChange={e => setDepositFormDate(e.target.value)} className="mt-1" /></div>
               <div><Label>{t('cash.depositComment')}</Label><Input value={depositFormComment} onChange={e => setDepositFormComment(e.target.value)} placeholder={t('cash.depositCommentPlaceholder')} className="mt-1" /></div>
-              <Button variant="outline" className="w-full text-sm"><Plus className="h-3.5 w-3.5 mr-2" /> {t('cash.addReceipt')}</Button>
+              <label className="w-full">
+                <div className="w-full inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-sm font-medium cursor-pointer">
+                  <Plus className="h-3.5 w-3.5 mr-2" /> {t('cash.addReceipt')}
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*,.pdf"
+                  onChange={e => setDepositReceiptFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              {depositReceiptFile && (
+                <p className="text-xs text-muted-foreground">
+                  {depositReceiptFile.name}
+                </p>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDepositDialog(false)}>{t('common.cancel')}</Button>
-              <Button onClick={() => {
+              <Button onClick={async () => {
+                const requestedDeposit = Math.max(0, depositFormValue);
+                const appliedDeposit = Math.min(requestedDeposit, storeAcumulado);
+                let remainingToApply = appliedDeposit;
+                const overridesPatch: Record<string, DepositOverride> = {};
+
                 const newDeposit: DepositRecord = {
                   id: Date.now().toString(), storeId: depositStoreId, date: depositFormDate,
-                  value: depositFormValue, comment: depositFormComment,
-                  hasAttachment: false, hasComment: !!depositFormComment,
+                  value: appliedDeposit, comment: depositFormComment,
+                  hasAttachment: !!depositReceiptFile, hasComment: !!depositFormComment,
                   relatedEntryIds: storeDetail.map(e => e.id),
                 };
                 setDeposits(prev => [...prev, newDeposit]);
-                setEntries(prev => prev.map(e => storeDetail.some(d => d.id === e.id) ? { ...e, depositStatus: 'deposited' as const } : e));
+
+                // Apply deposit amount across pending closings (oldest first), supporting partial deposits.
+                const orderedPending = [...storeDetail].sort((a, b) => a.date.localeCompare(b.date));
+                for (const e of orderedPending) {
+                  if (remainingToApply <= 0) break;
+                  const pendingValue = Math.max(0, e.closingTotal - e.depositValue);
+                  if (pendingValue <= 0) continue;
+
+                  const amountForEntry = Math.min(remainingToApply, pendingValue);
+                  const newEntryDepositValue = e.depositValue + amountForEntry;
+                  const isFullyDeposited = newEntryDepositValue >= e.closingTotal;
+
+                  await updateCashRegister(e.id, {
+                    deposited: isFullyDeposited,
+                    closureDetails: {
+                      closingEspecie: e.closingEspecie,
+                      closingCartao: e.closingCartao,
+                      closingDelivery: e.closingDelivery,
+                      closingTotal: e.closingTotal,
+                      apuracaoNotas: e.apuracaoNotas,
+                      apuracaoMoedas: e.apuracaoMoedas,
+                      apuracaoEspecieTotal: e.apuracaoEspecieTotal,
+                      cartaoItems: e.cartaoItems,
+                      deliveryItems: e.deliveryItems,
+                      extras: e.extras,
+                      depositValue: newEntryDepositValue,
+                      depositStatus: isFullyDeposited ? 'deposited' : 'pending',
+                      attachments: e.attachments,
+                      comments: e.comments,
+                      closedBy: e.closedBy || user?.name || 'Usuário',
+                      noMovement: e.noMovement,
+                    },
+                  });
+                  overridesPatch[e.id] = {
+                    depositValue: newEntryDepositValue,
+                    depositStatus: isFullyDeposited ? 'deposited' : 'pending',
+                  };
+
+                  remainingToApply -= amountForEntry;
+                }
+
+                if (Object.keys(overridesPatch).length > 0) {
+                  setDepositOverrides(prev => ({ ...prev, ...overridesPatch }));
+                }
+
                 setShowDepositDialog(false);
+                setDepositReceiptFile(null);
                 setExpandedStore(null);
                 toast({ title: t('cash.depositCompleted') });
               }} className="bg-primary hover:bg-primary/90">{t('cash.conclude')}</Button>
@@ -399,7 +616,7 @@ const CashManager: React.FC = () => {
                   {storeDetail.map(e => (
                     <tr key={e.id} className="border-b last:border-0">
                       <td className="p-3">{new Date(e.date + 'T12:00:00').toLocaleDateString('pt-PT')}</td>
-                      <td className="p-3">{fmt(e.depositValue)}</td>
+                      <td className="p-3">{fmt(getPendingDepositValue(e))}</td>
                       <td className="p-3"><Link to={`/${lang}/caixa/${e.id}`}><Button size="sm" variant="ghost" className="h-6 w-6 p-0"><Eye className="h-3.5 w-3.5" /></Button></Link></td>
                     </tr>
                   ))}
@@ -435,7 +652,7 @@ const CashManager: React.FC = () => {
                           {d.hasComment && <span title={t('cash.hasComment')}><MessageSquare className="h-3.5 w-3.5 text-blue-400" /></span>}
                           {d.hasAttachment && <span title={t('cash.hasReceipt')}><Paperclip className="h-3.5 w-3.5 text-amber-500" /></span>}
                           <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
-                            setDepositStoreId(d.storeId); setDepositFormValue(d.value); setDepositFormDate(d.date); setDepositFormComment(d.comment || ''); setShowHistoryDialog(false); setShowDepositDialog(true);
+                            setDepositStoreId(d.storeId); setDepositFormValue(d.value); setDepositFormDate(d.date); setDepositFormComment(d.comment || ''); setDepositReceiptFile(null); setShowHistoryDialog(false); setShowDepositDialog(true);
                           }}><Edit className="h-3.5 w-3.5" /></Button>
                         </td>
                       </tr>
@@ -469,7 +686,7 @@ const CashManager: React.FC = () => {
       if (filterMonth !== 'all' && (d.getMonth() + 1).toString() !== filterMonth) return false;
       if (d.getFullYear().toString() !== filterYear) return false;
       return true;
-    }).sort((a, b) => a.date.localeCompare(b.date));
+    }).sort((a, b) => b.date.localeCompare(a.date));
 
     const totalEspecie = resumoEntries.reduce((s, e) => s + e.closingEspecie, 0);
     const totalCartao = resumoEntries.reduce((s, e) => s + e.closingCartao, 0);
@@ -733,9 +950,16 @@ const CashManager: React.FC = () => {
         preSelectedStoreId={preStoreId}
         preOpeningValue={preOpeningValue}
         prePreviousClose={prePreviousClose}
+        cashRegisterIdToClose={cashRegisterIdToClose}
+        onOpenComplete={handleOpenComplete}
+        onOpenSuccess={() => {
+          setShowForm(false);
+          setCashRegisterIdToClose(null);
+          toast({ title: t('cashForm.cashOpenedSuccess') });
+        }}
         cashSettings={cashSettings}
-        onSubmit={handleFormSubmit}
-        onCancel={() => setShowForm(false)}
+        onSubmit={(entry, cashRegisterId) => handleFormSubmit(entry, cashRegisterId ?? cashRegisterIdToClose ?? undefined)}
+        onCancel={() => { setShowForm(false); setCashRegisterIdToClose(null); }}
       />
     );
   }

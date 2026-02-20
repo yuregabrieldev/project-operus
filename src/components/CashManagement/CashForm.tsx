@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,20 +29,29 @@ interface CashFormProps {
     preSelectedStoreId?: string;
     preOpeningValue?: number;
     prePreviousClose?: number;
+    cashRegisterIdToClose?: string | null;
+    onOpenComplete?: (storeId: string, openingValue: number) => Promise<string | undefined>;
+    onOpenSuccess?: () => void;
     cashSettings: { baseValueEnabled: boolean; baseValue: number; extrasConsideredStores: string[] };
-    onSubmit: (entry: Omit<CashEntry, 'id'>) => void;
+    onSubmit: (entry: Omit<CashEntry, 'id'>, cashRegisterId?: string) => void;
     onCancel: () => void;
+    mode?: 'edit' | 'view';
+    viewEntry?: CashEntry;
 }
 
 const CashForm: React.FC<CashFormProps> = ({
     step: initialStep, allStores, entries, cardBrands, deliveryApps,
     onAddBrand, onAddApp, onDeleteBrand, onDeleteApp,
     preSelectedStoreId, preOpeningValue, prePreviousClose,
+    cashRegisterIdToClose, onOpenComplete, onOpenSuccess,
     cashSettings, onSubmit, onCancel,
+    mode = 'edit', viewEntry,
 }) => {
     const { user } = useAuth();
     const { t } = useLanguage();
-    const [formStep, setFormStep] = useState(initialStep);
+    const isReadOnly = mode === 'view';
+    const [formStep, setFormStep] = useState<'open' | 'close'>(isReadOnly ? 'close' : initialStep);
+    const [createdCashRegisterId, setCreatedCashRegisterId] = useState<string | null>(null);
     const [showNoMovDialog, setShowNoMovDialog] = useState(false);
     const [showDiffAlertDialog, setShowDiffAlertDialog] = useState(false);
     const [showAddBrandDialog, setShowAddBrandDialog] = useState(false);
@@ -51,22 +60,62 @@ const CashForm: React.FC<CashFormProps> = ({
     const [newAppName, setNewAppName] = useState('');
 
     // Opening
-    const [formStoreId, setFormStoreId] = useState(preSelectedStoreId || '');
-    const [formPreviousClose, setFormPreviousClose] = useState(prePreviousClose || 0);
-    const [formOpeningValue, setFormOpeningValue] = useState(preOpeningValue || 0);
+    const [formStoreId, setFormStoreId] = useState(viewEntry?.storeId || preSelectedStoreId || '');
+    const [formPreviousClose, setFormPreviousClose] = useState(viewEntry?.previousClose || prePreviousClose || 0);
+    const [formOpeningValue, setFormOpeningValue] = useState(viewEntry?.openingValue || preOpeningValue || 0);
+
+    // When store or settings change: "Fechamento Anterior" = valor base (se ativo) ou último fechamento (zero se depositado)
+    useEffect(() => {
+        if (isReadOnly) return;
+        if (!formStoreId) {
+            setFormPreviousClose(0);
+            return;
+        }
+        if (cashSettings.baseValueEnabled) {
+            setFormPreviousClose(cashSettings.baseValue ?? 0);
+            return;
+        }
+        const closedForStore = entries
+            .filter(e => e.storeId === formStoreId && e.status === 'closed')
+            .sort((a, b) => b.date.localeCompare(a.date));
+        const last = closedForStore[0];
+        if (!last) {
+            setFormPreviousClose(0);
+            return;
+        }
+        setFormPreviousClose(last.depositStatus === 'deposited' ? 0 : last.closingTotal);
+    }, [formStoreId, entries, cashSettings.baseValueEnabled, cashSettings.baseValue, isReadOnly]);
 
     // Closing
-    const [closingEspecie, setClosingEspecie] = useState(0);
-    const [closingCartao, setClosingCartao] = useState(0);
-    const [closingDelivery, setClosingDelivery] = useState(0);
-    const [apuracaoNotas, setApuracaoNotas] = useState(0);
-    const [apuracaoMoedas, setApuracaoMoedas] = useState(0);
-    const [cartaoItems, setCartaoItems] = useState<{ brand: string; value: number }[]>([]);
-    const [deliveryItems, setDeliveryItems] = useState<{ app: string; value: number }[]>([]);
-    const [extras, setExtras] = useState<{ description: string; value: number; type: 'entrada' | 'saida' }[]>([]);
-    const [depositValue, setDepositValue] = useState(0);
+    const [closingEspecie, setClosingEspecie] = useState(viewEntry?.closingEspecie || 0);
+    const [closingCartao, setClosingCartao] = useState(viewEntry?.closingCartao || 0);
+    const [closingDelivery, setClosingDelivery] = useState(viewEntry?.closingDelivery || 0);
+    const [apuracaoNotas, setApuracaoNotas] = useState(viewEntry?.apuracaoNotas || 0);
+    const [apuracaoMoedas, setApuracaoMoedas] = useState(viewEntry?.apuracaoMoedas || 0);
+    const [cartaoItems, setCartaoItems] = useState<{ brand: string; value: number }[]>(viewEntry?.cartaoItems || []);
+    const [deliveryItems, setDeliveryItems] = useState<{ app: string; value: number }[]>(viewEntry?.deliveryItems || []);
+    const [extras, setExtras] = useState<{ description: string; value: number; type: 'entrada' | 'saida' }[]>(viewEntry?.extras || []);
+    const [depositValue, setDepositValue] = useState(viewEntry?.depositValue || 0);
     const [attachments, setAttachments] = useState<File[]>([]);
-    const [obsGeral, setObsGeral] = useState('');
+    const [obsGeral, setObsGeral] = useState(viewEntry?.comments?.[0] || '');
+
+    useEffect(() => {
+        if (!isReadOnly || !viewEntry) return;
+        setFormStep('close');
+        setFormStoreId(viewEntry.storeId);
+        setFormPreviousClose(viewEntry.previousClose || 0);
+        setFormOpeningValue(viewEntry.openingValue || 0);
+        setClosingEspecie(viewEntry.closingEspecie || 0);
+        setClosingCartao(viewEntry.closingCartao || 0);
+        setClosingDelivery(viewEntry.closingDelivery || 0);
+        setApuracaoNotas(viewEntry.apuracaoNotas || 0);
+        setApuracaoMoedas(viewEntry.apuracaoMoedas || 0);
+        setCartaoItems(viewEntry.cartaoItems || []);
+        setDeliveryItems(viewEntry.deliveryItems || []);
+        setExtras(viewEntry.extras || []);
+        setDepositValue(viewEntry.depositValue || 0);
+        setObsGeral(viewEntry.comments?.[0] || '');
+    }, [isReadOnly, viewEntry]);
 
     const today = new Date().toISOString().split('T')[0];
     const openingDiff = formOpeningValue - formPreviousClose;
@@ -89,42 +138,68 @@ const CashForm: React.FC<CashFormProps> = ({
 
     const storeName = (id: string) => allStores.find(s => s.id === id)?.name || t('cash.store');
 
-    const handleOpenSubmit = () => {
+    const handleOpenSubmit = async () => {
         if (!formStoreId) { toast({ title: t('cashForm.selectStoreError'), variant: 'destructive' }); return; }
         const existsToday = entries.find(e => e.date === today && e.storeId === formStoreId);
         if (existsToday) { toast({ title: t('cashForm.alreadyOpenToday'), variant: 'destructive' }); return; }
-        setFormStep('close');
-        toast({ title: t('cashForm.cashOpenedFill') });
+        if (onOpenComplete) {
+            const id = await onOpenComplete(formStoreId, formOpeningValue);
+            if (id) {
+                if (onOpenSuccess) {
+                    onOpenSuccess();
+                } else {
+                    setCreatedCashRegisterId(id);
+                    setFormStep('close');
+                    toast({ title: t('cashForm.cashOpenedFill') });
+                }
+            } else {
+                toast({ title: t('cashForm.openErrorGeneric'), variant: 'destructive' });
+            }
+        } else {
+            if (onOpenSuccess) onOpenSuccess();
+            else { setFormStep('close'); toast({ title: t('cashForm.cashOpenedFill') }); }
+        }
     };
 
-    const handleNoMovement = () => {
+    const handleNoMovement = async () => {
         if (!formStoreId) return;
-        onSubmit({
-            storeId: formStoreId, date: today, openingValue: 0, previousClose: 0,
-            closingEspecie: 0, closingCartao: 0, closingDelivery: 0, closingTotal: 0,
-            apuracaoNotas: 0, apuracaoMoedas: 0, apuracaoEspecieTotal: 0,
-            cartaoItems: [], deliveryItems: [], extras: [],
-            depositValue: 0, depositStatus: 'deposited',
-            attachments: [], comments: [t('cashForm.noMovementsMark')],
-            openedBy: user?.name || 'Usuário', closedBy: user?.name || 'Usuário',
-            status: 'closed', noMovement: true,
-        });
+        let idToClose = cashRegisterIdToClose ?? undefined;
+        if (!idToClose && onOpenComplete) {
+            idToClose = await onOpenComplete(formStoreId, 0) ?? undefined;
+        }
+        onSubmit(
+            {
+                storeId: formStoreId, date: today, openingValue: 0, previousClose: 0,
+                closingEspecie: 0, closingCartao: 0, closingDelivery: 0, closingTotal: 0,
+                apuracaoNotas: 0, apuracaoMoedas: 0, apuracaoEspecieTotal: 0,
+                cartaoItems: [], deliveryItems: [], extras: [],
+                depositValue: 0, depositStatus: 'deposited',
+                attachments: [], comments: [t('cashForm.noMovementsMark')],
+                openedBy: user?.name || 'Usuário', closedBy: user?.name || 'Usuário',
+                status: 'closed', noMovement: true,
+            },
+            idToClose
+        );
         setShowNoMovDialog(false);
     };
 
     const handleCloseSubmit = () => {
-        onSubmit({
-            storeId: formStoreId, date: today,
-            openingValue: formOpeningValue, previousClose: formPreviousClose,
-            closingEspecie, closingCartao, closingDelivery, closingTotal,
-            apuracaoNotas, apuracaoMoedas, apuracaoEspecieTotal: apuracaoEspecieTot,
-            cartaoItems, deliveryItems, extras,
-            depositValue, depositStatus: 'pending',
-            attachments: attachments.map(f => ({ name: f.name, date: new Date().toISOString() })),
-            comments: obsGeral ? [obsGeral] : [],
-            openedBy: user?.name || 'Usuário', closedBy: user?.name || 'Usuário',
-            status: 'closed', noMovement: false,
-        });
+        const idToClose = cashRegisterIdToClose ?? createdCashRegisterId ?? undefined;
+        onSubmit(
+            {
+                storeId: formStoreId, date: today,
+                openingValue: formOpeningValue, previousClose: formPreviousClose,
+                closingEspecie, closingCartao, closingDelivery, closingTotal,
+                apuracaoNotas, apuracaoMoedas, apuracaoEspecieTotal: apuracaoEspecieTot,
+                cartaoItems, deliveryItems, extras,
+                depositValue, depositStatus: 'pending',
+                attachments: attachments.map(f => ({ name: f.name, date: new Date().toISOString() })),
+                comments: obsGeral ? [obsGeral] : [],
+                openedBy: user?.name || 'Usuário', closedBy: user?.name || 'Usuário',
+                status: 'closed', noMovement: false,
+            },
+            idToClose
+        );
     };
 
     return (
@@ -140,7 +215,7 @@ const CashForm: React.FC<CashFormProps> = ({
                             {formStep === 'open' ? t('cashForm.openTitle') : t('cashForm.closeTitle')}
                         </h1>
                         <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                            <Calendar className="h-3.5 w-3.5" /> {new Date().toLocaleDateString('pt-PT')}
+                            <Calendar className="h-3.5 w-3.5" /> {(isReadOnly && viewEntry ? new Date(viewEntry.date + 'T12:00:00') : new Date()).toLocaleDateString('pt-PT')}
                             {formStoreId && <Badge variant="outline">{storeName(formStoreId)}</Badge>}
                         </p>
                     </div>
@@ -180,8 +255,8 @@ const CashForm: React.FC<CashFormProps> = ({
                         </Card>
                         <div className="flex gap-3 justify-end">
                             <Button variant="outline" onClick={() => { if (!formStoreId) { toast({ title: t('cashForm.selectStoreError'), variant: 'destructive' }); return; } setShowNoMovDialog(true); }}>{t('cashForm.noMovements')}</Button>
-                            <Button variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
-                            <Button onClick={handleOpenSubmit} className="bg-primary hover:bg-primary/90"><ArrowUpCircle className="h-4 w-4 mr-2" /> {t('cashForm.openCash')}</Button>
+                            <Button type="button" variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
+                            <Button type="button" onClick={handleOpenSubmit} className="bg-primary hover:bg-primary/90"><ArrowUpCircle className="h-4 w-4 mr-2" /> {t('cashForm.openCash')}</Button>
                         </div>
                     </div>
                 ) : (
@@ -198,9 +273,9 @@ const CashForm: React.FC<CashFormProps> = ({
                                 <div>
                                     <Label className="text-xs font-semibold">{t('cashForm.closingLabel')}</Label>
                                     <div className="grid grid-cols-4 gap-3 mt-2">
-                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.cash')}</Label><Input type="number" step="0.01" value={closingEspecie || ''} onChange={e => setClosingEspecie(parseFloat(e.target.value) || 0)} /></div>
-                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.card')}</Label><Input type="number" step="0.01" value={closingCartao || ''} onChange={e => setClosingCartao(parseFloat(e.target.value) || 0)} /></div>
-                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.delivery')}</Label><Input type="number" step="0.01" value={closingDelivery || ''} onChange={e => setClosingDelivery(parseFloat(e.target.value) || 0)} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.cash')}</Label><Input type="number" step="0.01" value={closingEspecie || ''} onChange={e => setClosingEspecie(parseFloat(e.target.value) || 0)} disabled={isReadOnly} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.card')}</Label><Input type="number" step="0.01" value={closingCartao || ''} onChange={e => setClosingCartao(parseFloat(e.target.value) || 0)} disabled={isReadOnly} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cash.delivery')}</Label><Input type="number" step="0.01" value={closingDelivery || ''} onChange={e => setClosingDelivery(parseFloat(e.target.value) || 0)} disabled={isReadOnly} /></div>
                                         <div><Label className="text-[10px] text-muted-foreground">{t('common.total')}</Label><div className="h-10 flex items-center px-3 rounded-md border bg-primary/10 text-sm font-bold text-primary">{fmt(closingTotal)}</div></div>
                                     </div>
                                 </div>
@@ -215,8 +290,8 @@ const CashForm: React.FC<CashFormProps> = ({
                                 <div>
                                     <Label className="text-xs flex items-center gap-1"><Banknote className="h-3 w-3" /> {t('cash.cash')}</Label>
                                     <div className="grid grid-cols-3 gap-3 mt-2">
-                                        <div><Label className="text-[10px] text-muted-foreground">{t('cashForm.notes')}</Label><Input type="number" step="0.01" value={apuracaoNotas || ''} onChange={e => setApuracaoNotas(parseFloat(e.target.value) || 0)} /></div>
-                                        <div><Label className="text-[10px] text-muted-foreground">{t('cashForm.coins')}</Label><Input type="number" step="0.01" value={apuracaoMoedas || ''} onChange={e => setApuracaoMoedas(parseFloat(e.target.value) || 0)} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cashForm.notes')}</Label><Input type="number" step="0.01" value={apuracaoNotas || ''} onChange={e => setApuracaoNotas(parseFloat(e.target.value) || 0)} disabled={isReadOnly} /></div>
+                                        <div><Label className="text-[10px] text-muted-foreground">{t('cashForm.coins')}</Label><Input type="number" step="0.01" value={apuracaoMoedas || ''} onChange={e => setApuracaoMoedas(parseFloat(e.target.value) || 0)} disabled={isReadOnly} /></div>
                                         <div><Label className="text-[10px] text-muted-foreground">{t('common.total')}</Label><div className="h-10 flex items-center px-3 rounded-md border bg-muted text-sm font-semibold">{fmt(apuracaoEspecieTot)}</div></div>
                                     </div>
                                 </div>
@@ -230,25 +305,25 @@ const CashForm: React.FC<CashFormProps> = ({
                                     {cartaoItems.map((item, idx) => (
                                         <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 mt-2 items-end">
                                             <div>
-                                                <Select value={item.brand} onValueChange={v => { const n = [...cartaoItems]; n[idx] = { ...n[idx], brand: v }; setCartaoItems(n); }}>
+                                                <Select value={item.brand} onValueChange={v => { const n = [...cartaoItems]; n[idx] = { ...n[idx], brand: v }; setCartaoItems(n); }} disabled={isReadOnly}>
                                                     <SelectTrigger className="h-10"><SelectValue placeholder={t('cashForm.brand')} /></SelectTrigger>
                                                     <SelectContent>
                                                         {cardBrands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-                                                        <div className="border-t mt-1 pt-1 px-2 pb-1">
+                                                        {!isReadOnly && <div className="border-t mt-1 pt-1 px-2 pb-1">
                                                             <Button size="sm" variant="ghost" className="w-full text-xs text-primary h-7" onClick={(e) => { e.stopPropagation(); setNewBrandName(''); setShowAddBrandDialog(true); }}>
                                                                 <Plus className="h-3 w-3 mr-1" /> {t('cashForm.newBrand')}
                                                             </Button>
-                                                        </div>
+                                                        </div>}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} value={item.value || ''} onChange={e => { const n = [...cartaoItems]; n[idx] = { ...n[idx], value: parseFloat(e.target.value) || 0 }; setCartaoItems(n); }} />
-                                            <Button size="sm" variant="ghost" className="text-destructive h-10 px-2" onClick={() => setCartaoItems(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>
+                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} value={item.value || ''} onChange={e => { const n = [...cartaoItems]; n[idx] = { ...n[idx], value: parseFloat(e.target.value) || 0 }; setCartaoItems(n); }} disabled={isReadOnly} />
+                                            {!isReadOnly && <Button size="sm" variant="ghost" className="text-destructive h-10 px-2" onClick={() => setCartaoItems(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>}
                                         </div>
                                     ))}
-                                    <Button variant="outline" className="w-full mt-2" onClick={() => setCartaoItems(prev => [...prev, { brand: '', value: 0 }])}>
+                                    {!isReadOnly && <Button variant="outline" className="w-full mt-2" onClick={() => setCartaoItems(prev => [...prev, { brand: '', value: 0 }])}>
                                         <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
-                                    </Button>
+                                    </Button>}
                                 </div>
 
                                 {/* Delivery - dropdown app */}
@@ -260,25 +335,25 @@ const CashForm: React.FC<CashFormProps> = ({
                                     {deliveryItems.map((item, idx) => (
                                         <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 mt-2 items-end">
                                             <div>
-                                                <Select value={item.app} onValueChange={v => { const n = [...deliveryItems]; n[idx] = { ...n[idx], app: v }; setDeliveryItems(n); }}>
+                                                <Select value={item.app} onValueChange={v => { const n = [...deliveryItems]; n[idx] = { ...n[idx], app: v }; setDeliveryItems(n); }} disabled={isReadOnly}>
                                                     <SelectTrigger className="h-10"><SelectValue placeholder="App" /></SelectTrigger>
                                                     <SelectContent>
                                                         {deliveryApps.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                                                        <div className="border-t mt-1 pt-1 px-2 pb-1">
+                                                        {!isReadOnly && <div className="border-t mt-1 pt-1 px-2 pb-1">
                                                             <Button size="sm" variant="ghost" className="w-full text-xs text-primary h-7" onClick={(e) => { e.stopPropagation(); setNewAppName(''); setShowAddAppDialog(true); }}>
                                                                 <Plus className="h-3 w-3 mr-1" /> {t('cashForm.newApp')}
                                                             </Button>
-                                                        </div>
+                                                        </div>}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} value={item.value || ''} onChange={e => { const n = [...deliveryItems]; n[idx] = { ...n[idx], value: parseFloat(e.target.value) || 0 }; setDeliveryItems(n); }} />
-                                            <Button size="sm" variant="ghost" className="text-destructive h-10 px-2" onClick={() => setDeliveryItems(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>
+                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} value={item.value || ''} onChange={e => { const n = [...deliveryItems]; n[idx] = { ...n[idx], value: parseFloat(e.target.value) || 0 }; setDeliveryItems(n); }} disabled={isReadOnly} />
+                                            {!isReadOnly && <Button size="sm" variant="ghost" className="text-destructive h-10 px-2" onClick={() => setDeliveryItems(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>}
                                         </div>
                                     ))}
-                                    <Button variant="outline" className="w-full mt-2" onClick={() => setDeliveryItems(prev => [...prev, { app: '', value: 0 }])}>
+                                    {!isReadOnly && <Button variant="outline" className="w-full mt-2" onClick={() => setDeliveryItems(prev => [...prev, { app: '', value: 0 }])}>
                                         <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
-                                    </Button>
+                                    </Button>}
                                 </div>
                             </CardContent>
                         </Card>
@@ -291,27 +366,27 @@ const CashForm: React.FC<CashFormProps> = ({
                                     <Label className="text-xs font-semibold text-emerald-600">{t('cashForm.inflows')}</Label>
                                     {extras.map((item, idx) => item.type === 'entrada' && (
                                         <div key={idx} className="flex gap-2 mb-2">
-                                            <Input placeholder={t('cashForm.description')} value={item.description} onChange={e => { const n = [...extras]; n[idx].description = e.target.value; setExtras(n); }} />
-                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} className="w-32" value={item.value || ''} onChange={e => { const n = [...extras]; n[idx].value = parseFloat(e.target.value) || 0; setExtras(n); }} />
-                                            <Button size="icon" variant="ghost" className="text-destructive h-10 w-10" onClick={() => setExtras(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4" /></Button>
+                                            <Input placeholder={t('cashForm.description')} value={item.description} onChange={e => { const n = [...extras]; n[idx].description = e.target.value; setExtras(n); }} disabled={isReadOnly} />
+                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} className="w-32" value={item.value || ''} onChange={e => { const n = [...extras]; n[idx].value = parseFloat(e.target.value) || 0; setExtras(n); }} disabled={isReadOnly} />
+                                            {!isReadOnly && <Button size="icon" variant="ghost" className="text-destructive h-10 w-10" onClick={() => setExtras(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4" /></Button>}
                                         </div>
                                     ))}
-                                    <Button variant="outline" className="w-full mt-2" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'entrada' }])}>
+                                    {!isReadOnly && <Button variant="outline" className="w-full mt-2" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'entrada' }])}>
                                         <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
-                                    </Button>
+                                    </Button>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-xs font-semibold text-destructive">{t('cashForm.outflowsLabel')}</Label>
                                     {extras.map((item, idx) => item.type === 'saida' && (
                                         <div key={idx} className="flex gap-2 mb-2">
-                                            <Input placeholder={t('cashForm.description')} value={item.description} onChange={e => { const n = [...extras]; n[idx].description = e.target.value; setExtras(n); }} />
-                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} className="w-32" value={item.value || ''} onChange={e => { const n = [...extras]; n[idx].value = parseFloat(e.target.value) || 0; setExtras(n); }} />
-                                            <Button size="icon" variant="ghost" className="text-destructive h-10 w-10" onClick={() => setExtras(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4" /></Button>
+                                            <Input placeholder={t('cashForm.description')} value={item.description} onChange={e => { const n = [...extras]; n[idx].description = e.target.value; setExtras(n); }} disabled={isReadOnly} />
+                                            <Input type="number" step="0.01" placeholder={t('cashForm.value')} className="w-32" value={item.value || ''} onChange={e => { const n = [...extras]; n[idx].value = parseFloat(e.target.value) || 0; setExtras(n); }} disabled={isReadOnly} />
+                                            {!isReadOnly && <Button size="icon" variant="ghost" className="text-destructive h-10 w-10" onClick={() => setExtras(prev => prev.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4" /></Button>}
                                         </div>
                                     ))}
-                                    <Button variant="outline" className="w-full mt-2" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'saida' }])}>
+                                    {!isReadOnly && <Button variant="outline" className="w-full mt-2" onClick={() => setExtras([...extras, { description: '', value: 0, type: 'saida' }])}>
                                         <Plus className="h-4 w-4 mr-2" /> {t('common.add')}
-                                    </Button>
+                                    </Button>}
                                 </div>
                             </CardContent>
                         </Card>
@@ -323,24 +398,29 @@ const CashForm: React.FC<CashFormProps> = ({
                                 <div>
                                     <Label className="text-xs mb-2 block">{t('cashForm.receiptsPhotos')}</Label>
                                     <div className="flex flex-wrap gap-2">
+                                        {isReadOnly && viewEntry?.attachments?.map((file, i) => (
+                                            <div key={`db-${i}`} className="h-16 px-3 bg-muted rounded-lg border flex items-center text-xs text-muted-foreground">
+                                                {file.name}
+                                            </div>
+                                        ))}
                                         {attachments.map((file, i) => (
                                             <div key={i} className="relative group">
                                                 <div className="h-16 w-16 bg-muted rounded-lg border flex items-center justify-center overflow-hidden">
                                                     {file.type.startsWith('image/') ? <img src={URL.createObjectURL(file)} alt="" className="h-full w-full object-cover" /> : <Paperclip className="h-6 w-6 text-muted-foreground" />}
                                                 </div>
-                                                <button onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
+                                                {!isReadOnly && <button onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>}
                                             </div>
                                         ))}
-                                        <label className="h-16 w-16 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                                        {!isReadOnly && <label className="h-16 w-16 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
                                             <Upload className="h-5 w-5 text-muted-foreground" />
                                             <span className="text-[9px] text-muted-foreground mt-1">{t('common.add')}</span>
                                             <input type="file" multiple className="hidden" onChange={e => { if (e.target.files) setAttachments(prev => [...prev, ...Array.from(e.target.files!)]); }} />
-                                        </label>
+                                        </label>}
                                     </div>
                                 </div>
                                 <div>
                                     <Label className="text-xs">{t('cashForm.generalObs')}</Label>
-                                    <Textarea value={obsGeral} onChange={e => setObsGeral(e.target.value)} placeholder={t('cashForm.obsPlaceholder')} className="mt-1 h-20" />
+                                    <Textarea value={obsGeral} onChange={e => setObsGeral(e.target.value)} placeholder={t('cashForm.obsPlaceholder')} className="mt-1 h-20" disabled={isReadOnly} />
                                 </div>
                             </CardContent>
                         </Card>
@@ -364,21 +444,21 @@ const CashForm: React.FC<CashFormProps> = ({
                         </Card>
 
                         <div className="flex gap-3 justify-end pt-4">
-                            <Button variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
-                            <Button onClick={() => {
+                            <Button variant="outline" onClick={onCancel}>{isReadOnly ? t('common.back') : t('common.cancel')}</Button>
+                            {!isReadOnly && <Button onClick={() => {
                                 if (diferencaTotal !== 0) {
                                     setShowDiffAlertDialog(true);
                                 } else {
                                     handleCloseSubmit();
                                 }
-                            }} className="bg-primary hover:bg-primary/90 min-w-[150px]"><CheckCircle className="h-4 w-4 mr-2" /> {t('cashForm.finalize')}</Button>
+                            }} className="bg-primary hover:bg-primary/90 min-w-[150px]"><CheckCircle className="h-4 w-4 mr-2" /> {t('cashForm.finalize')}</Button>}
                         </div>
                     </div>
                 )}
             </div>
 
             {/* No Movement */}
-            <Dialog open={showNoMovDialog} onOpenChange={setShowNoMovDialog}>
+            <Dialog open={showNoMovDialog && !isReadOnly} onOpenChange={setShowNoMovDialog}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-yellow-500" /> {t('cashForm.noMovementTitle')}</DialogTitle>
@@ -392,7 +472,7 @@ const CashForm: React.FC<CashFormProps> = ({
             </Dialog>
 
             {/* Difference Alert Dialog */}
-            <Dialog open={showDiffAlertDialog} onOpenChange={setShowDiffAlertDialog}>
+            <Dialog open={showDiffAlertDialog && !isReadOnly} onOpenChange={setShowDiffAlertDialog}>
                 <DialogContent className="sm:max-w-[440px]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
@@ -427,7 +507,7 @@ const CashForm: React.FC<CashFormProps> = ({
             </Dialog>
 
             {/* Add Brand Dialog */}
-            <Dialog open={showAddBrandDialog} onOpenChange={setShowAddBrandDialog}>
+            <Dialog open={showAddBrandDialog && !isReadOnly} onOpenChange={setShowAddBrandDialog}>
                 <DialogContent className="sm:max-w-[350px]">
                     <DialogHeader><DialogTitle>{t('cash.newCardBrand')}</DialogTitle></DialogHeader>
                     <div><Label>{t('common.name')} *</Label><Input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="Ex: VISA, MASTERCARD" className="mt-1" /></div>
@@ -447,7 +527,7 @@ const CashForm: React.FC<CashFormProps> = ({
             </Dialog>
 
             {/* Add App Dialog */}
-            <Dialog open={showAddAppDialog} onOpenChange={setShowAddAppDialog}>
+            <Dialog open={showAddAppDialog && !isReadOnly} onOpenChange={setShowAddAppDialog}>
                 <DialogContent className="sm:max-w-[350px]">
                     <DialogHeader><DialogTitle>{t('cash.newDeliveryApp')}</DialogTitle></DialogHeader>
                     <div><Label>{t('common.name')} *</Label><Input value={newAppName} onChange={e => setNewAppName(e.target.value)} placeholder="Ex: UBEREATS, GLOVO" className="mt-1" /></div>

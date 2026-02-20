@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useBrand } from './BrandContext';
+import { useAuth } from './AuthContext';
 import {
+  authService,
   categoriesService, suppliersService, productsService, inventoryService,
   costCentersService, cashService, invoicesService, movementsService,
   operationLogsService, purchaseOrdersService, recipesService, productionService,
@@ -62,6 +64,9 @@ export interface CashRegister {
   openedBy: string;
   closedBy?: string;
   status: 'open' | 'closed';
+  deposited?: boolean;
+  /** Full closing form data when closed via CashForm (espécie, cartão, delivery, etc.) */
+  closureDetails?: import('@/components/CashManagement/types').ClosureDetails;
 }
 
 export type InvoiceStatus = 'pedido_realizado' | 'mercadoria_recebida' | 'contas_a_pagar' | 'finalizado_pago' | 'cancelado' | 'finalizado_outros';
@@ -274,9 +279,9 @@ interface DataContextType {
   deleteProduct: (id: string) => void;
   addInventoryItem: (item: Omit<InventoryItem, 'id'>) => void;
   updateInventoryItem: (id: string, item: Partial<InventoryItem>) => void;
-  addCashRegister: (cashRegister: Omit<CashRegister, 'id'>) => void;
+  addCashRegister: (cashRegister: Omit<CashRegister, 'id'>) => Promise<string | undefined>;
   updateCashRegister: (id: string, cashRegister: Partial<CashRegister>) => void;
-  addInvoice: (invoice: Omit<Invoice, 'id'>) => void;
+  addInvoice: (invoice: Omit<Invoice, 'id'>) => Promise<string | undefined>;
   updateInvoice: (id: string, invoice: Partial<Invoice>) => void;
   addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
   deleteSupplier: (id: string) => void;
@@ -320,6 +325,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const { selectedBrand, stores: brandStores } = useBrand();
   const brandId = selectedBrand?.id;
 
@@ -395,13 +401,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         alertCritical: i.alert_critical != null ? Number(i.alert_critical) : undefined,
       })));
       setCostCenters(dbCC.map(c => ({ id: c.id, name: c.name })));
+      const cashUserIds = [...new Set(dbCash.flatMap(cr => [cr.opened_by, cr.closed_by].filter(Boolean) as string[]))];
+      const profileNames = await authService.getProfilesByIds(cashUserIds);
       setCashRegisters(dbCash.map(cr => ({
         id: cr.id, storeId: cr.store_id,
         openingBalance: Number(cr.opening_balance),
         closingBalance: cr.closing_balance != null ? Number(cr.closing_balance) : undefined,
         openedAt: new Date(cr.opened_at), closedAt: cr.closed_at ? new Date(cr.closed_at) : undefined,
-        openedBy: cr.opened_by, closedBy: cr.closed_by ?? undefined,
+        openedBy: profileNames.get(cr.opened_by) ?? cr.opened_by,
+        closedBy: cr.closed_by ? (profileNames.get(cr.closed_by) ?? cr.closed_by) : undefined,
         status: cr.status,
+        deposited: !!cr.deposited,
+        closureDetails: cr.closure_details ?? undefined,
       })));
       setInvoices(dbInv2.map(inv => ({
         id: inv.id, supplierId: inv.supplier_id || '', invoiceNumber: inv.invoice_number,
@@ -579,20 +590,39 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
-  const addCashRegister = async (cashRegister: Omit<CashRegister, 'id'>) => {
-    if (!brandId) return;
+  const addCashRegister = async (cashRegister: Omit<CashRegister, 'id'>): Promise<string | undefined> => {
+    if (!brandId) return undefined;
+    const userId = user?.id ?? null;
+    if (!userId) return undefined;
     try {
+      // Safety rule: never allow opening the same store twice on the same calendar day.
+      const openingDate = cashRegister.openedAt.toISOString().split('T')[0];
+      const alreadyExistsToday = cashRegisters.some(cr =>
+        cr.storeId === cashRegister.storeId &&
+        cr.openedAt.toISOString().split('T')[0] === openingDate
+      );
+      if (alreadyExistsToday) {
+        console.warn('[addCashRegister] blocked duplicate opening for same store/day');
+        return undefined;
+      }
+
       const created = await cashService.create({
-        brand_id: brandId, store_id: cashRegister.storeId,
+        brand_id: brandId,
+        store_id: cashRegister.storeId,
         opening_balance: cashRegister.openingBalance,
         closing_balance: cashRegister.closingBalance ?? null,
         opened_at: cashRegister.openedAt.toISOString(),
         closed_at: cashRegister.closedAt?.toISOString() ?? null,
-        opened_by: cashRegister.openedBy, closed_by: cashRegister.closedBy ?? null,
+        opened_by: userId,
+        closed_by: cashRegister.closedBy ?? null,
         status: cashRegister.status,
       });
-      setCashRegisters(prev => [...prev, { ...cashRegister, id: created.id }]);
-    } catch (err) { console.error(err?.message || 'Operation failed'); }
+      setCashRegisters(prev => [...prev, { ...cashRegister, id: created.id, openedBy: cashRegister.openedBy, closedBy: cashRegister.closedBy }]);
+      return created.id;
+    } catch (err) {
+      console.error('[addCashRegister]', err?.message ?? err);
+      return undefined;
+    }
   };
 
   const updateCashRegister = async (id: string, cashRegister: Partial<CashRegister>) => {
@@ -600,16 +630,35 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const dbUpdate: any = {};
       if (cashRegister.closingBalance !== undefined) dbUpdate.closing_balance = cashRegister.closingBalance;
       if (cashRegister.closedAt !== undefined) dbUpdate.closed_at = cashRegister.closedAt?.toISOString() ?? null;
-      if (cashRegister.closedBy !== undefined) dbUpdate.closed_by = cashRegister.closedBy;
+      if (cashRegister.closedBy !== undefined) dbUpdate.closed_by = user?.id ?? null;
       if (cashRegister.status !== undefined) dbUpdate.status = cashRegister.status;
       if (cashRegister.openingBalance !== undefined) dbUpdate.opening_balance = cashRegister.openingBalance;
-      await cashService.update(id, dbUpdate);
-      setCashRegisters(prev => prev.map(cr => cr.id === id ? { ...cr, ...cashRegister } : cr));
+      if (cashRegister.deposited !== undefined) dbUpdate.deposited = cashRegister.deposited;
+      if (cashRegister.closureDetails !== undefined) dbUpdate.closure_details = cashRegister.closureDetails;
+      let usedFallbackWithoutClosureDetails = false;
+      try {
+        await cashService.update(id, dbUpdate);
+      } catch (err: any) {
+        const msg = String(err?.message ?? err ?? '');
+        const shouldRetryWithoutClosureDetails =
+          dbUpdate.closure_details !== undefined &&
+          /closure_details|column .*closure_details.*does not exist/i.test(msg);
+        if (!shouldRetryWithoutClosureDetails) throw err;
+
+        const { closure_details, ...retryUpdate } = dbUpdate;
+        await cashService.update(id, retryUpdate);
+        usedFallbackWithoutClosureDetails = true;
+      }
+
+      const localUpdate = usedFallbackWithoutClosureDetails
+        ? { ...cashRegister, closureDetails: undefined }
+        : cashRegister;
+      setCashRegisters(prev => prev.map(cr => cr.id === id ? { ...cr, ...localUpdate } : cr));
     } catch (err) { console.error(err?.message || 'Operation failed'); }
   };
 
-  const addInvoice = async (invoice: Omit<Invoice, 'id'>) => {
-    if (!brandId) return;
+  const addInvoice = async (invoice: Omit<Invoice, 'id'>): Promise<string | undefined> => {
+    if (!brandId) return undefined;
     try {
       const created = await invoicesService.create({
         brand_id: brandId, supplier_id: invoice.supplierId || null,
@@ -625,7 +674,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         observations: invoice.observations ?? [],
       });
       setInvoices(prev => [...prev, { ...invoice, id: created.id }]);
-    } catch (err) { console.error(err?.message || 'Operation failed'); }
+      return created.id;
+    } catch (err) { console.error(err?.message || 'Operation failed'); return undefined; }
   };
 
   const updateInvoice = async (id: string, invoice: Partial<Invoice>) => {

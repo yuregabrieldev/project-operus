@@ -1,3 +1,23 @@
+/** Stored in DB cash_registers.closure_details when closing with full form */
+export interface ClosureDetails {
+    closingEspecie: number;
+    closingCartao: number;
+    closingDelivery: number;
+    closingTotal: number;
+    apuracaoNotas: number;
+    apuracaoMoedas: number;
+    apuracaoEspecieTotal: number;
+    cartaoItems: { brand: string; value: number }[];
+    deliveryItems: { app: string; value: number }[];
+    extras: { description: string; value: number; type: 'entrada' | 'saida' }[];
+    depositValue: number;
+    depositStatus: 'deposited' | 'pending';
+    attachments: { name: string; date: string }[];
+    comments: string[];
+    closedBy: string;
+    noMovement: boolean;
+}
+
 export interface CashEntry {
     id: string;
     storeId: string;
@@ -93,3 +113,77 @@ export const DEFAULT_CARD_BRANDS = ['VISA', 'MASTERCARD', 'MULTIBANCO', 'MB WAY'
 export const DEFAULT_DELIVERY_APPS = ['UBEREATS', 'GLOVO', 'BOLT FOOD'];
 
 export const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+
+/** CashRegister from DataContext (minimal type for conversion) */
+export interface CashRegisterForEntry {
+  id: string;
+  storeId: string;
+  openingBalance: number;
+  closingBalance?: number;
+  openedAt: Date;
+  closedAt?: Date;
+  openedBy: string;
+  closedBy?: string;
+  status: 'open' | 'closed';
+  deposited?: boolean;
+  closureDetails?: ClosureDetails;
+}
+
+/** Build CashEntry from a persisted cash register (list + detail view). */
+export function cashRegisterToEntry(cr: CashRegisterForEntry): CashEntry {
+  const dateStr = cr.openedAt instanceof Date ? cr.openedAt.toISOString().split('T')[0] : new Date(cr.openedAt).toISOString().split('T')[0];
+  const closing = cr.closingBalance ?? 0;
+  const d = cr.closureDetails;
+  if (d) {
+    return {
+      id: cr.id,
+      storeId: cr.storeId,
+      date: dateStr,
+      openingValue: cr.openingBalance,
+      previousClose: 0,
+      closingEspecie: d.closingEspecie ?? 0,
+      closingCartao: d.closingCartao ?? 0,
+      closingDelivery: d.closingDelivery ?? 0,
+      closingTotal: d.closingTotal ?? closing,
+      apuracaoNotas: d.apuracaoNotas ?? 0,
+      apuracaoMoedas: d.apuracaoMoedas ?? 0,
+      apuracaoEspecieTotal: d.apuracaoEspecieTotal ?? (d.closingEspecie ?? 0),
+      cartaoItems: d.cartaoItems ?? [],
+      deliveryItems: d.deliveryItems ?? [],
+      extras: d.extras ?? [],
+      depositValue: d.depositValue ?? 0,
+      depositStatus: d.depositStatus ?? 'pending',
+      attachments: d.attachments ?? [],
+      comments: d.comments ?? [],
+      openedBy: cr.openedBy,
+      closedBy: d.closedBy ?? cr.closedBy ?? '',
+      status: cr.status,
+      noMovement: !!d.noMovement,
+    };
+  }
+  return {
+    id: cr.id,
+    storeId: cr.storeId,
+    date: dateStr,
+    openingValue: cr.openingBalance,
+    previousClose: 0,
+    closingEspecie: closing,
+    closingCartao: 0,
+    closingDelivery: 0,
+    closingTotal: closing,
+    apuracaoNotas: 0,
+    apuracaoMoedas: 0,
+    apuracaoEspecieTotal: closing,
+    cartaoItems: [],
+    deliveryItems: [],
+    extras: [],
+    depositValue: 0,
+    depositStatus: cr.deposited ? 'deposited' : 'pending',
+    attachments: [],
+    comments: [],
+    openedBy: cr.openedBy,
+    closedBy: cr.closedBy ?? '',
+    status: cr.status,
+    noMovement: false,
+  };
+}
