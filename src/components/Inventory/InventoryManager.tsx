@@ -7,6 +7,11 @@ import { DateInput } from '@/components/ui/date-input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -17,7 +22,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import {
   Search, Plus, Edit, Truck, ShoppingCart, Package,
-  FileText, Download, Calendar, Filter
+  FileText, Download, Calendar, Filter, Trash2
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import ProductForm from './ProductForm';
@@ -42,7 +47,8 @@ const InventoryManager: React.FC = () => {
     getProductById,
     getStoreById,
     getCategoryById,
-    getSupplierById
+    getSupplierById,
+    deleteProduct,
   } = useData();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +65,7 @@ const InventoryManager: React.FC = () => {
   const [stockPopupData, setStockPopupData] = useState<{
     product: any; store: any; item: any; category?: any;
   } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; productId: string; productName: string }>({ open: false, productId: '', productName: '' });
   const [activeTab, setActiveTab] = useState<InventoryTab>('estoque');
   const [reportStoreFilter, setReportStoreFilter] = useState<string>('all');
   const [reportCategoryFilter, setReportCategoryFilter] = useState<string>('all');
@@ -157,6 +164,12 @@ const InventoryManager: React.FC = () => {
   const handleAddMovement = (productId: string) => {
     setSelectedProduct(productId);
     setShowMovementForm(true);
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deleteConfirm.productId) return;
+    await deleteProduct(deleteConfirm.productId);
+    setDeleteConfirm({ open: false, productId: '', productName: '' });
   };
 
   const getStockDotClass = (filter: StockFilter, active: boolean) => {
@@ -502,6 +515,9 @@ const InventoryManager: React.FC = () => {
                             <Button variant="ghost" size="sm" onClick={() => handleAddMovement(group.product.id)}>
                               <Plus className="h-4 w-4" />
                             </Button>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteConfirm({ open: true, productId: group.product.id, productName: group.product.name })}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
 
@@ -602,6 +618,24 @@ const InventoryManager: React.FC = () => {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => !open && setDeleteConfirm({ open: false, productId: '', productName: '' })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir produto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deleteConfirm.productName}</strong>? Esta ação não pode ser desfeita e removerá todo o histórico de estoque associado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProduct} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>}
     </div>
   );
 };
