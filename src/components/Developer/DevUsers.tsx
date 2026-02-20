@@ -56,6 +56,7 @@ const DevUsers: React.FC = () => {
     const [approvingId, setApprovingId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'usuarios' | 'interessados'>('usuarios');
     const [passwordDialog, setPasswordDialog] = useState<{ open: boolean; name: string; email: string; password: string }>({ open: false, name: '', email: '', password: '' });
+    const [approveDialog, setApproveDialog] = useState<{ open: boolean; req: typeof interessados[0] | null; password: string }>({ open: false, req: null, password: '' });
 
     const tabFromUrl = searchParams.get('tab');
     useEffect(() => {
@@ -267,23 +268,43 @@ const DevUsers: React.FC = () => {
         }
     };
 
-    const handleApproveInteressado = async (req: typeof interessados[0]) => {
+    const openApproveDialog = (req: typeof interessados[0]) => {
+        setApproveDialog({ open: true, req, password: '' });
+    };
+
+    const handleApproveInteressado = async () => {
+        const req = approveDialog.req;
+        const password = approveDialog.password.trim();
+        if (!req || !password) {
+            toast({ title: 'Erro', description: 'Digite uma senha para o usuário.', variant: 'destructive' });
+            return;
+        }
+        if (password.length < 6) {
+            toast({ title: 'Erro', description: 'A senha deve ter pelo menos 6 caracteres.', variant: 'destructive' });
+            return;
+        }
         setApprovingId(req.id);
-        const password = randomPassword();
         try {
-            const { error } = await authService.signUp(req.email, password, { name: req.name, role: 'assistant' });
+            // Usar RPC do banco para criar usuário SEM afetar a sessão atual
+            const { data, error } = await supabase.rpc('create_user_for_developer', {
+                p_email: req.email,
+                p_password: password,
+                p_name: req.name,
+                p_role: 'assistant',
+            });
             if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+
             try {
-                await supabase.from('registration_requests').update({ status: 'aguardando_confirmacao', temp_password: password }).eq('id', req.id);
+                await supabase.from('registration_requests').update({ status: 'aprovado', temp_password: password }).eq('id', req.id);
             } catch (_) {
                 // Coluna status/temp_password ou policy pode não existir; conta já foi criada
             }
-            setInteressados(prev => prev.map(r => r.id === req.id ? { ...r, status: 'aguardando_confirmacao', temp_password: password } : r));
-            await navigator.clipboard.writeText(password);
-            setPasswordDialog({ open: true, name: req.name, email: req.email, password });
+            setInteressados(prev => prev.filter(r => r.id !== req.id));
+            setApproveDialog({ open: false, req: null, password: '' });
             toast({
-                title: 'Conta criada — Aguardando confirmação',
-                description: 'O interessado precisa confirmar o email. Depois será movido automaticamente para a lista de utilizadores. Senha copiada.',
+                title: 'Conta criada com sucesso',
+                description: `Usuário ${req.name} pode fazer login com o email ${req.email} e a senha definida.`,
             });
         } catch (e: any) {
             toast({
@@ -402,21 +423,14 @@ const DevUsers: React.FC = () => {
                                             </td>
                                             <td className="p-3 text-center">
                                                 <div className="flex items-center justify-center gap-2 flex-wrap">
-                                                    {req.status !== 'conta_criada' && req.status !== 'aguardando_confirmacao' && (
+                                                    {req.status !== 'conta_criada' && req.status !== 'aguardando_confirmacao' && req.status !== 'aprovado' && (
                                                         <Button
                                                             size="sm"
                                                             className="gap-1.5"
-                                                            disabled={approvingId === req.id}
-                                                            onClick={() => handleApproveInteressado(req)}
+                                                            onClick={() => openApproveDialog(req)}
                                                         >
-                                                            {approvingId === req.id ? (
-                                                                <>A aprovar...</>
-                                                            ) : (
-                                                                <>
-                                                                    <UserCheck className="h-3.5 w-3.5" />
-                                                                    Aprovar
-                                                                </>
-                                                            )}
+                                                            <UserCheck className="h-3.5 w-3.5" />
+                                                            Aprovar
                                                         </Button>
                                                     )}
                                                     {req.temp_password && (
@@ -813,6 +827,55 @@ const DevUsers: React.FC = () => {
                     </div>
                     <DialogFooter>
                         <Button onClick={() => setPasswordDialog(p => ({ ...p, open: false }))}>Fechar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog para definir senha ao aprovar interessado */}
+            <Dialog open={approveDialog.open} onOpenChange={(open) => setApproveDialog(p => ({ ...p, open }))}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <UserCheck className="h-5 w-5 text-blue-600" /> Aprovar Interessado
+                        </DialogTitle>
+                        <DialogDescription>
+                            Defina a senha de acesso para o usuário. Ele poderá fazer login com o email e esta senha.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {approveDialog.req && (
+                        <div className="space-y-4 py-2">
+                            <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-muted-foreground">Nome</Label>
+                                <p className="font-medium">{approveDialog.req.name}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-semibold text-muted-foreground">Email</Label>
+                                <p className="font-medium">{approveDialog.req.email}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="approve-password" className="text-xs font-semibold">Senha de acesso *</Label>
+                                <Input
+                                    id="approve-password"
+                                    type="text"
+                                    placeholder="Digite a senha (mínimo 6 caracteres)"
+                                    value={approveDialog.password}
+                                    onChange={(e) => setApproveDialog(p => ({ ...p, password: e.target.value }))}
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setApproveDialog({ open: false, req: null, password: '' })}>
+                            Cancelar
+                        </Button>
+                        <Button 
+                            onClick={handleApproveInteressado} 
+                            disabled={approvingId !== null || approveDialog.password.trim().length < 6}
+                            className="gap-2"
+                        >
+                            {approvingId ? 'Criando...' : <><UserCheck className="h-4 w-4" /> Criar Conta</>}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
