@@ -42,12 +42,13 @@ const DevUsers: React.FC = () => {
     const [showDelete, setShowDelete] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
     const [selectedUser, setSelectedUser] = useState<DemoUser | null>(null);
-    const [editUser, setEditUser] = useState<{ name: string; email: string; brand: string; role: UserRole; status: UserStatus } | null>(null);
+    const [editUser, setEditUser] = useState<{ name: string; email: string; brand: string; store: string; role: UserRole; status: UserStatus } | null>(null);
     const [savingEdit, setSavingEdit] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', email: '', brand: '', store: '', role: 'assistant' as UserRole });
     const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
     const [brands, setBrands] = useState<string[]>([]);
     const [brandIdMap, setBrandIdMap] = useState<Record<string, string>>({});
+    const [storeIdMap, setStoreIdMap] = useState<Record<string, string>>({});
     const [brandStores, setBrandStores] = useState<Record<string, string[]>>({});
     const [loading, setLoading] = useState(true);
     const [interessados, setInteressados] = useState<{ id: string; name: string; email: string; phone: string; brand_name: string; stores_range: string; created_at: string; status?: string; temp_password?: string | null }[]>([]);
@@ -84,10 +85,10 @@ const DevUsers: React.FC = () => {
                 }
 
                 const [userBrandsRes, brandsRes, storesRes, requestsRes] = await Promise.all([
-                    supabase.from('user_brands').select('user_id, brand_id, role'),
+                    supabase.from('user_brands').select('user_id, brand_id, role, store_id'),
                     supabase.from('brands').select('id, name').order('name'),
                     supabase.from('stores').select('id, name, brand_id').order('name'),
-                    supabase.from('registration_requests').select('id, name, email, phone, created_at, status, temp_password').order('created_at', { ascending: false }),
+                    supabase.from('registration_requests').select('id, name, email, phone, brand_name, stores_range, created_at, status, temp_password').order('created_at', { ascending: false }),
                 ]);
                 if (profilesRes.error) {
                     console.error('DevUsers profiles:', profilesRes.error.message);
@@ -110,21 +111,31 @@ const DevUsers: React.FC = () => {
                 const idMap: Record<string, string> = {};
                 brandsList.forEach((b: any) => { idMap[b.name] = b.id; });
                 setBrandIdMap(idMap);
+                const sIdMap: Record<string, string> = {};
+                storesList.forEach((s: any) => { sIdMap[s.name] = s.id; });
+                setStoreIdMap(sIdMap);
+                // Reverse map: store id -> store name
+                const storeNames = new Map(storesList.map((s: any) => [s.id, s.name]));
                 const brandStoresFlat: Record<string, string[]> = {};
                 brandsList.forEach((b: any) => { brandStoresFlat[b.name] = storesByBrand.get(b.id) ?? []; });
                 setBrandStores(brandStoresFlat);
 
-                const ubByUser = new Map<string, { brand_id: string; role: string }[]>();
+                const ubByUser = new Map<string, { brand_id: string; role: string; store_id?: string }[]>();
                 for (const ub of userBrands) {
                     const list = ubByUser.get(ub.user_id) ?? [];
-                    list.push({ brand_id: ub.brand_id, role: ub.role });
+                    list.push({ brand_id: ub.brand_id, role: ub.role, store_id: (ub as any).store_id });
                     ubByUser.set(ub.user_id, list);
                 }
                 const users: DemoUser[] = profiles.map((p: any) => {
                     const ubs = ubByUser.get(p.id) ?? [];
                     const brandIds = ubs.map(ub => ub.brand_id);
                     const brandNamesList = brandIds.map(id => brandNames.get(id) ?? '').filter(Boolean);
-                    const storesListForUser = brandIds.flatMap(id => storesByBrand.get(id) ?? []);
+                    // If user has an assigned store_id, show that store; otherwise show all brand stores
+                    const assignedStoreIds = ubs.map(ub => ub.store_id).filter(Boolean);
+                    const assignedStoreNames = assignedStoreIds.map(id => storeNames.get(id!) ?? '').filter(Boolean);
+                    const storesListForUser = assignedStoreNames.length > 0
+                        ? assignedStoreNames
+                        : brandIds.flatMap(id => storesByBrand.get(id) ?? []);
                     const role = (p.role === 'developer' ? 'admin' : p.role) as UserRole;
                     const status: UserStatus = p.is_active === false ? 'inactive' : (ubs.length === 0 ? 'pending' : 'active');
                     return {
@@ -212,7 +223,7 @@ const DevUsers: React.FC = () => {
 
     const handleOpenEdit = (user: DemoUser) => {
         setSelectedUser(user);
-        setEditUser({ name: user.name, email: user.email, brand: user.brand, role: user.role, status: user.status });
+        setEditUser({ name: user.name, email: user.email, brand: user.brand, store: user.stores.length > 0 ? user.stores[0] : '', role: user.role, status: user.status });
         setShowEdit(true);
     };
 
@@ -220,23 +231,21 @@ const DevUsers: React.FC = () => {
         if (!selectedUser || !editUser) return;
         setSavingEdit(true);
         try {
-            // Update profiles
             const isActive = editUser.status !== 'inactive';
-            const { error: profileError } = await supabase.from('profiles').update({
-                name: editUser.name,
-                email: editUser.email,
-                role: editUser.role,
-                is_active: isActive,
-            }).eq('id', selectedUser.id);
-            if (profileError) throw profileError;
+            const newBrandId = brandIdMap[editUser.brand] || null;
+            const newStoreId = storeIdMap[editUser.store] || null;
 
-            // Update brand association
-            const newBrandId = brandIdMap[editUser.brand];
-            if (newBrandId) {
-                // Remove old associations and add new one
-                await supabase.from('user_brands').delete().eq('user_id', selectedUser.id);
-                await supabase.from('user_brands').insert({ user_id: selectedUser.id, brand_id: newBrandId, role: editUser.role });
-            }
+            // Use RPC function (SECURITY DEFINER — bypasses RLS)
+            const { error } = await supabase.rpc('update_user_for_developer', {
+                p_user_id: selectedUser.id,
+                p_name: editUser.name,
+                p_email: editUser.email,
+                p_role: editUser.role,
+                p_is_active: isActive,
+                p_brand_id: newBrandId,
+                p_store_id: newStoreId,
+            });
+            if (error) throw error;
 
             // Update local state
             setDemoUsers(prev => prev.map(u => u.id === selectedUser.id ? {
@@ -244,12 +253,14 @@ const DevUsers: React.FC = () => {
                 name: editUser.name,
                 email: editUser.email,
                 brand: editUser.brand,
+                stores: editUser.store ? [editUser.store] : u.stores,
                 role: editUser.role,
                 status: editUser.status,
             } : u));
             setShowEdit(false);
             toast({ title: 'Usuário atualizado!', description: `${editUser.name} foi salvo com sucesso.` });
         } catch (e: any) {
+            console.error('handleSaveUser error:', e);
             toast({ title: 'Erro ao salvar', description: e?.message || 'Erro de rede.', variant: 'destructive' });
         } finally {
             setSavingEdit(false);
@@ -291,12 +302,14 @@ const DevUsers: React.FC = () => {
     };
 
     const handleExcluirInteressado = async (req: typeof interessados[0]) => {
-        if (!confirm(`Excluir a solicitação de ${req.name} (${req.email})? A conta na plataforma não será apagada.`)) return;
+        if (!confirm(`Excluir o interessado ${req.name} (${req.email})? A solicitação e a conta associada serão apagadas permanentemente.`)) return;
         try {
-            const { error } = await supabase.from('registration_requests').delete().eq('id', req.id);
+            // Use RPC — deletes registration_request + profile + user_brands
+            const { error } = await supabase.rpc('delete_interessado_for_developer', { p_request_id: req.id });
             if (error) throw error;
             setInteressados(prev => prev.filter(r => r.id !== req.id));
-            toast({ title: 'Solicitação excluída' });
+            setDemoUsers(prev => prev.filter(u => u.email.toLowerCase() !== req.email.toLowerCase()));
+            toast({ title: 'Interessado e conta excluídos com sucesso!' });
         } catch (e: any) {
             toast({ title: 'Erro ao excluir', description: e?.message, variant: 'destructive' });
         }
@@ -622,12 +635,11 @@ const DevUsers: React.FC = () => {
                         <Button variant="destructive" onClick={async () => {
                             if (!selectedUser) return;
                             try {
-                                // Remove brand associations
-                                await supabase.from('user_brands').delete().eq('user_id', selectedUser.id);
-                                // Deactivate profile (soft delete — Supabase Auth users cannot be deleted via client SDK)
-                                const { error } = await supabase.from('profiles').update({ is_active: false, role: 'deleted' }).eq('id', selectedUser.id);
+                                // Use RPC — deletes profile + user_brands + registration_requests
+                                const { error } = await supabase.rpc('delete_user_for_developer', { p_user_id: selectedUser.id });
                                 if (error) throw error;
                                 setDemoUsers(prev => prev.filter(u => u.id !== selectedUser.id));
+                                setInteressados(prev => prev.filter(r => r.email.toLowerCase() !== selectedUser.email.toLowerCase()));
                                 setShowDelete(false);
                                 toast({ title: 'Usuário excluído com sucesso!' });
                             } catch (e: any) {
@@ -685,7 +697,7 @@ const DevUsers: React.FC = () => {
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
                                     <Label className="text-xs font-semibold">Loja</Label>
-                                    <Select disabled={!editUser.brand}>
+                                    <Select value={editUser.store} onValueChange={v => setEditUser(p => p ? { ...p, store: v } : p)} disabled={!editUser.brand}>
                                         <SelectTrigger><SelectValue placeholder={editUser.brand ? 'Selecionar loja' : 'Selecione a marca'} /></SelectTrigger>
                                         <SelectContent>
                                             {(brandStores[editUser.brand] || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
