@@ -32,7 +32,7 @@ const DevDashboard: React.FC = () => {
         (async () => {
             try {
                 const [reqRes, brandsRes, licensesRes, invoicesRes] = await Promise.all([
-                    supabase.from('registration_requests').select('id', { count: 'exact', head: true }),
+                    supabase.from('registration_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
                     supabase.from('brands').select('id, stores_count'),
                     supabase.from('licenses').select('id, brand_id, name, status, periodicity, renewals, store_ids, created_at').eq('status', 'ativa'),
                     supabase.from('invoices').select('amount').gte('issue_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)),

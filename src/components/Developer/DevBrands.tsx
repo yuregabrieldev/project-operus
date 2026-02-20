@@ -83,21 +83,45 @@ const DevBrands: React.FC = () => {
     const [editStoreAddress, setEditStoreAddress] = useState('');
     const [editStoreContact, setEditStoreContact] = useState('');
     const [editStoreManager, setEditStoreManager] = useState('');
+    const [editStorePlan, setEditStorePlan] = useState<'Starter' | 'Business'>('Starter');
+    const [editStorePlanValue, setEditStorePlanValue] = useState(0);
+    const [editStoreStatus, setEditStoreStatus] = useState<BrandStatus>('active');
+    const [editStoreImage, setEditStoreImage] = useState('');
+    const editStoreImageRef = useRef<HTMLInputElement>(null);
+
+    // Edit Brand form state
+    const [showEditBrand, setShowEditBrand] = useState(false);
+    const [editBrandId, setEditBrandId] = useState('');
+    const [editBrandName, setEditBrandName] = useState('');
+    const [editBrandResponsible, setEditBrandResponsible] = useState<SystemUser | null>(null);
+    const [editBrandAdminSearch, setEditBrandAdminSearch] = useState('');
+    const [editBrandStatus, setEditBrandStatus] = useState<BrandStatus>('active');
 
     const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
     useEffect(() => {
         (async () => {
             try {
-                const [brandsRes, storesRes, profilesRes] = await Promise.all([
+                const [brandsRes, storesRes, profilesRes, userBrandsRes] = await Promise.all([
                     supabase.from('brands').select('*').order('name'),
                     supabase.from('stores').select('*').order('name'),
                     supabase.from('profiles').select('id, name, email, role').eq('is_active', true),
+                    supabase.from('user_brands').select('user_id, brand_id, role').eq('role', 'admin'),
                 ]);
                 const brands = brandsRes.data ?? [];
                 const stores = storesRes.data ?? [];
                 const profiles = profilesRes.data ?? [];
+                const userBrands = userBrandsRes.data ?? [];
                 setSystemUsers(profiles.map((p: any) => ({ id: p.id, name: p.name || p.email, email: p.email, role: p.role || 'assistant' })));
+
+                // Map user_id -> profile name for brand admin lookup
+                const profilesMap = new Map(profiles.map((p: any) => [p.id, p.name || p.email]));
+                // Map brand_id -> admin name
+                const brandAdminMap = new Map<string, string>();
+                for (const ub of userBrands) {
+                    const name = profilesMap.get(ub.user_id);
+                    if (name) brandAdminMap.set(ub.brand_id, name);
+                }
 
                 const brandsMap = new Map<string, DemoBrand>();
                 for (const b of brands) {
@@ -105,7 +129,7 @@ const DevBrands: React.FC = () => {
                         id: b.id,
                         name: b.name,
                         storesCount: b.stores_count ?? 0,
-                        responsible: '-',
+                        responsible: brandAdminMap.get(b.id) || '-',
                         monthlyRevenue: 0,
                         totalRevenue: 0,
                         status: 'active',
@@ -121,10 +145,15 @@ const DevBrands: React.FC = () => {
                             address: s.address || '',
                             responsible: s.manager || '-',
                             contact: s.contact || '',
-                            plan: 'Starter',
-                            planValue: 0,
+                            plan: (s as any).plan || 'Starter',
+                            planValue: (s as any).plan_value ?? 0,
                             status: s.is_active ? 'active' : 'inactive',
+                            imageUrl: (s as any).image_url || undefined,
                         });
+                        brand.storesCount = brand.stores.length;
+                        // Compute revenue as sum of all store plan values
+                        brand.monthlyRevenue = brand.stores.reduce((sum, st) => sum + st.planValue, 0);
+                        brand.totalRevenue = brand.monthlyRevenue;
                     }
                 }
                 setDemoBrands(Array.from(brandsMap.values()));
@@ -194,7 +223,7 @@ const DevBrands: React.FC = () => {
         u.email.toLowerCase().includes(storeAdminSearch.toLowerCase())
     );
 
-    const handleImageUpload = async (file: File, target: 'brand' | 'store') => {
+    const handleImageUpload = async (file: File, target: 'brand' | 'store'): Promise<string | null> => {
         const setUploading = target === 'brand' ? setUploadingBrandImage : setUploadingStoreImage;
         const setImage = target === 'brand' ? setNewBrandImage : setNewStoreImage;
         setUploading(true);
@@ -206,8 +235,10 @@ const DevBrands: React.FC = () => {
             const { data: urlData } = supabase.storage.from('brand-images').getPublicUrl(path);
             setImage(urlData.publicUrl);
             toast({ title: 'Imagem carregada!' });
+            return urlData.publicUrl;
         } catch (e: any) {
             toast({ title: 'Erro ao carregar imagem', description: e?.message || 'Tente novamente.', variant: 'destructive' });
+            return null;
         } finally {
             setUploading(false);
         }
@@ -322,6 +353,10 @@ const DevBrands: React.FC = () => {
         setEditStoreAddress(store.address);
         setEditStoreContact(store.contact);
         setEditStoreManager(store.responsible);
+        setEditStorePlan(store.plan);
+        setEditStorePlanValue(store.planValue);
+        setEditStoreStatus(store.status);
+        setEditStoreImage(store.imageUrl || '');
         setShowEditStore(true);
     };
 
@@ -333,10 +368,14 @@ const DevBrands: React.FC = () => {
                 address: editStoreAddress,
                 contact: editStoreContact,
                 manager: editStoreManager,
+                plan: editStorePlan,
+                plan_value: editStorePlanValue,
+                is_active: editStoreStatus === 'active',
+                image_url: editStoreImage || null,
             }).eq('id', editStoreId);
             if (error) throw error;
             const updateStore = (stores: DemoStore[]) => stores.map(s =>
-                s.id === editStoreId ? { ...s, name: editStoreName, address: editStoreAddress, contact: editStoreContact, responsible: editStoreManager } : s
+                s.id === editStoreId ? { ...s, name: editStoreName, address: editStoreAddress, contact: editStoreContact, responsible: editStoreManager, plan: editStorePlan, planValue: editStorePlanValue, status: editStoreStatus, imageUrl: editStoreImage || undefined } : s
             );
             setDemoBrands(prev => prev.map(b => ({ ...b, stores: updateStore(b.stores) })));
             setSelectedBrand(prev => prev ? { ...prev, stores: updateStore(prev.stores) } : null);
@@ -347,8 +386,50 @@ const DevBrands: React.FC = () => {
         }
     };
 
+    const openEditBrand = (brand: DemoBrand) => {
+        setEditBrandId(brand.id);
+        setEditBrandName(brand.name);
+        // Find the current admin user by name
+        const adminUser = systemUsers.find(u => u.name === brand.responsible) || null;
+        setEditBrandResponsible(adminUser);
+        setEditBrandAdminSearch('');
+        setEditBrandStatus(brand.status);
+        setShowEditBrand(true);
+    };
+
+    const handleEditBrand = async () => {
+        if (!editBrandId || !editBrandName) return;
+        try {
+            const { error } = await supabase.from('brands').update({
+                name: editBrandName,
+            }).eq('id', editBrandId);
+            if (error) throw error;
+            // Update admin user_brands if a responsible was selected
+            if (editBrandResponsible) {
+                // Remove existing admin link and add new one
+                await supabase.from('user_brands').delete().eq('brand_id', editBrandId).eq('role', 'admin');
+                await supabase.from('user_brands').insert({
+                    user_id: editBrandResponsible.id,
+                    brand_id: editBrandId,
+                    role: 'admin',
+                    is_primary: true,
+                });
+            }
+            const responsibleName = editBrandResponsible?.name || '-';
+            setDemoBrands(prev => prev.map(b =>
+                b.id === editBrandId ? { ...b, name: editBrandName, responsible: responsibleName, status: editBrandStatus } : b
+            ));
+            setSelectedBrand(prev => prev && prev.id === editBrandId ? { ...prev, name: editBrandName, responsible: responsibleName, status: editBrandStatus } : prev);
+            toast({ title: 'Marca atualizada com sucesso!' });
+            setShowEditBrand(false);
+        } catch (e: any) {
+            toast({ title: 'Erro ao atualizar marca', description: e?.message || 'Tente novamente.', variant: 'destructive' });
+        }
+    };
+
     // Brand Detail View
     if (selectedBrand) {
+        const brandTotalRevenue = selectedBrand.stores.reduce((s, st) => s + st.planValue, 0);
         return (
             <div className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
@@ -371,7 +452,7 @@ const DevBrands: React.FC = () => {
                 <Card className="shadow-lg border-0 bg-gradient-to-r from-purple-50 to-indigo-50">
                     <CardContent className="p-5">
                         <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider">Receita Total da Marca</p>
-                        <p className="text-3xl font-bold text-gray-900 mt-1">{fmt(selectedBrand.totalRevenue)}</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{fmt(brandTotalRevenue)}</p>
                     </CardContent>
                 </Card>
 
@@ -386,6 +467,7 @@ const DevBrands: React.FC = () => {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b bg-gray-50/80">
+                                    <th className="text-left p-3 font-semibold text-gray-600">Foto</th>
                                     <th className="text-left p-3 font-semibold text-gray-600">Loja</th>
                                     <th className="text-left p-3 font-semibold text-gray-600">Endereço</th>
                                     <th className="text-left p-3 font-semibold text-gray-600">Responsável</th>
@@ -397,10 +479,15 @@ const DevBrands: React.FC = () => {
                             </thead>
                             <tbody>
                                 {selectedBrand.stores.length === 0 ? (
-                                    <tr><td colSpan={7} className="p-8 text-center text-gray-500">Nenhuma loja cadastrada</td></tr>
+                                    <tr><td colSpan={8} className="p-8 text-center text-gray-500">Nenhuma loja cadastrada</td></tr>
                                 ) : (
                                     selectedBrand.stores.map(store => (
                                         <tr key={store.id} className="border-b hover:bg-gray-50/50">
+                                            <td className="p-3">
+                                                <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                    {store.imageUrl ? <img src={store.imageUrl} alt={store.name} className="h-full w-full object-cover" /> : <Store className="h-5 w-5 text-gray-400" />}
+                                                </div>
+                                            </td>
                                             <td className="p-3 font-medium">{store.name}</td>
                                             <td className="p-3 text-gray-500 text-xs">{store.address}</td>
                                             <td className="p-3 text-gray-600">{store.responsible}</td>
@@ -462,7 +549,7 @@ const DevBrands: React.FC = () => {
 
                 {/* Edit Store Dialog */}
                 <Dialog open={showEditStore} onOpenChange={(open) => { if (!open) setShowEditStore(false); }}>
-                    <DialogContent className="max-w-lg">
+                    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <Edit className="h-5 w-5 text-blue-600" /> Editar Loja
@@ -470,6 +557,18 @@ const DevBrands: React.FC = () => {
                             <DialogDescription>Altere os dados da loja</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Foto da Loja</Label>
+                                <div className="flex items-center gap-3">
+                                    <div className="h-16 w-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                                        {editStoreImage ? <img src={editStoreImage} alt="Store" className="h-full w-full object-cover" /> : <ImageIcon className="h-6 w-6 text-gray-400" />}
+                                    </div>
+                                    <input ref={editStoreImageRef} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) { const url = await handleImageUpload(f, 'store'); if (url) setEditStoreImage(url); } }} />
+                                    <Button variant="outline" size="sm" className="gap-2" onClick={() => editStoreImageRef.current?.click()}>
+                                        <Upload className="h-3.5 w-3.5" /> Carregar
+                                    </Button>
+                                </div>
+                            </div>
                             <div className="space-y-2">
                                 <Label>Nome da Loja *</Label>
                                 <Input value={editStoreName} onChange={e => setEditStoreName(e.target.value)} placeholder="Nome da loja" />
@@ -479,12 +578,39 @@ const DevBrands: React.FC = () => {
                                 <Input value={editStoreAddress} onChange={e => setEditStoreAddress(e.target.value)} placeholder="Endereço" />
                             </div>
                             <div className="space-y-2">
+                                <Label>Responsável</Label>
+                                <Input value={editStoreManager} onChange={e => setEditStoreManager(e.target.value)} placeholder="Nome do responsável" />
+                            </div>
+                            <div className="space-y-2">
                                 <Label>Contacto</Label>
                                 <Input value={editStoreContact} onChange={e => setEditStoreContact(e.target.value)} placeholder="Telefone ou email" />
                             </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Plano</Label>
+                                    <Select value={editStorePlan} onValueChange={v => setEditStorePlan(v as 'Starter' | 'Business')}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Starter">Starter</SelectItem>
+                                            <SelectItem value="Business">Business</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Valor do Plano (€)</Label>
+                                    <Input type="number" value={editStorePlanValue} onChange={e => setEditStorePlanValue(Number(e.target.value))} placeholder="0" />
+                                </div>
+                            </div>
                             <div className="space-y-2">
-                                <Label>Responsável</Label>
-                                <Input value={editStoreManager} onChange={e => setEditStoreManager(e.target.value)} placeholder="Nome do responsável" />
+                                <Label>Status</Label>
+                                <Select value={editStoreStatus} onValueChange={v => setEditStoreStatus(v as BrandStatus)}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="active">Ativa</SelectItem>
+                                        <SelectItem value="pending">Pendente</SelectItem>
+                                        <SelectItem value="inactive">Inativa</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                         <DialogFooter>
@@ -669,8 +795,11 @@ const DevBrands: React.FC = () => {
                                     <td className="p-3 text-center">{statusBadge(brand.status)}</td>
                                     <td className="p-3 text-center">
                                         <div className="flex items-center justify-center gap-1">
-                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setSelectedBrand(brand)} title="Editar">
-                                                <Edit className="h-3.5 w-3.5" />
+                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setSelectedBrand(brand)} title="Ver Lojas">
+                                                <Store className="h-3.5 w-3.5 text-blue-500" />
+                                            </Button>
+                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEditBrand(brand)} title="Editar Marca">
+                                                <Edit className="h-3.5 w-3.5 text-amber-600" />
                                             </Button>
                                             {brand.status === 'pending' && (
                                                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Aprovar">
@@ -779,6 +908,84 @@ const DevBrands: React.FC = () => {
                         <Button variant="outline" onClick={resetCreateBrand}>Cancelar</Button>
                         <Button disabled={!newBrandName || !selectedAdmin} onClick={handleCreateBrand} className="gap-2">
                             <Plus className="h-4 w-4" /> Criar Marca
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Brand Dialog */}
+            <Dialog open={showEditBrand} onOpenChange={(open) => { if (!open) setShowEditBrand(false); }}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Edit className="h-5 w-5 text-amber-600" /> Editar Marca
+                        </DialogTitle>
+                        <DialogDescription>Altere os dados da marca</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Nome da Marca *</Label>
+                            <Input value={editBrandName} onChange={e => setEditBrandName(e.target.value)} placeholder="Nome da marca" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Responsável / Admin da Marca</Label>
+                            {editBrandResponsible ? (
+                                <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                    <div className="h-8 w-8 rounded-full bg-emerald-200 flex items-center justify-center text-sm font-bold text-emerald-700">
+                                        {editBrandResponsible.name.charAt(0)}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium">{editBrandResponsible.name}</p>
+                                        <p className="text-xs text-gray-500">{editBrandResponsible.email}</p>
+                                    </div>
+                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setEditBrandResponsible(null)}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <Input placeholder="Buscar utilizador por nome ou email..." value={editBrandAdminSearch} onChange={e => setEditBrandAdminSearch(e.target.value)} className="pl-10" />
+                                    </div>
+                                    {editBrandAdminSearch.length >= 2 && (
+                                        <div className="border rounded-lg max-h-40 overflow-y-auto">
+                                            {systemUsers.filter(u => u.name.toLowerCase().includes(editBrandAdminSearch.toLowerCase()) || u.email.toLowerCase().includes(editBrandAdminSearch.toLowerCase())).length === 0 ? (
+                                                <p className="p-3 text-sm text-gray-500 text-center">Nenhum utilizador encontrado</p>
+                                            ) : (
+                                                systemUsers.filter(u => u.name.toLowerCase().includes(editBrandAdminSearch.toLowerCase()) || u.email.toLowerCase().includes(editBrandAdminSearch.toLowerCase())).map(u => (
+                                                    <button key={u.id} onClick={() => { setEditBrandResponsible(u); setEditBrandAdminSearch(''); }} className="w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 text-left border-b last:border-0">
+                                                        <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">
+                                                            {u.name.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium">{u.name}</p>
+                                                            <p className="text-[11px] text-gray-400">{u.email} · {u.role}</p>
+                                                        </div>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Status</Label>
+                            <Select value={editBrandStatus} onValueChange={v => setEditBrandStatus(v as BrandStatus)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="active">Ativa</SelectItem>
+                                    <SelectItem value="pending">Pendente</SelectItem>
+                                    <SelectItem value="inactive">Inativa</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowEditBrand(false)}>Cancelar</Button>
+                        <Button disabled={!editBrandName} onClick={handleEditBrand} className="gap-2">
+                            <CheckCircle className="h-4 w-4" /> Salvar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
