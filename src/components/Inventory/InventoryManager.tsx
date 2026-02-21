@@ -635,7 +635,7 @@ const InventoryManager: React.FC = () => {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>}
+      </AlertDialog>
     </div>
   );
 };
